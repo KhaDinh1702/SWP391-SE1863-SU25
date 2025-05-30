@@ -32,36 +32,20 @@ export default function Login() {
   //   return emailRegex.test(input) || phoneRegex.test(input);
   // }
 
-  const handleLogin = async () => {
-  setError(""); // Clear error before new attempt
-
-  // if (!validateUsername(username)) {
-  //   setError("Vui lòng nhập email hoặc số điện thoại hợp lệ");
-  //   return;
-  // }
-
-  // if (password.length < 6) {
-  //   setError("Mật khẩu phải ít nhất 6 ký tự");
-  //   return;
-  // }
+ const handleLogin = async () => {
+  setError("");
 
   try {
-    const response = await authService.login({username, password}); // Gọi API và chờ phản hồi
-    console.log(response);
-    if (response.success) {
-      // Lưu token và thông tin người dùng vào localStorage nếu cần
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("username", response.username);
-      localStorage.setItem("role", response.role);
-      localStorage.setItem("userId", response.userId);
+    const data = await authService.login({username, password});
+    
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("userId", data.userId);
 
-      // Chuyển hướng đến trang chính
-      navigate("/");
-    } else {
-      setError(response.message || "Tài khoản hoặc mật khẩu không đúng");
-    }
+    navigate("/");
   } catch (error) {
-    setError("Đăng nhập thất bại. Vui lòng thử lại.");
+    setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     console.error(error);
   }
 };
