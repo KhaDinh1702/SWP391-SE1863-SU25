@@ -1,7 +1,8 @@
+// src/pages/Register.jsx
 import { useState } from "react";
-import { register } from "../utils/auth"; 
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/NavBar.jsx";
+import { authService } from "../services/api.js";
 
 function EyeIcon({ visible, onClick }) {
   return (
@@ -17,78 +18,190 @@ function EyeIcon({ visible, onClick }) {
 }
 
 export default function Register() {
-  const [username, setUsername] = useState(""); // email hoặc số điện thoại
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    address: "",
+    dateOfBirth: "",
+    gender: 0, // Default to Male (0)
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  // Kiểm tra đơn giản username có phải email hoặc số điện thoại không
-  function validateUsername(input) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\d{9,15}$/; // 9-15 số
-    return emailRegex.test(input) || phoneRegex.test(input);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === "gender" ? parseInt(value) : value
+    }));
+  };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+
+  if (formData.password !== formData.confirmPassword) {
+    setError("Mật khẩu xác nhận không khớp");
+    return;
   }
 
-  const handleRegister = () => {
-    if (!validateUsername(username)) {
-      setError("Vui lòng nhập email hoặc số điện thoại hợp lệ");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Mật khẩu phải ít nhất 6 ký tự");
-      return;
-    }
-    const ok = register(username, password);
-    if (ok) {
-      navigate("/login");
-    } else {
-      setError("Tài khoản đã tồn tại");
-    }
-  };
-
-  const handleGoogleRegister = () => {
-    alert("Chức năng đăng ký bằng Google chưa được tích hợp");
-    // Ở đây bạn sẽ xử lý OAuth với Google sau này
-  };
+  try {
+    await authService.registerPatient({
+      username: formData.username,
+      password: formData.password,
+      fullName: formData.fullName,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      address: formData.address,
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender
+    });
+    
+    setSuccess("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
+    setTimeout(() => navigate("/login"), 2000);
+  } catch (error) {
+    setError(error.message || "Có lỗi xảy ra khi đăng ký");
+  }
+};
 
   return (
     <div>
       <Navbar />
       <div className="max-w-md mx-auto mt-10 p-4 border rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Đăng ký</h2>
+        <h2 className="text-xl font-bold mb-4">Đăng ký bệnh nhân</h2>
         {error && <p className="text-red-500 mb-2">{error}</p>}
-        <input
-          type="text"
-          placeholder="Email hoặc số điện thoại"
-          className="border px-3 py-2 w-full mb-3"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <div className="relative mb-3">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Mật khẩu"
-            className="border px-3 py-2 w-full"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <EyeIcon visible={showPassword} onClick={() => setShowPassword((v) => !v)} />
-        </div>
-        <button
-          onClick={handleRegister}
-          className="bg-green-700 text-white w-full py-2 rounded hover:bg-green-800 mb-4"
-        >
-          Đăng ký
-        </button>
-        <div className="text-center mb-2 text-gray-500">Hoặc</div>
-        <button
-          onClick={handleGoogleRegister}
-          className="bg-red-600 text-white w-full py-2 rounded hover:bg-red-700 flex items-center justify-center gap-2"
-        >
-          {/* Icon Google đơn giản bằng emoji */}
-          <span>🔴</span> Đăng ký bằng Google
-        </button>
+        {success && <p className="text-green-500 mb-2">{success}</p>}
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <input
+              type="text"
+              name="username"
+              placeholder="Tên đăng nhập"
+              className="border px-3 py-2 w-full"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <input
+              type="text"
+              name="fullName"
+              placeholder="Họ và tên"
+              className="border px-3 py-2 w-full"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="border px-3 py-2 w-full"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="Số điện thoại"
+              className="border px-3 py-2 w-full"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="relative mb-3">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Mật khẩu"
+              className="border px-3 py-2 w-full"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <EyeIcon visible={showPassword} onClick={() => setShowPassword(v => !v)} />
+          </div>
+          
+          <div className="mb-3">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="confirmPassword"
+              placeholder="Xác nhận mật khẩu"
+              className="border px-3 py-2 w-full"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <input
+              type="text"
+              name="address"
+              placeholder="Địa chỉ"
+              className="border px-3 py-2 w-full"
+              value={formData.address}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="block mb-1">Ngày sinh</label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              className="border px-3 py-2 w-full"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-1">Giới tính</label>
+            <select
+              name="gender"
+              className="border px-3 py-2 w-full"
+              value={formData.gender}
+              onChange={handleChange}
+            >
+              <option value={0}>Nam</option>
+              <option value={1}>Nữ</option>
+              <option value={2}>Khác</option>
+            </select>
+          </div>
+          
+          <button
+            type="submit"
+            className="bg-blue-700 text-white w-full py-2 rounded hover:bg-blue-800"
+          >
+            Đăng ký
+          </button>
+        </form>
+        
+        <p className="mt-4 text-center">
+          Đã có tài khoản? <a href="/login" className="text-blue-600">Đăng nhập ngay</a>
+        </p>
       </div>
     </div>
   );

@@ -1,63 +1,49 @@
 // src/services/api.js
-const API_BASE_URL = 'http://localhost:5275/api'; // Adjust to your backend URL
+const API_BASE_URL = 'http://localhost:5275/api/auth'; // Đã thêm /auth vào base URL
 
 export const authService = {
   login: async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(credentials),
       });
-      console.log(response)
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Đăng nhập thất bại');
+      }
 
       const data = await response.json();
-      console.log(data)
-      
-      if (!response.ok) {
-        // Handle backend validation errors
-        if (response.status === 400 && data.errors) {
-          const errorMessages = Object.values(data.errors).flat();
-          throw new Error(errorMessages.join('\n'));
-        }
-        throw new Error(data.message || 'Login failed');
-      }
-      
-      // Store token and user data if available
-      if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        if (data.userId) {
-          localStorage.setItem('userId', data.userId);
-        }
-        if (data.role) {
-          localStorage.setItem('userRole', data.role);
-        }
-      }
-      
       return data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userRole');
-  },
+  registerPatient: async (patientData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/register-patient`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(patientData),
+      });
 
-  getCurrentUser: () => {
-    return {
-      token: localStorage.getItem('authToken'),
-      userId: localStorage.getItem('userId'),
-      role: localStorage.getItem('userRole')
-    };
-  },
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Đăng ký thất bại');
+      }
 
-  isAuthenticated: () => {
-    return !!localStorage.getItem('authToken');
+      return await response.json();
+    } catch (error) {
+      console.error("Register error:", error);
+      throw error;
+    }
   }
 };
