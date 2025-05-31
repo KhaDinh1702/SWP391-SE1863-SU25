@@ -1,3 +1,4 @@
+// src/utils/auth.js
 export const getUser = () => {
   return JSON.parse(localStorage.getItem("user")) || null;
 };
@@ -22,5 +23,10 @@ export const register = (username, password) => {
 };
 
 export const logout = () => {
-  localStorage.removeItem("user");
+  // Xóa tất cả các item liên quan đến user
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("role");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("user"); // Nếu có
 };

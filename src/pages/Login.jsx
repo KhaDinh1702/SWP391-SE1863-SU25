@@ -38,6 +38,9 @@ export default function Login() {
   try {
     const data = await authService.login({username, password});
     
+    // Log the response data to console
+    console.log("Login response:", data);
+    
     localStorage.setItem("token", data.token);
     localStorage.setItem("username", data.username);
     localStorage.setItem("role", data.role);
@@ -45,8 +48,8 @@ export default function Login() {
 
     navigate("/");
   } catch (error) {
+    console.error("Login error details:", error); // This will log the full error object
     setError(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
-    console.error(error);
   }
 };
 

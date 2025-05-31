@@ -18,11 +18,13 @@ export default function FullNavbar() {
     return () => window.removeEventListener("storage", syncUser);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    setUser(null); // cập nhật lại user state
-    navigate("/login"); // chuyển về trang login
-  };
+ const handleLogout = () => {
+  logout();
+  setUser(null);
+  // Hiển thị thông báo
+  alert('Bạn đã đăng xuất thành công');
+  navigate("/login");
+};
 
   return (
     <div>
@@ -63,10 +65,7 @@ export default function FullNavbar() {
 
         {/* Menu */}
         <div className="flex items-center gap-6 text-sm font-semibold">
-          <span className="cursor-pointer hover:text-blue-700">Giới thiệu</span>
-          <span className="cursor-pointer hover:text-blue-700">Bảng giá</span>
-          <span className="cursor-pointer hover:text-blue-700">Ký Sinh Trùng</span>
-          <span className="cursor-pointer hover:text-blue-700">PrEP miễn phí</span>
+          <span className="cursor-pointer hover:text-blue-700">Giới thiệu</span> 
           <span className="cursor-pointer hover:text-blue-700">STDs & HIV</span>
           <span className="cursor-pointer hover:text-blue-700">Dịch vụ</span>
           <span className="cursor-pointer hover:text-blue-700">Nhà thuốc</span>
@@ -81,12 +80,7 @@ export default function FullNavbar() {
               <span className="text-sm text-gray-700">
                 👋 Xin chào, <span className="text-blue-700 font-medium">{user.username}</span>
               </span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-              >
-                Đăng xuất
-              </button>
+              
             </>
           ) : (
             <>
@@ -101,6 +95,12 @@ export default function FullNavbar() {
                 className="bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
               >
                 Đăng ký
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
+              >
+                Đăng xuất
               </button>
             </>
           )}
