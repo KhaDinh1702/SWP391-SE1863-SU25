@@ -1,34 +1,44 @@
 import { useParams, Link } from "react-router-dom";
 
-// Tất cả các bài viết đều xoay quanh chủ đề HIV
 const blogPosts = [
   {
     id: 1,
     title: "Hiểu Biết Cơ Bản Về HIV/AIDS",
-    content:
-      "HIV (Human Immunodeficiency Virus) tấn công hệ miễn dịch của cơ thể, làm suy giảm khả năng chống lại các bệnh nhiễm trùng và ung thư. Việc xét nghiệm định kỳ giúp phát hiện sớm và điều trị kịp thời, tăng chất lượng và tuổi thọ cho người nhiễm. Áp dụng lối sống lành mạnh, tuân thủ điều trị ART đều đặn và sử dụng các biện pháp phòng ngừa (bao gồm bao cao su, PrEP, PEP) là chìa khóa giảm lây truyền HIV.",
+    content: [
+      {
+        type: "paragraph",
+        text: "HIV (Human Immunodeficiency Virus) tấn công hệ miễn dịch của cơ thể, làm suy giảm khả năng chống lại các bệnh nhiễm trùng và ung thư."
+      },
+      {
+        type: "heading",
+        text: "Tại sao xét nghiệm định kỳ quan trọng?"
+      },
+      {
+        type: "paragraph",
+        text: "Việc xét nghiệm định kỳ giúp phát hiện sớm và điều trị kịp thời, tăng chất lượng và tuổi thọ cho người nhiễm."
+      },
+      {
+        type: "list",
+        items: [
+          "Xét nghiệm nhanh cho kết quả trong 20 phút",
+          "Xét nghiệm miễn phí tại các trung tâm y tế",
+          "Bảo mật thông tin tuyệt đối"
+        ]
+      },
+      {
+        type: "heading",
+        text: "Biện pháp sống khỏe với HIV"
+      },
+      {
+        type: "paragraph",
+        text: "Áp dụng lối sống lành mạnh, tuân thủ điều trị ART đều đặn và sử dụng các biện pháp phòng ngừa là chìa khóa giảm lây truyền HIV."
+      }
+    ],
     date: "10/06/2025",
     category: "Tổng quan HIV",
-   
+    author: "BS. Trần Thị Minh",
   },
-  {
-    id: 2,
-    title: "Phòng Ngừa Lây Nhiễm HIV Trong Cộng Đồng",
-    content:
-      "Để giảm nguy cơ lây nhiễm HIV, cần tăng cường truyền thông thay đổi hành vi, xét nghiệm tự nguyện, và sử dụng bao cao su đúng cách. Chương trình tiêm phòng vắc‑xin HIV hiện vẫn đang được nghiên cứu, vì vậy PrEP (dự phòng trước phơi nhiễm) và PEP (dự phòng sau phơi nhiễm) là những chiến lược quan trọng trong giai đoạn hiện tại. Việc tạo môi trường không kỳ thị và nâng cao nhận thức cộng đồng sẽ giúp người có nguy cơ cao chủ động tiếp cận dịch vụ y tế.",
-    date: "12/06/2025",
-    category: "Phòng ngừa",
-    
-  },
-  {
-    id: 3,
-    title: "Cập Nhật Về Điều Trị PrEP Năm 2025",
-    content:
-      "PrEP (Pre‑Exposure Prophylaxis) là biện pháp dự phòng HIV hiệu quả, sử dụng thuốc kháng vi‑rút cho người âm tính nhưng có nguy cơ cao nhiễm HIV. Năm 2025 chứng kiến nhiều tiến bộ: thuốc PrEP tác dụng kéo dài dạng tiêm Cabotegravir mỗi 8 tuần, và viên uống kết hợp Tenofovir Alafenamide/Emtricitabine giảm tác dụng phụ trên xương và thận. Khuyến cáo mới mở rộng nhóm sử dụng, bao gồm phụ nữ mang thai nguy cơ cao và thanh thiếu niên. Việc tuân thủ lịch uống/tiêm và theo dõi định kỳ chức năng thận, gan là bắt buộc để đảm bảo hiệu quả.",
-    date: "15/06/2025",
-    category: "Điều trị",
-    
-  }
+  // ... other posts
 ];
 
 export default function BlogPost() {
@@ -37,15 +47,27 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Bài viết không tồn tại</h2>
-          <div className="flex justify-center space-x-4">
-            <Link to="/" className="text-blue-600 hover:underline">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link 
+              to="/" 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
               Về trang chủ
             </Link>
-            <Link to="/blog" className="text-blue-600 hover:underline">
-              Quay lại trang Blog
+            <Link 
+              to="/blog" 
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Quay lại Blog
             </Link>
           </div>
         </div>
@@ -54,52 +76,72 @@ export default function BlogPost() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <article className="bg-white rounded-lg shadow-md p-8">
-          <div className="mb-6">
-            <span className="text-sm font-semibold text-blue-600">{post.category}</span>
-            <span className="text-sm text-gray-500 mx-2">•</span>
-            <span className="text-sm text-gray-500">{post.date}</span>
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 py-12 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto">
+        <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Article Header */}
+          <div className="bg-blue-600 px-8 py-6">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-white text-blue-600 text-sm font-semibold rounded-full">
+                {post.category}
+              </span>
+              <span className="text-white text-sm">{post.date}</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white">{post.title}</h1>
           </div>
-          <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-          <div className="prose max-w-none text-gray-700 mb-6">
-            <p>{post.content}</p>
+
+          {/* Article Content */}
+          <div className="p-8 prose prose-lg max-w-none">
+            {post.content.map((section, index) => {
+              if (section.type === "heading") {
+                return <h2 key={index} className="text-2xl font-semibold text-gray-800 mt-8 mb-4">{section.text}</h2>;
+              }
+              if (section.type === "paragraph") {
+                return <p key={index} className="text-gray-700 mb-6 leading-relaxed">{section.text}</p>;
+              }
+              if (section.type === "list") {
+                return (
+                  <ul key={index} className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+                    {section.items.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                );
+              }
+              return null;
+            })}
           </div>
-          
-          <div className="mt-8 flex space-x-4">
-            <Link to="/" className="text-blue-600 hover:underline flex items-center">
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                />
-              </svg>
-              Về trang chủ
-            </Link>
-            <Link to="/blog" className="text-blue-600 hover:underline flex items-center">
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Quay lại trang Blog
-            </Link>
+
+          {/* Article Footer */}
+          <div className="border-t border-gray-200 px-8 py-6 bg-gray-50">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              {post.author && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">Tác giả:</span> {post.author}
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-3">
+                <Link 
+                  to="/blog" 
+                  className="flex items-center px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Quay lại Blog
+                </Link>
+                <Link 
+                  to="/" 
+                  className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Về trang chủ
+                </Link>
+              </div>
+            </div>
           </div>
         </article>
       </div>
