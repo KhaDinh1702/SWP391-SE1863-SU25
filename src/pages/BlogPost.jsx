@@ -9,7 +9,7 @@ const blogPosts = [
       "HIV (Human Immunodeficiency Virus) tấn công hệ miễn dịch của cơ thể, làm suy giảm khả năng chống lại các bệnh nhiễm trùng và ung thư. Việc xét nghiệm định kỳ giúp phát hiện sớm và điều trị kịp thời, tăng chất lượng và tuổi thọ cho người nhiễm. Áp dụng lối sống lành mạnh, tuân thủ điều trị ART đều đặn và sử dụng các biện pháp phòng ngừa (bao gồm bao cao su, PrEP, PEP) là chìa khóa giảm lây truyền HIV.",
     date: "10/06/2025",
     category: "Tổng quan HIV",
-    author: "BS. Trần Minh"
+   
   },
   {
     id: 2,
@@ -18,7 +18,7 @@ const blogPosts = [
       "Để giảm nguy cơ lây nhiễm HIV, cần tăng cường truyền thông thay đổi hành vi, xét nghiệm tự nguyện, và sử dụng bao cao su đúng cách. Chương trình tiêm phòng vắc‑xin HIV hiện vẫn đang được nghiên cứu, vì vậy PrEP (dự phòng trước phơi nhiễm) và PEP (dự phòng sau phơi nhiễm) là những chiến lược quan trọng trong giai đoạn hiện tại. Việc tạo môi trường không kỳ thị và nâng cao nhận thức cộng đồng sẽ giúp người có nguy cơ cao chủ động tiếp cận dịch vụ y tế.",
     date: "12/06/2025",
     category: "Phòng ngừa",
-    author: "Tổ Chức Y Tế Thế Giới"
+    
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ const blogPosts = [
       "PrEP (Pre‑Exposure Prophylaxis) là biện pháp dự phòng HIV hiệu quả, sử dụng thuốc kháng vi‑rút cho người âm tính nhưng có nguy cơ cao nhiễm HIV. Năm 2025 chứng kiến nhiều tiến bộ: thuốc PrEP tác dụng kéo dài dạng tiêm Cabotegravir mỗi 8 tuần, và viên uống kết hợp Tenofovir Alafenamide/Emtricitabine giảm tác dụng phụ trên xương và thận. Khuyến cáo mới mở rộng nhóm sử dụng, bao gồm phụ nữ mang thai nguy cơ cao và thanh thiếu niên. Việc tuân thủ lịch uống/tiêm và theo dõi định kỳ chức năng thận, gan là bắt buộc để đảm bảo hiệu quả.",
     date: "15/06/2025",
     category: "Điều trị",
-    author: "BS. Nguyễn Văn A"
+    
   }
 ];
 
@@ -66,7 +66,7 @@ export default function BlogPost() {
           <div className="prose max-w-none text-gray-700 mb-6">
             <p>{post.content}</p>
           </div>
-          <div className="text-sm text-gray-500">Tác giả: {post.author}</div>
+          
           <div className="mt-8 flex space-x-4">
             <Link to="/" className="text-blue-600 hover:underline flex items-center">
               <svg
