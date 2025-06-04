@@ -62,7 +62,7 @@ export default function Login() {
         {error && <p className="text-red-500 mb-2">{error}</p>}
         <input
           type="text"
-          placeholder="Email hoặc số điện thoại"
+          placeholder="Tên tài khoản đăng nhập"
           className="border px-3 py-2 w-full mb-3"
           value={username}
           onChange={(e) => setUsername(e.target.value)}

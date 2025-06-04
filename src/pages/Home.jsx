@@ -1,6 +1,7 @@
 import Navbar from "../components/NavBar.jsx";
 import Footer from "../components/Footer.jsx";
 import ARVTreatmentForm from "../components/ARVTreatmentForm.jsx";
+import ChatWidget from "../components/ChatWidget.jsx";
 
 export default function Home() {
   return (
@@ -47,6 +48,9 @@ export default function Home() {
           </div>
         </section>
       </main>
+      
+      {/* Use the ChatWidget component */}
+      <ChatWidget />
       
       <Footer />
     </div>

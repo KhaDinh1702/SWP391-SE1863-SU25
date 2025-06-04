@@ -1,6 +1,22 @@
 // src/utils/auth.js
 export const getUser = () => {
-  return JSON.parse(localStorage.getItem("user")) || null;
+  // Check both the API-style auth and local user storage
+  const apiUser = {
+    token: localStorage.getItem("token"),
+    username: localStorage.getItem("username"),
+    role: localStorage.getItem("role"),
+    userId: localStorage.getItem("userId")
+  };
+
+  const localUser = JSON.parse(localStorage.getItem("user")) || null;
+
+  // Prioritize API-style auth if token exists
+  if (apiUser.token) {
+    return apiUser;
+  }
+  
+  // Fall back to local user storage
+  return localUser;
 };
 
 export const login = (username, password) => {
@@ -23,10 +39,17 @@ export const register = (username, password) => {
 };
 
 export const logout = () => {
-  // Xóa tất cả các item liên quan đến user
+  // Clear all possible authentication methods
+  // API-style auth items
   localStorage.removeItem("token");
   localStorage.removeItem("username");
   localStorage.removeItem("role");
   localStorage.removeItem("userId");
-  localStorage.removeItem("user"); // Nếu có
+  
+  // Local user storage items
+  localStorage.removeItem("user");
+  localStorage.removeItem("users");
+  
+  // Clear any session storage if used
+  sessionStorage.clear();
 };
