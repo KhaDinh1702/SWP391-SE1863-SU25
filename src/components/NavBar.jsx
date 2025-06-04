@@ -59,7 +59,7 @@ export default function FullNavbar() {
       <div className="flex items-center justify-between px-6 py-4 bg-white shadow-md">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-          <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+          
           <h1 className="text-xl font-bold">Dịch vụ y tế và điều trị HIV GALANT</h1>
         </div>
 
@@ -69,7 +69,7 @@ export default function FullNavbar() {
           <span className="cursor-pointer hover:text-blue-700">STDs & HIV</span>
           <span className="cursor-pointer hover:text-blue-700">Dịch vụ</span>
           <span className="cursor-pointer hover:text-blue-700">Nhà thuốc</span>
-          <span className="cursor-pointer hover:text-blue-700">Kiến thức</span>
+          <span onClick={() => navigate("/blog")} className="cursor-pointer hover:text-blue-700"> Blog Kiến thức</span>
           <span className="cursor-pointer hover:text-blue-700">Liên Hệ</span>
         </div>
 
