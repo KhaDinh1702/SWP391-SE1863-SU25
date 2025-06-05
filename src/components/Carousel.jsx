@@ -5,7 +5,7 @@ export default function Carousel() {
   const slides = [
     "https://objstore17034api.superdata.vn/alobacsi-assets/thuoc-ARV.jpg",
     "https://i.pinimg.com/736x/d4/ea/55/d4ea556a1359c33fc7fb5d6c7bbd7d71.jpg",
-    "https://i.pinimg.com/736x/41/b5/14/41b5144653f09f48b99625063b9bcafa.jpg",
+    "https://i.pinimg.com/736x/00/a3/de/00a3dedef07d58b443b76a97ca894f83.jpg",
     "https://i.pinimg.com/736x/12/1f/fd/121ffd0bf46bf2872f80407c9c60d75d.jpg",
     "https://jbi.global/sites/default/files/styles/home_page_carousel_image_style/public/2021-03/CarouselEITP1900wide_1.jpg?h=cd163b2d&itok=k2hZSitm"
   ];
@@ -70,32 +70,6 @@ export default function Carousel() {
         ))}
       </div>
 
-      {/* Navigation buttons with hover animation */}
-      <button
-        type="button"
-        className="absolute top-1/2 left-4 z-30 flex items-center justify-center w-12 h-12 -translate-y-1/2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300 transform hover:scale-110 focus:outline-none shadow-lg"
-        onClick={prevSlide}
-        aria-label="Previous slide"
-      >
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className="absolute top-1/2 right-4 z-30 flex items-center justify-center w-12 h-12 -translate-y-1/2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all duration-300 transform hover:scale-110 focus:outline-none shadow-lg"
-        onClick={nextSlide}
-        aria-label="Next slide"
-      >
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Optional slide counter */}
-      <div className="absolute bottom-4 right-4 z-30 px-3 py-1 text-sm rounded-full bg-black/30 text-white backdrop-blur-sm">
-        {currentSlide + 1} / {slides.length}
-      </div>
     </div>
   );
 }

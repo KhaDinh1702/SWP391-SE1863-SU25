@@ -66,16 +66,25 @@ export default function FullNavbar() {
               Giới thiệu
             </span>
 
-          <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">STDs & HIV</span>
-          <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Dịch vụ</span>
-          <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Nhà thuốc</span>
+          <span onClick={() => navigate("/pricing")} 
+              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
+              Bảng giá
+            </span>
+            <span onClick={() => navigate("/services")} 
+              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
+              Dịch vụ
+            </span>
+          <span onClick={() => navigate("/medical")} 
+              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
+              Nhà thuốc
+            </span>
           <span 
             onClick={() => navigate("/blog")} 
             className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
           >
             Blog Kiến thức
           </span>
-          <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Liên Hệ</span>
+          
         </div>
 
         {/* Auth buttons */}
