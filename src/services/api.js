@@ -1,5 +1,4 @@
-// src/services/api.js
-const API_BASE_URL = 'http://localhost:5275/api/auth'; // Đã thêm /auth vào base URL
+const API_BASE_URL = 'http://localhost:5275/api/auth';
 
 export const authService = {
   login: async (credentials) => {
@@ -45,5 +44,22 @@ export const authService = {
       console.error("Register error:", error);
       throw error;
     }
+  },
+
+  // ✅ Thêm mới:
+  isAuthenticated: () => {
+    return !!localStorage.getItem("token");
+  },
+
+  getCurrentUser: () => {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    return {
+      token,
+      username: localStorage.getItem("username"),
+      role: localStorage.getItem("role"),
+      userId: localStorage.getItem("userId"),
+    };
   }
 };

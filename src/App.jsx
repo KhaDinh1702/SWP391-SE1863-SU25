@@ -25,9 +25,9 @@ function App() {
 
         {/* Protected routes */}
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute requiredRoles={['Admin']}>
               <AdminDashboard />
             </ProtectedRoute>
           }
@@ -35,7 +35,7 @@ function App() {
         <Route
           path="/doctor"
           element={
-            <ProtectedRoute allowedRoles={['doctor']}>
+            <ProtectedRoute requiredRoles={['Doctor']}>
               <DoctorDashboard />
             </ProtectedRoute>
           }
@@ -43,7 +43,7 @@ function App() {
         <Route
           path="/patient"
           element={
-            <ProtectedRoute allowedRoles={['patient']}>
+            <ProtectedRoute requiredRoles={['Patient']}>
               <PatientDashboard />
             </ProtectedRoute>
           }
