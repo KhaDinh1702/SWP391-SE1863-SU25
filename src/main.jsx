@@ -5,7 +5,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost"; // Make sure to import your BlogPost component
+import BlogPost from "./pages/BlogPost"; 
 import "./index.css";
 import AdminDashboard from "./pages/AdminDashboard";
 
