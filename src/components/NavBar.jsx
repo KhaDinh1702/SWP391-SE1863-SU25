@@ -53,13 +53,19 @@ export default function FullNavbar() {
           onClick={() => navigate("/")}
         >
           <h1 className="text-2xl font-bold text-blue-900">
-            Dịch vụ y tế và điều trị HIV GALANT
+            Dịch vụ y tế và điều trị HIV 
           </h1>
         </div>
 
         {/* Menu */}
         <div className="flex items-center gap-8 text-base font-semibold">
-          <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Giới thiệu</span> 
+            <span 
+              onClick={() => navigate("/about")} 
+              className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
+            >
+              Giới thiệu
+            </span>
+
           <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">STDs & HIV</span>
           <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Dịch vụ</span>
           <span className="cursor-pointer hover:text-blue-700 transition-colors duration-200">Nhà thuốc</span>

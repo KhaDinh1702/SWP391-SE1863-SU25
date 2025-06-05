@@ -8,6 +8,8 @@ import DoctorDashboard from './components/DoctorDashboard';
 import PatientDashboard from './components/PatientDashboard';
 import Unauthorized from './components/Unauthorized';
 import Blog from './pages/Blog';
+import About from "./pages/About"; // adjust the path if needed
+
 
 import BlogPost from './pages/BlogPost';
 
@@ -18,6 +20,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/about" element={<About />} />
         <Route path="/register" element={<Register />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
