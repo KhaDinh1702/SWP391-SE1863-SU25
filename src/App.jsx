@@ -11,7 +11,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import DoctorDashboard from './pages/DoctorDashboard';
 import PatientDashboard from './pages/PatientDashboard';
-
+import Medical from './pages/Medicine';
+import Pricing from './pages/Pricing';
+import Services from './pages/Services';
 // Import các component quản lý từ thư mục con
 
 
