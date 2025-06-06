@@ -1,49 +1,112 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import NavBar from '../components/NavBar';
-import Footer from '../components/Footer';
-import { isAuthenticated, getUserRole } from '../utils/auth';
+import { useState, useEffect } from 'react';
+import { Layout } from 'antd';
+import { useNavigate } from 'react-router-dom';
+
+import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminHeader from '../components/admin/AdminHeader';
+import DoctorList from '../components/admin/DoctorManagement/DoctorList';
+import UserList from '../components/admin/UserManagement/UserList';
+import AdminProfile from '../components/admin/AdminProfile';
+import StatsCards from '../components/admin/DashboardStatus/StatsCards';
+
+import { userService, doctorService } from '../services/api';
+
+const { Content } = Layout;
 
 const AdminDashboard = () => {
-  const auth = isAuthenticated();
-  const role = getUserRole();
+  const navigate = useNavigate();
 
-  if (!auth) {
-    return <Navigate to="/login" />;
-  }
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [doctors, setDoctors] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  if (role !== 'admin') {
-    return <Navigate to="/unauthorized" />;
-  }
+  const stats = {
+    totalUsers: 1245,
+    newUsers: 12,
+    activeAppointments: 56,
+    completedTreatments: 342,
+  };
+
+  // Giả định admin info, có thể lấy từ API nếu cần
+  const admin = {
+    fullName: 'Nguyễn Văn Quản Trị',
+    email: 'admin@example.com',
+    phone: '0901234567',
+    role: 'Admin',
+    joinedDate: '2024-01-15',
+    avatarUrl: '',
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'users') {
+          const userData = await userService.getAllUsers();
+          setUsers(userData);
+        } else if (activeTab === 'doctors') {
+          const doctorData = await doctorService.getAllDoctors();
+          setDoctors(doctorData);
+        }
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Chỉ gọi fetch khi tab users hoặc doctors active
+    if (activeTab === 'users' || activeTab === 'doctors') {
+      fetchData();
+    }
+  }, [activeTab]);
+
+  const handleEditDoctor = (doctor) => {
+    console.log('Edit doctor:', doctor);
+    // Có thể điều hướng đến form chỉnh sửa hoặc mở modal
+  };
+
+  const handleDeleteDoctor = async (id) => {
+    try {
+      setLoading(true);
+      await doctorService.deleteDoctor(id);
+      setDoctors((prev) => prev.filter((doc) => doc.id !== id));
+    } catch (error) {
+      console.error('Xoá bác sĩ thất bại:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId');
+    navigate('/login');
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <NavBar />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">Người dùng</h2>
-            <p className="text-gray-600">Quản lý danh sách người dùng, phân quyền.</p>
-            <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Xem</button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">Bài viết</h2>
-            <p className="text-gray-600">Kiểm duyệt hoặc chỉnh sửa bài viết blog.</p>
-            <button className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Quản lý</button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">Thống kê</h2>
-            <p className="text-gray-600">Xem tổng quan về hoạt động người dùng và hệ thống.</p>
-            <button className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Xem thống kê</button>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <Layout style={{ minHeight: '100vh' }}>
+      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Layout>
+        <AdminHeader onLogout={handleLogout} />
+        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff' }}>
+          {activeTab === 'dashboard' && <StatsCards stats={stats} />}
+          {activeTab === 'doctors' && (
+            <DoctorList
+              doctors={doctors}
+              onEdit={handleEditDoctor}
+              onDelete={handleDeleteDoctor}
+              isLoading={loading}
+            />
+          )}
+          {activeTab === 'users' && <UserList users={users} isLoading={loading} />}
+          {activeTab === 'profile' && <AdminProfile admin={admin} />}
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

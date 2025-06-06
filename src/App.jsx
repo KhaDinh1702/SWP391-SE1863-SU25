@@ -1,17 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './components/Login';
-import Register from './pages/Register';
-import Home from './components/Home';
-import AdminDashboard from './components/AdminDashboard';
-import DoctorDashboard from './components/DoctorDashboard';
-import PatientDashboard from './components/PatientDashboard';
-import Unauthorized from './components/Unauthorized';
-import Blog from './pages/Blog';
-import About from "./pages/About"; // adjust the path if needed
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import About from "./pages/About";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Unauthorized from "./pages/Unauthorized";
+import DoctorDashboard from './pages/DoctorDashboard';
+import PatientDashboard from './pages/PatientDashboard';
+
+// Import các component quản lý từ thư mục con
 
 
-import BlogPost from './pages/BlogPost';
 
 function App() {
   return (
@@ -26,27 +29,32 @@ function App() {
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* Protected routes */}
+        {/* Admin routes */}
         <Route
-          path="/admin/dashboard"
+          path="/admin/*"
           element={
-            <ProtectedRoute requiredRoles={['Admin']}>
+            <ProtectedRoute requiredRoles={["Admin"]}>
               <AdminDashboard />
             </ProtectedRoute>
           }
-        />
+        >
+        </Route>
+
+        {/* Doctor routes */}
         <Route
-          path="/doctor"
+          path="/doctor/dashboard"
           element={
-            <ProtectedRoute requiredRoles={['Doctor']}>
+            <ProtectedRoute requiredRoles={["Doctor"]}>
               <DoctorDashboard />
             </ProtectedRoute>
           }
         />
+
+        {/* Patient routes */}
         <Route
-          path="/patient"
+          path="/patient/dashboard"
           element={
-            <ProtectedRoute requiredRoles={['Patient']}>
+            <ProtectedRoute requiredRoles={["Patient"]}>
               <PatientDashboard />
             </ProtectedRoute>
           }
