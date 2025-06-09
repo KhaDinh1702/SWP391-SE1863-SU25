@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Spin, Avatar, Typography } from 'antd';
+import { Layout, Spin, Avatar, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { UserOutlined } from '@ant-design/icons';
 
@@ -10,7 +10,7 @@ import UserList from '../components/admin/UserManagement/UserList';
 import AdminProfile from '../components/admin/AdminProfile';
 import StatsCards from '../components/admin/DashboardStatus/StatsCards';
 
-import { userService, doctorService } from '../services/api';
+import { userService, doctorService, authService } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -21,22 +21,82 @@ const AdminDashboard = () => {
   const [doctors, setDoctors] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState('');
 
-  const stats = {
-    totalUsers: 1245,
-    newUsers: 12,
-    activeAppointments: 56,
-    completedTreatments: 342,
-  };
-
-  const admin = {
-    fullName: 'Nguyễn Văn Quản Trị',
+  // Admin info
+  const [admin, setAdmin] = useState({
+    fullName: 'Admin hệ thống',
     email: 'admin@example.com',
-    phone: '0901234567',
+    phone: '',
     role: 'Admin',
-    joinedDate: '2024-01-15',
+    joinedDate: '',
     avatarUrl: '',
-  };
+  });
+
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    newUsers: 0,
+    activeAppointments: 0,
+    completedTreatments: 0,
+  });
+
+  useEffect(() => {
+    // Check authentication and role
+    const checkAuth = () => {
+      if (!authService.isAuthenticated()) {
+        navigate('/login');
+        return;
+      }
+      
+      const currentUser = authService.getCurrentUser();
+      setUserRole(currentUser.role);
+      
+      if (currentUser.role !== 'Admin') {
+        message.warning('Bạn không có quyền truy cập trang này');
+        navigate('/');
+      }
+    };
+
+    checkAuth();
+    
+    const fetchStatsAndAdmin = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch admin profile
+        const currentUser = authService.getCurrentUser();
+        if (currentUser) {
+          const adminInfo = await userService.getUserById(currentUser.userId);
+          setAdmin({
+            ...admin,
+            fullName: adminInfo.fullName || adminInfo.username,
+            email: adminInfo.email,
+            phone: adminInfo.phoneNumber,
+            joinedDate: adminInfo.createdDate,
+          });
+        }
+
+        // Fetch stats
+        const userData = await userService.getAllUsers();
+        const doctorData = await doctorService.getAllDoctors();
+        
+        setStats({
+          totalUsers: userData.length,
+          newUsers: userData.filter(u => 
+            new Date(u.createdDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          ).length,
+          activeAppointments: 0, // You'll need to implement this
+          completedTreatments: 0, // You'll need to implement this
+        });
+      } catch (error) {
+        message.error('Lỗi tải dữ liệu thống kê/admin.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatsAndAdmin();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,7 +110,7 @@ const AdminDashboard = () => {
           setDoctors(doctorData);
         }
       } catch (error) {
-        console.error('Lỗi tải dữ liệu:', error);
+        message.error('Lỗi tải dữ liệu.');
       } finally {
         setLoading(false);
       }
@@ -62,6 +122,7 @@ const AdminDashboard = () => {
   }, [activeTab]);
 
   const handleEditDoctor = (doctor) => {
+    // Implement doctor edit functionality
     console.log('Edit doctor:', doctor);
   };
 
@@ -70,17 +131,62 @@ const AdminDashboard = () => {
       setLoading(true);
       await doctorService.deleteDoctor(id);
       setDoctors((prev) => prev.filter((doc) => doc.id !== id));
+      message.success('Xoá bác sĩ thành công');
     } catch (error) {
-      console.error('Xoá bác sĩ thất bại:', error);
+      message.error('Xoá bác sĩ thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewUser = (id) => {
+    navigate(`/admin/users/${id}`);
+  };
+
+  const handleEditUser = async (user) => {
+    try {
+      setLoading(true);
+      await userService.updateUser(user);
+      message.success('Cập nhật người dùng thành công');
+      // Refresh user list
+      const userData = await userService.getAllUsers();
+      setUsers(userData);
+    } catch (error) {
+      message.error('Cập nhật người dùng thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeactivateUser = async (id) => {
+    try {
+      setLoading(true);
+      await userService.inactiveUser(id);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, isActive: false } : u))
+      );
+      message.success('Vô hiệu hóa người dùng thành công');
+    } catch (error) {
+      message.error('Vô hiệu hóa người dùng thất bại');
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    authService.logout();
     navigate('/login');
   };
+
+  if (userRole && userRole !== 'Admin') {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Typography.Title level={2}>
+          Bạn không có quyền truy cập trang này
+        </Typography.Title>
+      </div>
+    );
+  }
 
   return (
     <Layout className="min-h-screen">
@@ -132,7 +238,13 @@ const AdminDashboard = () => {
                 />
               )}
               {activeTab === 'users' && (
-                <UserList users={users} isLoading={loading} />
+                <UserList
+                  users={users}
+                  isLoading={loading}
+                  onViewUser={handleViewUser}
+                  onEditUser={handleEditUser}
+                  onDeactivateUser={handleDeactivateUser}
+                />
               )}
               {activeTab === 'profile' && <AdminProfile admin={admin} />}
             </>

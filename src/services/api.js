@@ -69,25 +69,96 @@ export const authService = {
     localStorage.removeItem('username');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
-  }
+  },
 };
+
+const getAuthHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+  'Content-Type': 'application/json',
+});
 
 export const userService = {
   getAllUsers: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+      const headers = getAuthHeaders();
+      console.log('Auth headers:', headers); // Debug log
+
+      const response = await fetch(`${API_BASE_URL}/User/get-list-user`, {
+        headers: headers,
       });
 
       if (!response.ok) {
-        throw new Error('Không thể lấy danh sách người dùng');
+        const errorData = await response.json();
+        console.error('Server error response:', errorData); // Debug log
+        throw new Error(errorData.message || 'Không thể lấy danh sách người dùng');
+      }
+
+      const data = await response.json();
+      console.log('Received user data:', data); // Debug log
+      
+      return data.map(user => ({
+        ...user,
+        key: user.id,
+        isActive: user.isActive ?? true,
+      }));
+    } catch (error) {
+      console.error('Fetch users failed:', error);
+      throw error;
+    }
+  },
+
+  getUserById: async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/User/get-by-id?userId=${userId}`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Không thể lấy thông tin người dùng');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Fetch users failed:', error);
+      console.error('Fetch user by ID failed:', error);
+      throw error;
+    }
+  },
+
+  updateUser: async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Cập nhật người dùng thất bại');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Update user failed:', error);
+      throw error;
+    }
+  },
+
+  inactiveUser: async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/User/admin/inactive-account?UserId=${userId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Vô hiệu hóa tài khoản thất bại');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Inactive user failed:', error);
       throw error;
     }
   },
@@ -96,10 +167,8 @@ export const userService = {
 export const doctorService = {
   getAllDoctors: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/doctors`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -115,11 +184,9 @@ export const doctorService = {
 
   deleteDoctor: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/doctors/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/Doctor/delete/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
