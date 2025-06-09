@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Layout, Spin, Avatar, Typography, message } from 'antd';
+import { Layout, Spin, Avatar, Typography, message, Card } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { UserOutlined } from '@ant-design/icons';
+import { UserOutlined, DashboardOutlined, TeamOutlined, UserSwitchOutlined, ProfileOutlined } from '@ant-design/icons';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -85,8 +85,8 @@ const AdminDashboard = () => {
           newUsers: userData.filter(u => 
             new Date(u.createdDate) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
           ).length,
-          activeAppointments: 0, // You'll need to implement this
-          completedTreatments: 0, // You'll need to implement this
+          activeAppointments: 0,
+          completedTreatments: 0,
         });
       } catch (error) {
         message.error('Lỗi tải dữ liệu thống kê/admin.');
@@ -106,9 +106,7 @@ const AdminDashboard = () => {
           const userData = await userService.getAllUsers();
           setUsers(userData);
         } else if (activeTab === 'doctors') {
-          console.log('Fetching doctors...'); // Debug log
           const doctorData = await doctorService.getAllDoctors();
-          console.log('Fetched doctors:', doctorData); // Debug log
           if (Array.isArray(doctorData)) {
             setDoctors(doctorData);
           } else {
@@ -130,7 +128,6 @@ const AdminDashboard = () => {
   }, [activeTab]);
 
   const handleEditDoctor = (doctor) => {
-    // Implement doctor edit functionality
     console.log('Edit doctor:', doctor);
   };
 
@@ -156,7 +153,6 @@ const AdminDashboard = () => {
       setLoading(true);
       await userService.updateUser(user);
       message.success('Cập nhật người dùng thành công');
-      // Refresh user list
       const userData = await userService.getAllUsers();
       setUsers(userData);
     } catch (error) {
@@ -188,90 +184,121 @@ const AdminDashboard = () => {
 
   if (userRole && userRole !== 'Admin') {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Typography.Title level={2}>
-          Bạn không có quyền truy cập trang này
-        </Typography.Title>
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+        <Card className="shadow-lg border-0">
+          <Typography.Title level={2} className="text-center text-gray-700">
+            Bạn không có quyền truy cập trang này
+          </Typography.Title>
+        </Card>
       </div>
     );
   }
 
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return 'Dashboard Tổng quan';
+      case 'doctors':
+        return 'Quản lý Bác sĩ';
+      case 'users':
+        return 'Quản lý Người dùng';
+      case 'profile':
+        return 'Hồ sơ Admin';
+      default:
+        return '';
+    }
+  };
+
+  const getPageIcon = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardOutlined className="text-2xl text-blue-600" />;
+      case 'doctors':
+        return <TeamOutlined className="text-2xl text-green-600" />;
+      case 'users':
+        return <UserSwitchOutlined className="text-2xl text-purple-600" />;
+      case 'profile':
+        return <ProfileOutlined className="text-2xl text-orange-600" />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Layout className="min-h-screen">
+    <Layout className="min-h-screen bg-gray-50">
       <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Layout className="bg-gray-100">
+      <Layout className="bg-gradient-to-br from-blue-50 to-indigo-50">
         <AdminHeader onLogout={handleLogout} />
 
-        <Content className="m-4 p-4 bg-white rounded-lg shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-            <div>
-              <Title level={4} className="!m-0 !text-lg sm:!text-xl">
-                {activeTab === 'dashboard'
-                  ? 'Dashboard Tổng quan'
-                  : activeTab === 'doctors'
-                  ? 'Quản lý Bác sĩ'
-                  : activeTab === 'users'
-                  ? 'Quản lý Người dùng'
-                  : 'Hồ sơ Admin'}
-              </Title>
-              <Text type="secondary" className="text-xs sm:text-sm">
-                Chào mừng trở lại, {admin.fullName}!
-              </Text>
-            </div>
-            <div className="flex items-center gap-2">
-              <Avatar
-                size={36}
-                icon={<UserOutlined />}
-                src={admin.avatarUrl || null}
-                className="hidden xs:block"
-              />
-              <div className="hidden sm:block">
-                <Text strong className="text-xs sm:text-sm">
-                  {admin.fullName}
-                </Text>
-                <br />
-                <Text type="secondary" className="text-xs">
-                  {admin.email}
-                </Text>
+        <Content className="m-6 p-6">
+          <Card className="shadow-lg border-0 rounded-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+              <div className="flex items-center gap-4">
+                {getPageIcon()}
+                <div>
+                  <Title level={4} className="!m-0 !text-xl sm:!text-2xl text-gray-800">
+                    {getPageTitle()}
+                  </Title>
+                  <Text type="secondary" className="text-sm">
+                    Chào mừng trở lại, {admin.fullName}!
+                  </Text>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm">
+                <Avatar
+                  size={40}
+                  icon={<UserOutlined />}
+                  src={admin.avatarUrl || null}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500"
+                />
+                <div>
+                  <Text strong className="text-sm text-gray-800">
+                    {admin.fullName}
+                  </Text>
+                  <br />
+                  <Text type="secondary" className="text-xs">
+                    {admin.email}
+                  </Text>
+                </div>
               </div>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center h-48">
-              <Spin size="large" tip="Đang tải dữ liệu..." />
-            </div>
-          ) : (
-            <>
-              {activeTab === 'dashboard' && (
-                <div className="scale-90 sm:scale-100">
-                  <StatsCards stats={stats} />
-                </div>
-              )}
-              {activeTab === 'doctors' && (
-                <div className="overflow-x-auto">
-                  <DoctorList
-                    doctors={doctors}
-                    onEdit={handleEditDoctor}
-                    onDelete={handleDeleteDoctor}
-                    isLoading={loading}
-                  />
-                </div>
-              )}
-              {activeTab === 'users' && (
-                <div className="overflow-x-auto">
-                  <UserList
-                    users={users}
-                    isLoading={loading}
-                    onViewUser={handleViewUser}
-                    onEditUser={handleEditUser}
-                    onDeactivateUser={handleDeactivateUser}
-                  />
-                </div>
-              )}
-              {activeTab === 'profile' && <AdminProfile admin={admin} />}
-            </>
-          )}
+            {loading ? (
+              <div className="flex justify-center items-center h-48">
+                <Spin size="large" tip="Đang tải dữ liệu..." />
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg p-4">
+                {activeTab === 'dashboard' && (
+                  <div className="scale-95 sm:scale-100">
+                    <StatsCards stats={stats} />
+                  </div>
+                )}
+                {activeTab === 'doctors' && (
+                  <div className="overflow-x-auto">
+                    <DoctorList
+                      doctors={doctors}
+                      onEdit={handleEditDoctor}
+                      onDelete={handleDeleteDoctor}
+                      isLoading={loading}
+                    />
+                  </div>
+                )}
+                {activeTab === 'users' && (
+                  <div className="overflow-x-auto">
+                    <UserList
+                      users={users}
+                      isLoading={loading}
+                      onViewUser={handleViewUser}
+                      onEditUser={handleEditUser}
+                      onDeactivateUser={handleDeactivateUser}
+                    />
+                  </div>
+                )}
+                {activeTab === 'profile' && <AdminProfile admin={admin} />}
+              </div>
+            )}
+          </Card>
         </Content>
       </Layout>
     </Layout>

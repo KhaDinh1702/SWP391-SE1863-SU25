@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { FaHome, FaArrowLeft, FaCalendarAlt, FaUserMd, FaTag, FaShareAlt, FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
 const blogPosts = [
   {
@@ -7,7 +8,7 @@ const blogPosts = [
     content: [
       {
         type: "paragraph",
-        text: "HIV (Human Immunodeficiency Virus) tấn công hệ miễn dịch của cơ thể, làm suy giảm khả năng chống lại các bệnh nhiễm trùng và ung thư."
+        text: "HIV (Human Immunodeficiency Virus) tấn công hệ miễn dịch của cơ thể, làm suy giảm khả năng chống lại các bệnh nhiễm trùng và ung thư. Hiểu biết về HIV/AIDS là bước đầu tiên quan trọng trong việc phòng ngừa và điều trị."
       },
       {
         type: "heading",
@@ -15,14 +16,15 @@ const blogPosts = [
       },
       {
         type: "paragraph",
-        text: "Việc xét nghiệm định kỳ giúp phát hiện sớm và điều trị kịp thời, tăng chất lượng và tuổi thọ cho người nhiễm."
+        text: "Việc xét nghiệm định kỳ giúp phát hiện sớm và điều trị kịp thời, tăng chất lượng và tuổi thọ cho người nhiễm. Đây là một phần không thể thiếu trong chiến lược phòng chống HIV/AIDS."
       },
       {
         type: "list",
         items: [
           "Xét nghiệm nhanh cho kết quả trong 20 phút",
           "Xét nghiệm miễn phí tại các trung tâm y tế",
-          "Bảo mật thông tin tuyệt đối"
+          "Bảo mật thông tin tuyệt đối",
+          "Tư vấn trước và sau xét nghiệm"
         ]
       },
       {
@@ -31,14 +33,123 @@ const blogPosts = [
       },
       {
         type: "paragraph",
-        text: "Áp dụng lối sống lành mạnh, tuân thủ điều trị ART đều đặn và sử dụng các biện pháp phòng ngừa là chìa khóa giảm lây truyền HIV."
+        text: "Áp dụng lối sống lành mạnh, tuân thủ điều trị ART đều đặn và sử dụng các biện pháp phòng ngừa là chìa khóa giảm lây truyền HIV và duy trì sức khỏe tốt."
       }
     ],
     date: "10/06/2025",
-    category: "Tổng quan HIV",
+    category: "Kiến Thức Cơ Bản",
     author: "BS. Trần Thị Minh",
+    image: "https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg",
+    tags: ["HIV", "AIDS", "Xét nghiệm", "Điều trị"]
   },
-  // ... other posts
+  {
+    id: 2,
+    title: "Các Con Đường Lây Truyền HIV Tại Việt Nam",
+    content: [
+      {
+        type: "paragraph",
+        text: "Hiểu rõ về các con đường lây truyền HIV là cách tốt nhất để phòng tránh và giảm thiểu nguy cơ lây nhiễm trong cộng đồng."
+      },
+      {
+        type: "heading",
+        text: "Các đường lây truyền chính"
+      },
+      {
+        type: "list",
+        items: [
+          "Quan hệ tình dục không an toàn",
+          "Dùng chung bơm kim tiêm",
+          "Từ mẹ sang con trong quá trình mang thai, sinh nở và cho con bú",
+          "Tiếp xúc với máu nhiễm HIV qua vết thương hở"
+        ]
+      },
+      {
+        type: "heading",
+        text: "Biện pháp phòng ngừa"
+      },
+      {
+        type: "paragraph",
+        text: "Sử dụng bao cao su đúng cách, không dùng chung bơm kim tiêm, và xét nghiệm thường xuyên là những biện pháp hiệu quả để phòng tránh lây nhiễm HIV."
+      }
+    ],
+    date: "12/06/2025",
+    category: "Phòng Ngừa",
+    author: "TS. Nguyễn Văn Hùng",
+    image: "https://img.freepik.com/free-photo/doctor-examining-patient_23-2147755109.jpg",
+    tags: ["Lây truyền", "Phòng ngừa", "An toàn"]
+  },
+  {
+    id: 3,
+    title: "Điều Trị ARV: Hiệu Quả và Tiếp Cận Tại Việt Nam",
+    content: [
+      {
+        type: "paragraph",
+        text: "Điều trị ARV (Antiretroviral) đã cách mạng hóa việc điều trị HIV, giúp người nhiễm có thể sống khỏe mạnh và giảm nguy cơ lây truyền."
+      },
+      {
+        type: "heading",
+        text: "Lợi ích của điều trị ARV"
+      },
+      {
+        type: "list",
+        items: [
+          "Ức chế virus HIV",
+          "Tăng cường hệ miễn dịch",
+          "Giảm nguy cơ lây truyền",
+          "Cải thiện chất lượng cuộc sống"
+        ]
+      },
+      {
+        type: "heading",
+        text: "Tiếp cận điều trị tại Việt Nam"
+      },
+      {
+        type: "paragraph",
+        text: "Việt Nam đã có nhiều tiến bộ trong việc cung cấp thuốc ARV miễn phí cho người nhiễm HIV. Các trung tâm y tế địa phương đều có thể cung cấp thuốc và tư vấn điều trị."
+      }
+    ],
+    date: "15/06/2025",
+    category: "Điều Trị",
+    author: "PGS.TS Lê Thị Mai",
+    image: "https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg",
+    tags: ["ARV", "Điều trị", "Thuốc"]
+  },
+  {
+    id: 4,
+    title: "Xét Nghiệm HIV: Khi Nào và Ở Đâu?",
+    content: [
+      {
+        type: "paragraph",
+        text: "Xét nghiệm HIV là bước quan trọng trong việc phát hiện sớm và điều trị kịp thời. Hiểu rõ về thời điểm và địa điểm xét nghiệm sẽ giúp bạn chủ động hơn trong việc bảo vệ sức khỏe."
+      },
+      {
+        type: "heading",
+        text: "Khi nào nên xét nghiệm?"
+      },
+      {
+        type: "list",
+        items: [
+          "Sau khi có hành vi nguy cơ 3 tháng",
+          "Trước khi kết hôn",
+          "Khi mang thai",
+          "Định kỳ 6 tháng/lần nếu có nguy cơ cao"
+        ]
+      },
+      {
+        type: "heading",
+        text: "Địa điểm xét nghiệm uy tín"
+      },
+      {
+        type: "paragraph",
+        text: "Các trung tâm y tế dự phòng, bệnh viện đa khoa và phòng khám tư nhân được cấp phép đều có thể thực hiện xét nghiệm HIV. Đặc biệt, các trung tâm y tế dự phòng cung cấp dịch vụ xét nghiệm miễn phí và bảo mật."
+      }
+    ],
+    date: "18/06/2025",
+    category: "Xét Nghiệm",
+    author: "ThS. Phạm Quốc Khánh",
+    image: "https://img.freepik.com/free-photo/doctor-examining-patient_23-2147755109.jpg",
+    tags: ["Xét nghiệm", "Chẩn đoán", "Sức khỏe"]
+  }
 ];
 
 export default function BlogPost() {
@@ -47,26 +158,22 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-xl">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Bài viết không tồn tại</h2>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link 
               to="/" 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center group"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+              <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Về trang chủ
             </Link>
             <Link 
               to="/blog" 
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
+              className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center group"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <FaArrowLeft className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Quay lại Blog
             </Link>
           </div>
@@ -76,34 +183,62 @@ export default function BlogPost() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 py-12 px-4 sm:px-6">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Article Header */}
-          <div className="bg-blue-600 px-8 py-6">
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span className="px-3 py-1 bg-white text-blue-600 text-sm font-semibold rounded-full">
-                {post.category}
-              </span>
-              <span className="text-white text-sm">{post.date}</span>
+          <div className="relative h-64 md:h-96">
+            <img 
+              src={post.image} 
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <span className={`px-4 py-2 text-sm font-semibold rounded-full ${
+                  post.category === "Kiến Thức Cơ Bản" ? "bg-blue-100 text-blue-800" :
+                  post.category === "Phòng Ngừa" ? "bg-green-100 text-green-800" :
+                  post.category === "Điều Trị" ? "bg-purple-100 text-purple-800" :
+                  "bg-orange-100 text-orange-800"
+                }`}>
+                  {post.category}
+                </span>
+                <div className="flex items-center text-white/80">
+                  <FaCalendarAlt className="w-4 h-4 mr-2" />
+                  <span>{post.date}</span>
+                </div>
+                <div className="flex items-center text-white/80">
+                  <FaUserMd className="w-4 h-4 mr-2" />
+                  <span>{post.author}</span>
+                </div>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{post.title}</h1>
             </div>
-            <h1 className="text-3xl font-bold text-white">{post.title}</h1>
           </div>
 
           {/* Article Content */}
           <div className="p-8 prose prose-lg max-w-none">
             {post.content.map((section, index) => {
               if (section.type === "heading") {
-                return <h2 key={index} className="text-2xl font-semibold text-gray-800 mt-8 mb-4">{section.text}</h2>;
+                return (
+                  <h2 key={index} className="text-2xl font-semibold text-gray-800 mt-8 mb-4 border-b border-gray-200 pb-2">
+                    {section.text}
+                  </h2>
+                );
               }
               if (section.type === "paragraph") {
-                return <p key={index} className="text-gray-700 mb-6 leading-relaxed">{section.text}</p>;
+                return (
+                  <p key={index} className="text-gray-700 mb-6 leading-relaxed">
+                    {section.text}
+                  </p>
+                );
               }
               if (section.type === "list") {
                 return (
                   <ul key={index} className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
                     {section.items.map((item, i) => (
-                      <li key={i}>{item}</li>
+                      <li key={i} className="hover:text-blue-600 transition-colors">{item}</li>
                     ))}
                   </ul>
                 );
@@ -112,32 +247,64 @@ export default function BlogPost() {
             })}
           </div>
 
+          {/* Tags */}
+          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <FaTag className="w-5 h-5 text-gray-600" />
+              <span className="font-semibold text-gray-700">Tags:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {post.tags.map((tag, index) => (
+                <span 
+                  key={index}
+                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition-colors cursor-pointer"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Share Section */}
+          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <FaShareAlt className="w-5 h-5 text-gray-600" />
+              <span className="font-semibold text-gray-700">Chia sẻ bài viết:</span>
+            </div>
+            <div className="flex gap-3">
+              <button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
+                <FaFacebook className="w-5 h-5" />
+              </button>
+              <button className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-colors">
+                <FaTwitter className="w-5 h-5" />
+              </button>
+              <button className="p-2 bg-blue-700 text-white rounded-full hover:bg-blue-800 transition-colors">
+                <FaLinkedin className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
           {/* Article Footer */}
-          <div className="border-t border-gray-200 px-8 py-6 bg-gray-50">
+          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              {post.author && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-semibold">Tác giả:</span> {post.author}
-                </div>
-              )}
+              <div className="flex items-center text-gray-600">
+                <FaUserMd className="w-5 h-5 mr-2" />
+                <span className="font-semibold">Tác giả:</span> {post.author}
+              </div>
               
               <div className="flex flex-wrap gap-3">
                 <Link 
                   to="/blog" 
-                  className="flex items-center px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center group"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <FaArrowLeft className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   Quay lại Blog
                 </Link>
                 <Link 
                   to="/" 
-                  className="flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center group"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
+                  <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   Về trang chủ
                 </Link>
               </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { FaHome, FaCalendarAlt, FaUserMd, FaArrowRight } from 'react-icons/fa';
 
 const blogPosts = [
   {
@@ -8,7 +9,8 @@ const blogPosts = [
     summary: "HIV là gì? AIDS là gì? Cách phân biệt và các giai đoạn phát triển của bệnh.",
     category: "Kiến Thức Cơ Bản",
     date: "10/06/2025",
-    author: "BS. Trần Thị Minh"
+    author: "BS. Trần Thị Minh",
+    image: "https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg"
   },
   {
     id: 2,
@@ -16,7 +18,8 @@ const blogPosts = [
     summary: "Nhận biết các đường lây nhiễm chính và cách phòng tránh trong cộng đồng.",
     category: "Phòng Ngừa",
     date: "12/06/2025",
-    author: "TS. Nguyễn Văn Hùng"
+    author: "TS. Nguyễn Văn Hùng",
+    image: "https://img.freepik.com/free-photo/doctor-examining-patient_23-2147755109.jpg"
   },
   {
     id: 3,
@@ -24,7 +27,8 @@ const blogPosts = [
     summary: "Cập nhật phác đồ điều trị mới nhất và các địa điểm cung cấp thuốc miễn phí.",
     category: "Điều Trị",
     date: "15/06/2025",
-    author: "PGS.TS Lê Thị Mai"
+    author: "PGS.TS Lê Thị Mai",
+    image: "https://cdn-images.vtv.vn/zoom/640_400/2020/12/1/pchiv-16067939865091955328581-crop-16067944450441726639751.jpg"
   },
   {
     id: 4,
@@ -32,44 +36,54 @@ const blogPosts = [
     summary: "Hướng dẫn địa chỉ các trung tâm xét nghiệm tin cậy và chính sách bảo mật.",
     category: "Xét Nghiệm",
     date: "18/06/2025",
-    author: "ThS. Phạm Quốc Khánh"
+    author: "ThS. Phạm Quốc Khánh",
+    image: "https://hips.hearstapps.com/hmg-prod/images/types-of-doctors-1600114658.jpg?crop=0.670xw:1.00xh;0.0553xw,0&resize=640:*"
   },
 ];
 
 const Blog = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Kiến Thức Về HIV/AIDS</h1>
-          <p className="text-lg text-gray-600">Cập nhật thông tin chính xác về phòng ngừa và điều trị HIV tại Việt Nam</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-16 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl transform -skew-y-2"></div>
+          <div className="relative">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              Kiến Thức Về HIV/AIDS
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Cập nhật thông tin chính xác về phòng ngừa và điều trị HIV tại Việt Nam
+            </p>
+          </div>
         </div>
-        <Link to="/" className="text-blue-600 hover:underline flex items-center">
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
-          Về trang chủ
+
+        {/* Back to Home Button */}
+        <Link 
+          to="/" 
+          className="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:bg-blue-50 mb-8 group"
+        >
+          <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+          <span>Về trang chủ</span>
         </Link>
 
+        {/* Blog Posts Grid */}
         <div className="grid gap-8 md:grid-cols-2">
           {blogPosts.map((post) => (
             <div 
               key={post.id} 
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             >
-              <div className="p-6 flex flex-col flex-grow">
-                <div className="flex items-center mb-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+              {/* Image Container */}
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={post.image} 
+                  alt={post.title}
+                  className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="absolute bottom-4 left-4">
+                  <span className={`px-4 py-2 text-sm font-semibold rounded-full ${
                     post.category === "Kiến Thức Cơ Bản" ? "bg-blue-100 text-blue-800" :
                     post.category === "Phòng Ngừa" ? "bg-green-100 text-green-800" :
                     post.category === "Điều Trị" ? "bg-purple-100 text-purple-800" :
@@ -77,27 +91,30 @@ const Blog = () => {
                   }`}>
                     {post.category}
                   </span>
-                  <span className="mx-2 text-gray-400">•</span>
-                  <span className="text-sm text-gray-500">{post.date}</span>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-center text-sm text-gray-500 mb-4">
+                  <FaCalendarAlt className="w-4 h-4 mr-2" />
+                  <span>{post.date}</span>
+                  <span className="mx-2">•</span>
+                  <FaUserMd className="w-4 h-4 mr-2" />
+                  <span>{post.author}</span>
                 </div>
 
-                <h2 className="text-xl font-bold text-gray-800 mb-3">{post.title}</h2>
-                <p className="text-gray-600 mb-4 flex-grow">{post.summary}</p>
+                <h2 className="text-2xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors">
+                  {post.title}
+                </h2>
+                <p className="text-gray-600 mb-6 line-clamp-3">{post.summary}</p>
                 
-                <div className="mt-auto pt-4">
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                    <span className="text-sm text-gray-500">Tác giả: {post.author}</span>
-                    <Link 
-                      to={`/blog/${post.id}`}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Tìm hiểu thêm
-                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
+                <Link 
+                  to={`/blog/${post.id}`}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 group"
+                >
+                  <span>Tìm hiểu thêm</span>
+                  <FaArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
             </div>
           ))}

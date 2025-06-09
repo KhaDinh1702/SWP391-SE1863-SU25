@@ -1,18 +1,22 @@
-import { FaPills, FaSearch, FaShoppingCart, FaInfoCircle } from "react-icons/fa";
+import { FaPills, FaSearch, FaShoppingCart, FaInfoCircle, FaArrowLeft, FaPhone, FaMapMarkerAlt, FaClock } from "react-icons/fa";
 import { MdLocalPharmacy, MdHealthAndSafety } from "react-icons/md";
 import { FiAlertCircle, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Modal } from 'antd';
 
 export default function MedicinePage() {
-  // State to track which medicine's details are expanded
-  const [expandedCards, setExpandedCards] = useState({});
+  const [selectedMedicine, setSelectedMedicine] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const toggleCardExpansion = (index, section) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [`${section}-${index}`]: !prev[`${section}-${index}`]
-    }));
+  const showModal = (medicine) => {
+    setSelectedMedicine(medicine);
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setSelectedMedicine(null);
   };
 
   // ARV Medications
@@ -97,7 +101,7 @@ export default function MedicinePage() {
       description: "Điều trị nấm miệng, thực quản",
       price: "80,000 VND/vỉ",
       category: "Điều trị nhiễm trùng",
-      image: "https://5.imimg.com/data5/SELLER/Default/2024/8/445352144/BC/KO/AS/22822005/fluconazole-200mg-tablet.jpeg",
+      image: "https://drugstoreng.ams3.cdn.digitaloceanspaces.com/prod/drugstore-nigeria-online-pharmacy/products/NKLzI7HIjRtH3CzfUCU5vOzHQ3cWZTxfYr9VpumB.jpg",
       details: {
         composition: "Fluconazole 200mg",
         mechanism: "Ức chế tổng hợp ergosterol của màng tế bào nấm",
@@ -129,14 +133,25 @@ export default function MedicinePage() {
   ];
 
   return (
-    <div className="font-sans bg-gray-50 min-h-screen">
+    <div className="font-sans bg-gradient-to-b from-blue-50 to-white min-h-screen">
       {/* Hero Section */}
-      <div className="bg-blue-900 text-white py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl font-bold mb-6">Nhà Thuốc 3AE</h1>
-          <p className="text-xl max-w-3xl mx-auto">
-            Cung cấp đầy đủ thuốc ARV và các loại thuốc hỗ trợ điều trị HIV
+      <div className="relative bg-gradient-to-r from-blue-900 to-blue-700 text-white py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')] opacity-20"></div>
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <h1 className="text-5xl font-bold mb-6 animate-fade-in">Nhà Thuốc 3AE</h1>
+          <p className="text-xl max-w-3xl mx-auto leading-relaxed">
+            Cung cấp đầy đủ thuốc ARV và các loại thuốc hỗ trợ điều trị HIV với chất lượng quốc tế
           </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaPhone className="mr-2" />
+              <span>Hotline: 0943 108 138</span>
+            </div>
+            <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+              <FaClock className="mr-2" />
+              <span>7:00 - 20:00</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -144,31 +159,33 @@ export default function MedicinePage() {
       <div className="container mx-auto px-6 pt-6">
         <Link 
           to="/" 
-          className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+          className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-300"
         >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
+          <FaArrowLeft className="w-4 h-4 mr-2" />
           Quay lại trang chủ
         </Link>
       </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">
-
         {/* ARV Medicines Section */}
         <section className="mb-16">
           <div className="flex items-center mb-8">
-            <MdHealthAndSafety className="text-3xl text-blue-600 mr-4" />
-            <h2 className="text-2xl font-bold text-gray-800">Thuốc ARV Điều Trị HIV</h2>
+            <div className="bg-blue-100 p-3 rounded-xl mr-4">
+              <MdHealthAndSafety className="text-3xl text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">Thuốc ARV Điều Trị HIV</h2>
+              <p className="text-gray-600">Các loại thuốc ARV được cấp phép và đảm bảo chất lượng</p>
+            </div>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {arvMedicines.map((medicine, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
+              <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex flex-col h-full">
+                <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
                   {medicine.image ? (
-                    <img src={medicine.image} alt={medicine.name} className="h-full w-full object-cover" />
+                    <img src={medicine.image} alt={medicine.name} className="h-full w-full object-cover transform hover:scale-110 transition-transform duration-300" />
                   ) : (
                     <FaPills className="text-5xl text-gray-400" />
                   )}
@@ -178,17 +195,17 @@ export default function MedicinePage() {
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{medicine.name}</h3>
                     <p className="text-gray-600 mb-4">{medicine.description}</p>
                     
-                    <div className="mb-4">
+                    <div className="mb-4 space-y-3">
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="font-medium">Liều dùng:</span>
-                        <span>{medicine.dosage}</span>
+                        <span className="font-medium text-gray-700">Liều dùng:</span>
+                        <span className="text-gray-600">{medicine.dosage}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="font-medium">Tác dụng phụ:</span>
-                        <span>{medicine.sideEffects}</span>
+                        <span className="font-medium text-gray-700">Tác dụng phụ:</span>
+                        <span className="text-gray-600">{medicine.sideEffects}</span>
                       </div>
                       <div className="flex justify-between py-2">
-                        <span className="font-medium">Giá:</span>
+                        <span className="font-medium text-gray-700">Giá:</span>
                         <span className="font-bold text-blue-600">{medicine.price}</span>
                       </div>
                     </div>
@@ -196,64 +213,14 @@ export default function MedicinePage() {
                   
                   <div className="mt-auto pt-4">
                     <button 
-                      onClick={() => toggleCardExpansion(index, 'arv')}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                      onClick={() => showModal(medicine)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-[1.02]"
                     >
-                      {expandedCards[`arv-${index}`] ? (
-                        <>
-                          <FiChevronUp className="mr-2" />
-                          Thu gọn thông tin
-                        </>
-                      ) : (
-                        <>
-                          <FiChevronDown className="mr-2" />
-                          Xem chi tiết
-                        </>
-                      )}
+                      <FaInfoCircle className="mr-2" />
+                      Xem chi tiết
                     </button>
                   </div>
                 </div>
-
-                {/* Detailed Information Section */}
-                {expandedCards[`arv-${index}`] && (
-                  <div className="p-6 bg-gray-50 border-t border-gray-200">
-                    <h4 className="font-bold text-lg text-gray-800 mb-4">Thông tin chi tiết</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-medium">Thành phần:</p>
-                        <p className="text-gray-700">{medicine.details.composition}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Cơ chế tác dụng:</p>
-                        <p className="text-gray-700">{medicine.details.mechanism}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Chỉ định:</p>
-                        <p className="text-gray-700">{medicine.details.indications}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Chống chỉ định:</p>
-                        <p className="text-gray-700">{medicine.details.contraindications}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Thận trọng:</p>
-                        <p className="text-gray-700">{medicine.details.precautions}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Bảo quản:</p>
-                        <p className="text-gray-700">{medicine.details.storage}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Nhà sản xuất:</p>
-                        <p className="text-gray-700">{medicine.details.manufacturer}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Đăng ký:</p>
-                        <p className="text-gray-700">{medicine.details.registration}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -262,16 +229,21 @@ export default function MedicinePage() {
         {/* Other Medicines Section */}
         <section>
           <div className="flex items-center mb-8">
-            <MdLocalPharmacy className="text-3xl text-blue-600 mr-4" />
-            <h2 className="text-2xl font-bold text-gray-800">Thuốc Hỗ Trợ Khác</h2>
+            <div className="bg-blue-100 p-3 rounded-xl mr-4">
+              <MdLocalPharmacy className="text-3xl text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">Thuốc Hỗ Trợ Khác</h2>
+              <p className="text-gray-600">Các loại thuốc hỗ trợ điều trị và dự phòng</p>
+            </div>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {otherMedicines.map((medicine, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
-                <div className="h-48 bg-gray-200 flex items-center justify-center">
+              <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] flex flex-col h-full">
+                <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
                   {medicine.image ? (
-                    <img src={medicine.image} alt={medicine.name} className="h-full w-full object-cover" />
+                    <img src={medicine.image} alt={medicine.name} className="h-full w-full object-cover transform hover:scale-110 transition-transform duration-300" />
                   ) : (
                     <FaPills className="text-5xl text-gray-400" />
                   )}
@@ -281,15 +253,15 @@ export default function MedicinePage() {
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{medicine.name}</h3>
                     <p className="text-gray-600 mb-4">{medicine.description}</p>
                     
-                    <div className="mb-4">
+                    <div className="mb-4 space-y-3">
                       <div className="flex justify-between py-2">
-                        <span className="font-medium">Phân loại:</span>
+                        <span className="font-medium text-gray-700">Phân loại:</span>
                         <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                           {medicine.category}
                         </span>
                       </div>
-                      <div className="flex justify-between py-2 mt-2">
-                        <span className="font-medium">Giá:</span>
+                      <div className="flex justify-between py-2">
+                        <span className="font-medium text-gray-700">Giá:</span>
                         <span className="font-bold text-blue-600">{medicine.price}</span>
                       </div>
                     </div>
@@ -297,81 +269,147 @@ export default function MedicinePage() {
                   
                   <div className="mt-auto pt-4">
                     <button 
-                      onClick={() => toggleCardExpansion(index, 'other')}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                      onClick={() => showModal(medicine)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-[1.02]"
                     >
-                      {expandedCards[`other-${index}`] ? (
-                        <>
-                          <FiChevronUp className="mr-2" />
-                          Thu gọn thông tin
-                        </>
-                      ) : (
-                        <>
-                          <FiChevronDown className="mr-2" />
-                          Xem chi tiết
-                        </>
-                      )}
+                      <FaInfoCircle className="mr-2" />
+                      Xem chi tiết
                     </button>
                   </div>
                 </div>
-
-                {/* Detailed Information Section */}
-                {expandedCards[`other-${index}`] && (
-                  <div className="p-6 bg-gray-50 border-t border-gray-200">
-                    <h4 className="font-bold text-lg text-gray-800 mb-4">Thông tin chi tiết</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-medium">Thành phần:</p>
-                        <p className="text-gray-700">{medicine.details.composition}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Cơ chế tác dụng:</p>
-                        <p className="text-gray-700">{medicine.details.mechanism}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Chỉ định:</p>
-                        <p className="text-gray-700">{medicine.details.indications}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Chống chỉ định:</p>
-                        <p className="text-gray-700">{medicine.details.contraindications}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Thận trọng:</p>
-                        <p className="text-gray-700">{medicine.details.precautions}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Bảo quản:</p>
-                        <p className="text-gray-700">{medicine.details.storage}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Nhà sản xuất:</p>
-                        <p className="text-gray-700">{medicine.details.manufacturer}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Đăng ký:</p>
-                        <p className="text-gray-700">{medicine.details.registration}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
           </div>
         </section>
 
         {/* Notice Section */}
-        <div className="mt-16 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg">
-          <h3 className="text-lg font-bold text-blue-800 mb-2">Thông tin quan trọng</h3>
-          <ul className="list-disc pl-5 space-y-2 text-blue-700">
-            <li>Thuốc ARV được cấp miễn phí cho bệnh nhân có thẻ BHYT theo quy định</li>
-            <li>Cần có đơn thuốc của bác sĩ để mua các loại thuốc kháng virus</li>
-            <li>Nhà thuốc mở cửa từ 7:00 - 20:00 tất cả các ngày trong tuần</li>
-            <li>Hỗ trợ giao thuốc tận nhà trong nội thành</li>
-            <li>Tư vấn sử dụng thuốc miễn phí với dược sĩ chuyên môn</li>
+        <div className="mt-16 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-8 rounded-2xl shadow-lg">
+          <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center">
+            <FiAlertCircle className="mr-2 text-2xl" />
+            Thông tin quan trọng
+          </h3>
+          <ul className="space-y-3 text-blue-700">
+            <li className="flex items-start">
+              <span className="text-blue-600 mr-2">•</span>
+              <span>Thuốc ARV được cấp miễn phí cho bệnh nhân có thẻ BHYT theo quy định</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-blue-600 mr-2">•</span>
+              <span>Cần có đơn thuốc của bác sĩ để mua các loại thuốc kháng virus</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-blue-600 mr-2">•</span>
+              <span>Nhà thuốc mở cửa từ 7:00 - 20:00 tất cả các ngày trong tuần</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-blue-600 mr-2">•</span>
+              <span>Hỗ trợ giao thuốc tận nhà trong nội thành</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-blue-600 mr-2">•</span>
+              <span>Tư vấn sử dụng thuốc miễn phí với dược sĩ chuyên môn</span>
+            </li>
           </ul>
         </div>
       </div>
+
+      {/* Medicine Details Modal */}
+      <Modal
+        title={
+          <div className="flex items-center">
+            <FaInfoCircle className="text-blue-600 mr-2 text-xl" />
+            <span className="text-xl font-bold">Thông tin chi tiết</span>
+          </div>
+        }
+        open={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={800}
+        className="medicine-details-modal"
+      >
+        {selectedMedicine && (
+          <div className="p-4">
+            <div className="flex items-start gap-6 mb-6">
+              <div className="w-48 h-48 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                {selectedMedicine.image ? (
+                  <img 
+                    src={selectedMedicine.image} 
+                    alt={selectedMedicine.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <FaPills className="w-full h-full text-gray-400 p-8" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">{selectedMedicine.name}</h3>
+                <p className="text-gray-600 mb-4">{selectedMedicine.description}</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="font-medium text-gray-700">Giá:</span>
+                    <span className="font-bold text-blue-600">{selectedMedicine.price}</span>
+                  </div>
+                  {selectedMedicine.dosage && (
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="font-medium text-gray-700">Liều dùng:</span>
+                      <span className="text-gray-600">{selectedMedicine.dosage}</span>
+                    </div>
+                  )}
+                  {selectedMedicine.sideEffects && (
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="font-medium text-gray-700">Tác dụng phụ:</span>
+                      <span className="text-gray-600">{selectedMedicine.sideEffects}</span>
+                    </div>
+                  )}
+                  {selectedMedicine.category && (
+                    <div className="flex justify-between py-2">
+                      <span className="font-medium text-gray-700">Phân loại:</span>
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                        {selectedMedicine.category}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Thành phần:</p>
+                <p className="text-gray-700">{selectedMedicine.details.composition}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Cơ chế tác dụng:</p>
+                <p className="text-gray-700">{selectedMedicine.details.mechanism}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Chỉ định:</p>
+                <p className="text-gray-700">{selectedMedicine.details.indications}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Chống chỉ định:</p>
+                <p className="text-gray-700">{selectedMedicine.details.contraindications}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Thận trọng:</p>
+                <p className="text-gray-700">{selectedMedicine.details.precautions}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Bảo quản:</p>
+                <p className="text-gray-700">{selectedMedicine.details.storage}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Nhà sản xuất:</p>
+                <p className="text-gray-700">{selectedMedicine.details.manufacturer}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <p className="font-medium text-blue-600">Đăng ký:</p>
+                <p className="text-gray-700">{selectedMedicine.details.registration}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

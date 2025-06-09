@@ -3,24 +3,19 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/NavBar.jsx";
 import { authService } from "../services/api.js";
+import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaVenusMars } from "react-icons/fa";
+import { message } from "antd";
 
 // Eye icon toggle for password visibility
 function EyeIcon({ visible, onClick }) {
   return (
     <span
       onClick={onClick}
-      style={{
-        cursor: "pointer",
-        position: "absolute",
-        right: 12,
-        top: 10,
-        fontWeight: "bold",
-        color: "#444",
-      }}
+      className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
       tabIndex={0}
       aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
     >
-      {visible ? "Ẩn" : "Hiện"}
+      {visible ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
     </span>
   );
 }
@@ -35,15 +30,13 @@ export default function Register() {
     phoneNumber: "",
     address: "",
     dateOfBirth: "",
-    gender: 0, // Default to Male (0)
+    gender: 0,
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Handle form input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -52,14 +45,13 @@ export default function Register() {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+      message.error("Mật khẩu xác nhận không khớp");
+      setLoading(false);
       return;
     }
 
@@ -75,151 +67,202 @@ export default function Register() {
         gender: formData.gender,
       });
 
-      setSuccess("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
+      message.success("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
-      setError(error.message || "Có lỗi xảy ra khi đăng ký");
+      message.error(error.message || "Có lỗi xảy ra khi đăng ký");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Navbar />
-      <div className="max-w-md mx-auto mt-10 p-4 border rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Đăng ký bệnh nhân</h2>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+              <h2 className="text-2xl font-bold text-white text-center">
+                Đăng ký tài khoản bệnh nhân
+              </h2>
+            </div>
 
-        {error && <p className="text-red-500 mb-2">{error}</p>}
-        {success && <p className="text-green-500 mb-2">{success}</p>}
+            <div className="p-6 md:p-8">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Username */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="username"
+                      placeholder="Tên đăng nhập"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.username}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <input
-              type="text"
-              name="username"
-              placeholder="Tên đăng nhập"
-              className="border px-3 py-2 w-full"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
+                  {/* Full Name */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="Họ và tên"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaEnvelope className="text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaPhone className="text-gray-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      placeholder="Số điện thoại"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Mật khẩu"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                    <EyeIcon
+                      visible={showPassword}
+                      onClick={() => setShowPassword((v) => !v)}
+                    />
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      placeholder="Xác nhận mật khẩu"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div className="relative md:col-span-2">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaMapMarkerAlt className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="address"
+                      placeholder="Địa chỉ"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.address}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaCalendarAlt className="text-gray-400" />
+                    </div>
+                    <input
+                      type="date"
+                      name="dateOfBirth"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Gender */}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaVenusMars className="text-gray-400" />
+                    </div>
+                    <select
+                      name="gender"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
+                      value={formData.gender}
+                      onChange={handleChange}
+                    >
+                      <option value={0}>Nam</option>
+                      <option value={1}>Nữ</option>
+                      <option value={2}>Khác</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Đang xử lý..." : "Đăng ký"}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-gray-600">
+                  Đã có tài khoản?{" "}
+                  <a
+                    href="/login"
+                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  >
+                    Đăng nhập ngay
+                  </a>
+                </p>
+              </div>
+            </div>
           </div>
-
-          <div className="mb-3">
-            <input
-              type="text"
-              name="fullName"
-              placeholder="Họ và tên"
-              className="border px-3 py-2 w-full"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              className="border px-3 py-2 w-full"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <input
-              type="tel"
-              name="phoneNumber"
-              placeholder="Số điện thoại"
-              className="border px-3 py-2 w-full"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="relative mb-3">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Mật khẩu"
-              className="border px-3 py-2 w-full"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <EyeIcon
-              visible={showPassword}
-              onClick={() => setShowPassword((v) => !v)}
-            />
-          </div>
-
-          <div className="mb-3">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Xác nhận mật khẩu"
-              className="border px-3 py-2 w-full"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <input
-              type="text"
-              name="address"
-              placeholder="Địa chỉ"
-              className="border px-3 py-2 w-full"
-              value={formData.address}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="block mb-1">Ngày sinh</label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              className="border px-3 py-2 w-full"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block mb-1">Giới tính</label>
-            <select
-              name="gender"
-              className="border px-3 py-2 w-full"
-              value={formData.gender}
-              onChange={handleChange}
-            >
-              <option value={0}>Nam</option>
-              <option value={1}>Nữ</option>
-              <option value={2}>Khác</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="bg-blue-700 text-white w-full py-2 rounded hover:bg-blue-800"
-          >
-            Đăng ký
-          </button>
-        </form>
-
-        <p className="mt-4 text-center">
-          Đã có tài khoản?{" "}
-          <a href="/login" className="text-blue-600">
-            Đăng nhập ngay
-          </a>
-        </p>
+        </div>
       </div>
     </div>
   );
