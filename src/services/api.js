@@ -129,7 +129,15 @@ export const userService = {
       const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          userId: userData.id,
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+          role: userData.role,
+          address: userData.address,
+          gender: userData.gender,
+          password: userData.password || undefined // Only send if provided
+        }),
       });
 
       if (!response.ok) {
@@ -159,6 +167,35 @@ export const userService = {
       return await response.json();
     } catch (error) {
       console.error('Inactive user failed:', error);
+      throw error;
+    }
+  },
+
+  createUserByAdmin: async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/User/admin/create-account`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          username: userData.username,
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+          password: userData.password,
+          role: userData.role,
+          fullName: userData.fullName,
+          address: userData.address,
+          gender: userData.gender
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Tạo tài khoản thất bại');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Create user failed:', error);
       throw error;
     }
   },

@@ -194,10 +194,10 @@ const AdminDashboard = () => {
       <Layout className="bg-gray-100">
         <AdminHeader onLogout={handleLogout} />
 
-        <Content className="m-6 p-6 bg-white rounded-xl shadow-lg">
-          <div className="flex items-center justify-between mb-6">
+        <Content className="m-4 p-4 bg-white rounded-lg shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
             <div>
-              <Title level={3} className="!m-0">
+              <Title level={4} className="!m-0 !text-lg sm:!text-xl">
                 {activeTab === 'dashboard'
                   ? 'Dashboard Tổng quan'
                   : activeTab === 'doctors'
@@ -206,45 +206,60 @@ const AdminDashboard = () => {
                   ? 'Quản lý Người dùng'
                   : 'Hồ sơ Admin'}
               </Title>
-              <Text type="secondary">Chào mừng trở lại, {admin.fullName}!</Text>
+              <Text type="secondary" className="text-xs sm:text-sm">
+                Chào mừng trở lại, {admin.fullName}!
+              </Text>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Avatar
-                size={48}
+                size={36}
                 icon={<UserOutlined />}
                 src={admin.avatarUrl || null}
+                className="hidden xs:block"
               />
-              <div className="hidden md:block">
-                <Text strong>{admin.fullName}</Text>
+              <div className="hidden sm:block">
+                <Text strong className="text-xs sm:text-sm">
+                  {admin.fullName}
+                </Text>
                 <br />
-                <Text type="secondary">{admin.email}</Text>
+                <Text type="secondary" className="text-xs">
+                  {admin.email}
+                </Text>
               </div>
             </div>
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex justify-center items-center h-48">
               <Spin size="large" tip="Đang tải dữ liệu..." />
             </div>
           ) : (
             <>
-              {activeTab === 'dashboard' && <StatsCards stats={stats} />}
+              {activeTab === 'dashboard' && (
+                <div className="scale-90 sm:scale-100">
+                  <StatsCards stats={stats} />
+                </div>
+              )}
               {activeTab === 'doctors' && (
-                <DoctorList
-                  doctors={doctors}
-                  onEdit={handleEditDoctor}
-                  onDelete={handleDeleteDoctor}
-                  isLoading={loading}
-                />
+                <div className="overflow-x-auto">
+                  <DoctorList
+                    doctors={doctors}
+                    onEdit={handleEditDoctor}
+                    onDelete={handleDeleteDoctor}
+                    isLoading={loading}
+                  />
+                </div>
               )}
               {activeTab === 'users' && (
-                <UserList
-                  users={users}
-                  isLoading={loading}
-                  onViewUser={handleViewUser}
-                  onEditUser={handleEditUser}
-                  onDeactivateUser={handleDeactivateUser}
-                />
+                <div className="overflow-x-auto">
+                  <UserList
+                    users={users}
+                    isLoading={loading}
+                    onViewUser={handleViewUser}
+                    onEditUser={handleEditUser}
+                    onDeactivateUser={handleDeactivateUser}
+                  />
+                </div>
               )}
               {activeTab === 'profile' && <AdminProfile admin={admin} />}
             </>
