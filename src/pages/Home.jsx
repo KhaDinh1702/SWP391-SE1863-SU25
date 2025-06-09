@@ -115,7 +115,7 @@ export default function Home() {
       {newsData.map((news, index) => (
         <div
           key={index}
-          className="min-w-[300px] max-w-[300px] bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300 border border-blue-100"
+          className="min-w-[300px] max-w-[300px] bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300 border border-blue-100 flex flex-col"
         >
           <img
             src={news.image}
@@ -124,12 +124,14 @@ export default function Home() {
           />
           <h3 className="text-lg font-semibold text-blue-800 mb-1">{news.title}</h3>
           <p className="text-sm text-gray-500 mb-2">{news.date}</p>
-          <p className="text-gray-600 mb-4">{news.desc}</p>
+          <p className="text-gray-600 mb-4 flex-grow">{news.desc}</p>
+
+          {/* Link cố định dưới đáy */}
           <a
             href={news.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline font-medium"
+            className="text-blue-600 hover:underline font-medium mt-auto"
           >
             Đọc thêm →
           </a>
@@ -138,9 +140,6 @@ export default function Home() {
     </div>
   </div>
 </section>
-
-
-
 
       </main>
 
