@@ -1,6 +1,5 @@
-import { Layout, Dropdown, Avatar, Badge } from 'antd';
+import { Layout, Dropdown, Avatar } from 'antd';
 import {
-  BellOutlined,
   LogoutOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -39,9 +38,6 @@ const AdminHeader = ({ onLogout }) => {
     >
       <div></div>
       <div style={{ marginRight: 24 }}>
-        <Badge count={5} style={{ marginRight: 16 }}>
-          <BellOutlined style={{ fontSize: 18 }} />
-        </Badge>
         <Dropdown menu={{ items, onClick: handleMenuClick }}>
           <Avatar icon={<UserOutlined />} style={{ cursor: 'pointer' }} />
         </Dropdown>

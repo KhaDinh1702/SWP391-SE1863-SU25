@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Layout } from 'antd';
+import { Layout, Spin, Avatar, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { UserOutlined } from '@ant-design/icons';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -12,10 +13,10 @@ import StatsCards from '../components/admin/DashboardStatus/StatsCards';
 import { userService, doctorService } from '../services/api';
 
 const { Content } = Layout;
+const { Title, Text } = Typography;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState('dashboard');
   const [doctors, setDoctors] = useState([]);
   const [users, setUsers] = useState([]);
@@ -28,7 +29,6 @@ const AdminDashboard = () => {
     completedTreatments: 342,
   };
 
-  // Giả định admin info, có thể lấy từ API nếu cần
   const admin = {
     fullName: 'Nguyễn Văn Quản Trị',
     email: 'admin@example.com',
@@ -56,7 +56,6 @@ const AdminDashboard = () => {
       }
     };
 
-    // Chỉ gọi fetch khi tab users hoặc doctors active
     if (activeTab === 'users' || activeTab === 'doctors') {
       fetchData();
     }
@@ -64,7 +63,6 @@ const AdminDashboard = () => {
 
   const handleEditDoctor = (doctor) => {
     console.log('Edit doctor:', doctor);
-    // Có thể điều hướng đến form chỉnh sửa hoặc mở modal
   };
 
   const handleDeleteDoctor = async (id) => {
@@ -80,30 +78,65 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userId');
+    localStorage.clear();
     navigate('/login');
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="min-h-screen">
       <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Layout>
+      <Layout className="bg-gray-100">
         <AdminHeader onLogout={handleLogout} />
-        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff' }}>
-          {activeTab === 'dashboard' && <StatsCards stats={stats} />}
-          {activeTab === 'doctors' && (
-            <DoctorList
-              doctors={doctors}
-              onEdit={handleEditDoctor}
-              onDelete={handleDeleteDoctor}
-              isLoading={loading}
-            />
+
+        <Content className="m-6 p-6 bg-white rounded-xl shadow-lg">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Title level={3} className="!m-0">
+                {activeTab === 'dashboard'
+                  ? 'Dashboard Tổng quan'
+                  : activeTab === 'doctors'
+                  ? 'Quản lý Bác sĩ'
+                  : activeTab === 'users'
+                  ? 'Quản lý Người dùng'
+                  : 'Hồ sơ Admin'}
+              </Title>
+              <Text type="secondary">Chào mừng trở lại, {admin.fullName}!</Text>
+            </div>
+            <div className="flex items-center gap-4">
+              <Avatar
+                size={48}
+                icon={<UserOutlined />}
+                src={admin.avatarUrl || null}
+              />
+              <div className="hidden md:block">
+                <Text strong>{admin.fullName}</Text>
+                <br />
+                <Text type="secondary">{admin.email}</Text>
+              </div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Spin size="large" tip="Đang tải dữ liệu..." />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && <StatsCards stats={stats} />}
+              {activeTab === 'doctors' && (
+                <DoctorList
+                  doctors={doctors}
+                  onEdit={handleEditDoctor}
+                  onDelete={handleDeleteDoctor}
+                  isLoading={loading}
+                />
+              )}
+              {activeTab === 'users' && (
+                <UserList users={users} isLoading={loading} />
+              )}
+              {activeTab === 'profile' && <AdminProfile admin={admin} />}
+            </>
           )}
-          {activeTab === 'users' && <UserList users={users} isLoading={loading} />}
-          {activeTab === 'profile' && <AdminProfile admin={admin} />}
         </Content>
       </Layout>
     </Layout>

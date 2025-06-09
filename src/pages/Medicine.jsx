@@ -133,7 +133,7 @@ export default function MedicinePage() {
       {/* Hero Section */}
       <div className="bg-blue-900 text-white py-20">
         <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl font-bold mb-6">Nhà Thuốc 4AE</h1>
+          <h1 className="text-4xl font-bold mb-6">Nhà Thuốc 3AE</h1>
           <p className="text-xl max-w-3xl mx-auto">
             Cung cấp đầy đủ thuốc ARV và các loại thuốc hỗ trợ điều trị HIV
           </p>

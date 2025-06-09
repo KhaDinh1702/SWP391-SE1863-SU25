@@ -46,8 +46,8 @@ export default function Footer() {
               Liên hệ
             </h2>
             <ul className="space-y-2 text-gray-600 dark:text-gray-200">
-              <li>123 Đường Y Tế, Quận 1, TP.HCM</li>
-              <li>Hotline: 1900 1234</li>
+              <li>104 Trần Bình Trọng, Quận 5, TP.HCM</li>
+              <li>Hotline: 0943 108 138</li>
               <li>Email: info@trungtamyte.com</li>
             </ul>
           </div>
