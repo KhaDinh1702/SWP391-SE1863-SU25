@@ -6,119 +6,98 @@ import Carousel from "../components/Carousel.jsx";
 import CallWidget from "../components/CallWidget";
 import ChatWidget from "../components/ChatWidget";
 
-
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-white text-gray-800">
       <Navbar />
-      
+
       <main className="flex-grow p-4 md:p-6">
-        {/* Welcome Section */}
-        <section className="mb-12 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-4">
+        {/* Hero Section */}
+        <section className="mb-16 text-center py-12 bg-gradient-to-r from-blue-100 to-blue-200 rounded-2xl shadow-lg">
+          <div className="max-w-4xl mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4 leading-tight drop-shadow">
               Chào mừng đến với dịch vụ y tế và điều trị HIV 4AE
             </h1>
-            <p className="text-lg text-gray-600">
-              Đây là trang chủ. Bạn có thể đăng nhập, đăng ký hoặc xem thông tin dịch vụ.
+            <p className="text-xl md:text-2xl text-blue-800 mb-6">
+              Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy
             </p>
+            <button className="px-6 py-3 bg-blue-700 text-white font-semibold rounded-xl hover:bg-blue-800 transition duration-300 shadow-lg">
+              Khám phá ngay
+            </button>
           </div>
         </section>
 
         {/* Carousel Section */}
         <section className="mb-16">
           <Carousel />
-          
         </section>
 
-        {/* ARV Treatment Form Section */}
+        {/* ARV Treatment Form */}
         <section className="max-w-6xl mx-auto mb-16">
           <ARVTreatmentForm />
         </section>
-        
-        {/* New ARV Insurance Section */}
-        <section className="max-w-6xl mx-auto mb-16 bg-gradient-to-r from-blue-50 to-blue-100 p-6 md:p-8 rounded-xl shadow-lg">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-blue-900 mb-3">
+
+        {/* ARV Insurance Info Section */}
+        <section className="max-w-6xl mx-auto mb-20 bg-white/80 backdrop-blur-md border border-blue-100 p-6 md:p-10 rounded-2xl shadow-2xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">
               ARV BẢO HIỂM Y TẾ
             </h2>
-            <p className="text-lg md:text-xl text-blue-700">
-              Thủ tục nhanh chóng, không phải chờ đợi, nhận thuốc trong 15 phút
+            <p className="text-xl text-blue-700">
+              Thủ tục nhanh chóng – Nhận thuốc trong 15 phút – Không phải chờ đợi
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Benefit 1 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Thủ tục nhanh
-              </h3>
-              <p className="text-gray-700">
-                Không phải chờ đợi, nhận thuốc trong 15 phút
-              </p>
-            </div>
-            
-            {/* Benefit 2 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Chính sách đầy đủ
-              </h3>
-              <p className="text-gray-700">
-                Được hưởng mọi chính sách BHYT như ở bệnh viện
-              </p>
-            </div>
-            
-            {/* Benefit 3 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Miễn phí xét nghiệm
-              </h3>
-              <p className="text-gray-700">
-                Khám và xét nghiệm 12 chỉ số quan trọng hoàn toàn miễn phí
-              </p>
-            </div>
-            
-            {/* Benefit 4 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Tài liệu đầy đủ
-              </h3>
-              <p className="text-gray-700">
-                Xem và đọc các tài liệu hướng dẫn chi tiết về ARV
-              </p>
-            </div>
-            
-            {/* Benefit 5 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Uy tín hàng đầu
-              </h3>
-              <p className="text-gray-700">
-                Đội ngũ bác sĩ chuyên môn cao, giàu kinh nghiệm
-              </p>
-            </div>
-            
-            {/* Benefit 6 */}
-            <div className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-lg text-blue-800 mb-3">
-                Hỗ trợ tận tình
-              </h3>
-              <p className="text-gray-700">
-                Đội ngũ nhân viên luôn sẵn sàng hỗ trợ bạn 24/7
-              </p>
-            </div>  
-             
-          </div>
-          <p className="text-base text-gray-500 mt-4">
-  Tại 4AE, chúng tôi cam kết mang đến cho bạn dịch vụ y tế chất lượng cao với sự tận tâm và chuyên nghiệp. 
-  Với đội ngũ y bác sĩ giàu kinh nghiệm cùng hệ thống cơ sở vật chất hiện đại, chúng tôi không chỉ hỗ trợ điều trị HIV hiệu quả 
-  mà còn đồng hành cùng bạn trong suốt hành trình chăm sóc sức khỏe. Mọi thủ tục đều được tối ưu hóa để giúp bạn tiết kiệm thời gian, 
-  đảm bảo sự thuận tiện, riêng tư và an toàn tuyệt đối.
-</p>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Thủ tục nhanh",
+                desc: "Không phải chờ đợi, nhận thuốc trong 15 phút",
+              },
+              {
+                title: "Chính sách đầy đủ",
+                desc: "Hưởng mọi quyền lợi BHYT như bệnh viện công",
+              },
+              {
+                title: "Miễn phí xét nghiệm",
+                desc: "12 chỉ số quan trọng hoàn toàn miễn phí",
+              },
+              {
+                title: "Tài liệu đầy đủ",
+                desc: "Truy cập tài liệu ARV hướng dẫn chi tiết",
+              },
+              {
+                title: "Uy tín hàng đầu",
+                desc: "Đội ngũ bác sĩ chuyên môn cao, tận tâm",
+              },
+              {
+                title: "Hỗ trợ tận tình",
+                desc: "Nhân viên luôn sẵn sàng hỗ trợ 24/7",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition duration-300 border border-blue-100"
+              >
+                <h3 className="text-xl font-semibold text-blue-800 mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-gray-600">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10">
+            <p className="text-base text-gray-600 text-justify leading-relaxed">
+              Tại 4AE, chúng tôi cam kết mang đến cho bạn dịch vụ y tế chất lượng cao với sự tận tâm và chuyên nghiệp. 
+              Với đội ngũ y bác sĩ giàu kinh nghiệm cùng hệ thống cơ sở vật chất hiện đại, chúng tôi không chỉ hỗ trợ điều trị HIV hiệu quả 
+              mà còn đồng hành cùng bạn trong suốt hành trình chăm sóc sức khỏe. 
+              Mọi thủ tục đều được tối ưu hóa để giúp bạn tiết kiệm thời gian, đảm bảo sự thuận tiện, riêng tư và an toàn tuyệt đối.
+            </p>
+          </div>
         </section>
       </main>
-      
+
       {/* Floating Widgets */}
       <CallWidget />
       <ChatWidget />

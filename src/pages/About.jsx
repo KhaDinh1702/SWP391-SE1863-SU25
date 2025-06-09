@@ -20,7 +20,7 @@ export default function About() {
       {/* Clinic Name and Tagline */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-blue-900 mb-4">
-          Giới thiệu về GALANT
+          Giới thiệu về Hiv 4AE 
         </h1>
         <div className="text-xl md:text-2xl font-medium text-blue-700 mb-6">
           <span className="inline-block mx-2">THÂN THIỆN</span> • 
@@ -35,7 +35,7 @@ export default function About() {
       <div className="bg-blue-50 rounded-xl p-6 md:p-8 mb-12">
         <p className="text-lg md:text-xl leading-relaxed text-center">
           Phòng khám đa khoa chúng tôi là mô hình chăm sóc sức khỏe cộng đồng bền vững do sự hợp tác của các tổ chức dựa vào cộng đồng (CBO) thành lập. 
-          GALANT đã phát triển được 6 chi nhánh tại TP.HCM và TP Hà Nội.
+          4AE đã phát triển được 6 chi nhánh tại TP.HCM và TP Hà Nội.
         </p>
       </div>
         {/* History Section */}
@@ -45,7 +45,7 @@ export default function About() {
             </h2>
         <div className="bg-white rounded-lg shadow-md p-6">
             <p className="text-lg leading-relaxed mb-4">
-            GALANT được thành lập năm 2010 với sứ mệnh cung cấp dịch vụ y tế chất lượng cao cho cộng đồng, 
+            4AE được thành lập năm 2010 với sứ mệnh cung cấp dịch vụ y tế chất lượng cao cho cộng đồng, 
             đặc biệt tập trung vào chăm sóc sức khỏe cho nhóm người có HIV. 
             </p>
             <p className="text-lg leading-relaxed">

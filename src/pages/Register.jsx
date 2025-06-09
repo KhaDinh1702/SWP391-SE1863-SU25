@@ -4,11 +4,19 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/NavBar.jsx";
 import { authService } from "../services/api.js";
 
+// Eye icon toggle for password visibility
 function EyeIcon({ visible, onClick }) {
   return (
     <span
       onClick={onClick}
-      style={{ cursor: "pointer", position: "absolute", right: 12, top: 10, fontWeight: 'bold', color: '#444' }}
+      style={{
+        cursor: "pointer",
+        position: "absolute",
+        right: 12,
+        top: 10,
+        fontWeight: "bold",
+        color: "#444",
+      }}
       tabIndex={0}
       aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
     >
@@ -29,56 +37,60 @@ export default function Register() {
     dateOfBirth: "",
     gender: 0, // Default to Male (0)
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
+  // Handle form input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === "gender" ? parseInt(value) : value
+      [name]: name === "gender" ? parseInt(value) : value,
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccess("");
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  if (formData.password !== formData.confirmPassword) {
-    setError("Mật khẩu xác nhận không khớp");
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp");
+      return;
+    }
 
-  try {
-    await authService.registerPatient({
-      username: formData.username,
-      password: formData.password,
-      fullName: formData.fullName,
-      email: formData.email,
-      phoneNumber: formData.phoneNumber,
-      address: formData.address,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender
-    });
-    
-    setSuccess("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
-    setTimeout(() => navigate("/login"), 2000);
-  } catch (error) {
-    setError(error.message || "Có lỗi xảy ra khi đăng ký");
-  }
-};
+    try {
+      await authService.registerPatient({
+        username: formData.username,
+        password: formData.password,
+        fullName: formData.fullName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+      });
+
+      setSuccess("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (error) {
+      setError(error.message || "Có lỗi xảy ra khi đăng ký");
+    }
+  };
 
   return (
     <div>
       <Navbar />
       <div className="max-w-md mx-auto mt-10 p-4 border rounded shadow">
         <h2 className="text-xl font-bold mb-4">Đăng ký bệnh nhân</h2>
+
         {error && <p className="text-red-500 mb-2">{error}</p>}
         {success && <p className="text-green-500 mb-2">{success}</p>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <input
@@ -91,7 +103,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <input
               type="text"
@@ -103,7 +115,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <input
               type="email"
@@ -115,7 +127,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <input
               type="tel"
@@ -127,7 +139,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="relative mb-3">
             <input
               type={showPassword ? "text" : "password"}
@@ -138,9 +150,12 @@ const handleSubmit = async (e) => {
               onChange={handleChange}
               required
             />
-            <EyeIcon visible={showPassword} onClick={() => setShowPassword(v => !v)} />
+            <EyeIcon
+              visible={showPassword}
+              onClick={() => setShowPassword((v) => !v)}
+            />
           </div>
-          
+
           <div className="mb-3">
             <input
               type={showPassword ? "text" : "password"}
@@ -152,7 +167,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <input
               type="text"
@@ -164,7 +179,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-3">
             <label className="block mb-1">Ngày sinh</label>
             <input
@@ -176,7 +191,7 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-          
+
           <div className="mb-4">
             <label className="block mb-1">Giới tính</label>
             <select
@@ -190,7 +205,7 @@ const handleSubmit = async (e) => {
               <option value={2}>Khác</option>
             </select>
           </div>
-          
+
           <button
             type="submit"
             className="bg-blue-700 text-white w-full py-2 rounded hover:bg-blue-800"
@@ -198,9 +213,12 @@ const handleSubmit = async (e) => {
             Đăng ký
           </button>
         </form>
-        
+
         <p className="mt-4 text-center">
-          Đã có tài khoản? <a href="/login" className="text-blue-600">Đăng nhập ngay</a>
+          Đã có tài khoản?{" "}
+          <a href="/login" className="text-blue-600">
+            Đăng nhập ngay
+          </a>
         </p>
       </div>
     </div>

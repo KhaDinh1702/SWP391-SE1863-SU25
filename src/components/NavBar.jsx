@@ -15,13 +15,14 @@ export default function FullNavbar() {
 
     checkAuth();
     window.addEventListener("storage", checkAuth);
+    
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
   const handleLogout = () => {
     logout();
     setUser(null);
-    alert('Bạn đã đăng xuất thành công');
+    alert("Bạn đã đăng xuất thành công");
     navigate("/login");
   };
 
@@ -34,10 +35,12 @@ export default function FullNavbar() {
             <FaMapMarkerAlt className="text-lg" />
             <span>Hệ thống phòng khám</span>
           </div>
+          
           <div className="flex items-center gap-2">
             <FaPhone className="text-lg" />
             <span>0943 108 138</span>
           </div>
+          
           <div className="flex items-center gap-2 cursor-pointer hover:underline">
             <FaPlus className="text-lg" />
             <span>Đặt lịch khám</span>
@@ -59,32 +62,40 @@ export default function FullNavbar() {
 
         {/* Menu */}
         <div className="flex items-center gap-8 text-base font-semibold">
-            <span 
-              onClick={() => navigate("/about")} 
-              className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
-            >
-              Giới thiệu
-            </span>
+          <span 
+            onClick={() => navigate("/about")} 
+            className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
+          >
+            Giới thiệu
+          </span>
 
-          <span onClick={() => navigate("/pricing")} 
-              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
-              Bảng giá
-            </span>
-            <span onClick={() => navigate("/services")} 
-              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
-              Dịch vụ
-            </span>
-          <span onClick={() => navigate("/medical")} 
-              className="cursor-pointer hover:text-blue-700 transition-colors duration-200">
-              Nhà thuốc
-            </span>
+          <span 
+            onClick={() => navigate("/pricing")} 
+            className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
+          >
+            Bảng giá
+          </span>
+          
+          <span 
+            onClick={() => navigate("/services")} 
+            className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
+          >
+            Dịch vụ
+          </span>
+          
+          <span 
+            onClick={() => navigate("/medical")} 
+            className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
+          >
+            Nhà thuốc
+          </span>
+          
           <span 
             onClick={() => navigate("/blog")} 
             className="cursor-pointer hover:text-blue-700 transition-colors duration-200"
           >
             Blog Kiến thức
           </span>
-          
         </div>
 
         {/* Auth buttons */}
@@ -95,6 +106,7 @@ export default function FullNavbar() {
                 <FaUser className="mr-2 text-blue-600" />
                 Xin chào, <span className="text-blue-700 font-medium ml-1">{user.username}</span>
               </span>
+              
               <button
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-base font-medium transition-colors duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
@@ -110,6 +122,7 @@ export default function FullNavbar() {
               >
                 <span>Đăng nhập</span>
               </button>
+              
               <button
                 onClick={() => navigate("/register")}
                 className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-base font-medium transition-colors duration-200 shadow-md hover:shadow-lg flex items-center gap-2"

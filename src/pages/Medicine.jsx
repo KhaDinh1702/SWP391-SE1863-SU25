@@ -1,8 +1,20 @@
 import { FaPills, FaSearch, FaShoppingCart, FaInfoCircle } from "react-icons/fa";
 import { MdLocalPharmacy, MdHealthAndSafety } from "react-icons/md";
+import { FiAlertCircle, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function MedicinePage() {
+  // State to track which medicine's details are expanded
+  const [expandedCards, setExpandedCards] = useState({});
+
+  const toggleCardExpansion = (index, section) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [`${section}-${index}`]: !prev[`${section}-${index}`]
+    }));
+  };
+
   // ARV Medications
   const arvMedicines = [
     {
@@ -11,7 +23,17 @@ export default function MedicinePage() {
       price: "Miễn phí*",
       dosage: "1 viên mỗi ngày",
       sideEffects: "Có thể gây chóng mặt, buồn nôn nhẹ",
-      image: "https://th.bing.com/th/id/OIP.nSCiYZYdKuR2x_ztrsxnhAHaGj?rs=1&pid=ImgDetMain"
+      image: "https://th.bing.com/th/id/OIP.nSCiYZYdKuR2x_ztrsxnhAHaGj?rs=1&pid=ImgDetMain",
+      details: {
+        composition: "Tenofovir 300mg + Lamivudine 300mg + Dolutegravir 50mg",
+        mechanism: "Ức chế enzyme reverse transcriptase và integrase của HIV",
+        indications: "Điều trị HIV-1 ở người lớn và trẻ em ≥40kg",
+        contraindications: "Quá mẫn với bất kỳ thành phần nào của thuốc",
+        precautions: "Theo dõi chức năng thận, đặc biệt ở bệnh nhân có bệnh thận",
+        storage: "Bảo quản dưới 30°C, tránh ẩm",
+        manufacturer: "Các công ty dược trong nước và quốc tế",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     },
     {
       name: "Efavirenz 600mg",
@@ -19,7 +41,17 @@ export default function MedicinePage() {
       price: "450,000 VND/hộp",
       dosage: "1 viên mỗi tối",
       sideEffects: "Có thể gây ác mộng, chóng mặt",
-      image: "https://th.bing.com/th/id/OIP.CES4E1fonSkKiXEUuSlv2wHaEV?rs=1&pid=ImgDetMain"
+      image: "https://th.bing.com/th/id/OIP.CES4E1fonSkKiXEUuSlv2wHaEV?rs=1&pid=ImgDetMain",
+      details: {
+        composition: "Efavirenz 600mg",
+        mechanism: "Ức chế enzyme reverse transcriptase không nucleoside (NNRTI)",
+        indications: "Điều trị HIV-1 phối hợp với các ARV khác",
+        contraindications: "Quá mẫn, suy gan nặng, dùng cùng với voriconazole",
+        precautions: "Có thể ảnh hưởng tâm thần, tránh dùng khi lái xe",
+        storage: "Bảo quản ở nhiệt độ phòng",
+        manufacturer: "Merck Sharp & Dohme",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     },
     {
       name: "Abacavir/Lamivudine (ABC/3TC)",
@@ -27,7 +59,17 @@ export default function MedicinePage() {
       price: "600,000 VND/hộp",
       dosage: "1 viên 2 lần/ngày",
       sideEffects: "Hiếm khi gây dị ứng",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6ePojHZz3lgsIfqlOEer9fEZkoAKDz0zTzw&s"
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6ePojHZz3lgsIfqlOEer9fEZkoAKDz0zTzw&s",
+      details: {
+        composition: "Abacavir 600mg + Lamivudine 300mg",
+        mechanism: "Ức chế enzyme reverse transcriptase nucleoside (NRTI)",
+        indications: "Điều trị HIV-1 ở người lớn và trẻ em",
+        contraindications: "Quá mẫn với abacavir, suy gan nặng",
+        precautions: "Xét nghiệm HLA-B*5701 trước khi dùng",
+        storage: "Bảo quản dưới 30°C",
+        manufacturer: "ViiV Healthcare",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     }
   ];
 
@@ -38,21 +80,51 @@ export default function MedicinePage() {
       description: "Dự phòng nhiễm trùng cơ hội",
       price: "120,000 VND/hộp",
       category: "Dự phòng",
-      image: "https://www.vinmec.com/static/uploads/20220303_051822_042418_cotrimoxazol_480mg_max_1800x1800_png_a52dafcc45.png"
+      image: "https://www.vinmec.com/static/uploads/20220303_051822_042418_cotrimoxazol_480mg_max_1800x1800_png_a52dafcc45.png",
+      details: {
+        composition: "Sulfamethoxazole 400mg + Trimethoprim 80mg",
+        mechanism: "Ức chế tổng hợp acid folic của vi khuẩn",
+        indications: "Dự phòng PCP và các nhiễm trùng cơ hội khác ở bệnh nhân HIV",
+        contraindications: "Quá mẫn với sulfonamide, suy gan/thận nặng",
+        precautions: "Uống nhiều nước, theo dõi tác dụng phụ trên da",
+        storage: "Bảo quản ở nhiệt độ phòng",
+        manufacturer: "Nhiều công ty dược trong nước",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     },
     {
       name: "Fluconazole 200mg",
       description: "Điều trị nấm miệng, thực quản",
       price: "80,000 VND/vỉ",
       category: "Điều trị nhiễm trùng",
-      image: "https://5.imimg.com/data5/SELLER/Default/2024/8/445352144/BC/KO/AS/22822005/fluconazole-200mg-tablet.jpeg"
+      image: "https://5.imimg.com/data5/SELLER/Default/2024/8/445352144/BC/KO/AS/22822005/fluconazole-200mg-tablet.jpeg",
+      details: {
+        composition: "Fluconazole 200mg",
+        mechanism: "Ức chế tổng hợp ergosterol của màng tế bào nấm",
+        indications: "Điều trị và dự phòng nhiễm nấm Candida ở bệnh nhân HIV",
+        contraindications: "Quá mẫn với azole, dùng cùng cisapride",
+        precautions: "Điều chỉnh liều ở bệnh nhân suy thận",
+        storage: "Bảo quản dưới 30°C",
+        manufacturer: "Pfizer và các công ty generic",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     },
     {
       name: "Truvada (PrEP)",
       description: "Thuốc dự phòng trước phơi nhiễm HIV",
       price: "1,200,000 VND/hộp",
       category: "Dự phòng",
-      image: "https://galantclinic.com/wp-content/uploads/2024/02/prep-1.jpg"
+      image: "https://galantclinic.com/wp-content/uploads/2024/02/prep-1.jpg",
+      details: {
+        composition: "Tenofovir disoproxil 300mg + Emtricitabine 200mg",
+        mechanism: "Ức chế sao chép HIV khi phơi nhiễm",
+        indications: "Dự phòng HIV cho người có nguy cơ cao",
+        contraindications: "Quá mẫn, suy thận nặng (độ thanh thải creatinin <30mL/phút)",
+        precautions: "Xét nghiệm HIV trước khi dùng, theo dõi chức năng thận",
+        storage: "Bảo quản dưới 25°C",
+        manufacturer: "Gilead Sciences",
+        registration: "Đã đăng ký với Bộ Y tế"
+      }
     }
   ];
 
@@ -123,12 +195,65 @@ export default function MedicinePage() {
                   </div>
                   
                   <div className="mt-auto pt-4">
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
-                      <FaShoppingCart className="mr-2" />
-                      Đặt mua
+                    <button 
+                      onClick={() => toggleCardExpansion(index, 'arv')}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                    >
+                      {expandedCards[`arv-${index}`] ? (
+                        <>
+                          <FiChevronUp className="mr-2" />
+                          Thu gọn thông tin
+                        </>
+                      ) : (
+                        <>
+                          <FiChevronDown className="mr-2" />
+                          Xem chi tiết
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
+
+                {/* Detailed Information Section */}
+                {expandedCards[`arv-${index}`] && (
+                  <div className="p-6 bg-gray-50 border-t border-gray-200">
+                    <h4 className="font-bold text-lg text-gray-800 mb-4">Thông tin chi tiết</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium">Thành phần:</p>
+                        <p className="text-gray-700">{medicine.details.composition}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Cơ chế tác dụng:</p>
+                        <p className="text-gray-700">{medicine.details.mechanism}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Chỉ định:</p>
+                        <p className="text-gray-700">{medicine.details.indications}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Chống chỉ định:</p>
+                        <p className="text-gray-700">{medicine.details.contraindications}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Thận trọng:</p>
+                        <p className="text-gray-700">{medicine.details.precautions}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Bảo quản:</p>
+                        <p className="text-gray-700">{medicine.details.storage}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Nhà sản xuất:</p>
+                        <p className="text-gray-700">{medicine.details.manufacturer}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Đăng ký:</p>
+                        <p className="text-gray-700">{medicine.details.registration}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -171,12 +296,65 @@ export default function MedicinePage() {
                   </div>
                   
                   <div className="mt-auto pt-4">
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
-                      <FaShoppingCart className="mr-2" />
-                      Đặt mua
+                    <button 
+                      onClick={() => toggleCardExpansion(index, 'other')}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                    >
+                      {expandedCards[`other-${index}`] ? (
+                        <>
+                          <FiChevronUp className="mr-2" />
+                          Thu gọn thông tin
+                        </>
+                      ) : (
+                        <>
+                          <FiChevronDown className="mr-2" />
+                          Xem chi tiết
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
+
+                {/* Detailed Information Section */}
+                {expandedCards[`other-${index}`] && (
+                  <div className="p-6 bg-gray-50 border-t border-gray-200">
+                    <h4 className="font-bold text-lg text-gray-800 mb-4">Thông tin chi tiết</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium">Thành phần:</p>
+                        <p className="text-gray-700">{medicine.details.composition}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Cơ chế tác dụng:</p>
+                        <p className="text-gray-700">{medicine.details.mechanism}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Chỉ định:</p>
+                        <p className="text-gray-700">{medicine.details.indications}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Chống chỉ định:</p>
+                        <p className="text-gray-700">{medicine.details.contraindications}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Thận trọng:</p>
+                        <p className="text-gray-700">{medicine.details.precautions}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Bảo quản:</p>
+                        <p className="text-gray-700">{medicine.details.storage}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Nhà sản xuất:</p>
+                        <p className="text-gray-700">{medicine.details.manufacturer}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Đăng ký:</p>
+                        <p className="text-gray-700">{medicine.details.registration}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -190,6 +368,7 @@ export default function MedicinePage() {
             <li>Cần có đơn thuốc của bác sĩ để mua các loại thuốc kháng virus</li>
             <li>Nhà thuốc mở cửa từ 7:00 - 20:00 tất cả các ngày trong tuần</li>
             <li>Hỗ trợ giao thuốc tận nhà trong nội thành</li>
+            <li>Tư vấn sử dụng thuốc miễn phí với dược sĩ chuyên môn</li>
           </ul>
         </div>
       </div>
