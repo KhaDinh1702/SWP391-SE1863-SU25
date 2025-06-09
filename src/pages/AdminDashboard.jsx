@@ -106,11 +106,19 @@ const AdminDashboard = () => {
           const userData = await userService.getAllUsers();
           setUsers(userData);
         } else if (activeTab === 'doctors') {
+          console.log('Fetching doctors...'); // Debug log
           const doctorData = await doctorService.getAllDoctors();
-          setDoctors(doctorData);
+          console.log('Fetched doctors:', doctorData); // Debug log
+          if (Array.isArray(doctorData)) {
+            setDoctors(doctorData);
+          } else {
+            console.error('Invalid doctors data format:', doctorData);
+            message.error('Dữ liệu bác sĩ không hợp lệ');
+          }
         }
       } catch (error) {
-        message.error('Lỗi tải dữ liệu.');
+        console.error('Error fetching data:', error);
+        message.error(error.message || 'Lỗi tải dữ liệu');
       } finally {
         setLoading(false);
       }

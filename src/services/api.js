@@ -204,15 +204,31 @@ export const userService = {
 export const doctorService = {
   getAllDoctors: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
-        headers: getAuthHeaders(),
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctoc`, {
+        method: 'GET',
+        headers: getAuthHeaders()
       });
 
       if (!response.ok) {
-        throw new Error('Không thể lấy danh sách bác sĩ');
+        const errorData = await response.json().catch(() => ({ message: 'Không thể lấy danh sách bác sĩ' }));
+        throw new Error(errorData.message || 'Không thể lấy danh sách bác sĩ');
       }
 
-      return await response.json();
+      const text = await response.text();
+      if (!text) {
+        console.warn('Empty response from server');
+        return [];
+      }
+
+      try {
+        const data = JSON.parse(text);
+        console.log('Fetched doctors:', data);
+        return Array.isArray(data) ? data : [];
+      } catch (parseError) {
+        console.error('Error parsing doctors data:', parseError);
+        console.error('Raw response:', text);
+        return [];
+      }
     } catch (error) {
       console.error('Fetch doctors failed:', error);
       throw error;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser, logout } from "../utils/auth";
-import { FaPhone, FaMapMarkerAlt, FaPlus, FaUser } from "react-icons/fa";
+import { FaPhone, FaMapMarkerAlt, FaUser } from "react-icons/fa";
 
 export default function FullNavbar() {
   const [user, setUser] = useState(null);
@@ -39,11 +39,6 @@ export default function FullNavbar() {
           <div className="flex items-center gap-2">
             <FaPhone className="text-lg" />
             <span>0943 108 138</span>
-          </div>
-          
-          <div className="flex items-center gap-2 cursor-pointer hover:underline">
-            <FaPlus className="text-lg" />
-            <span>Đặt lịch khám</span>
           </div>
         </div>
       </div>
