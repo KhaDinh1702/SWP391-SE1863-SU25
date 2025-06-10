@@ -84,6 +84,7 @@ export default function FullNavbar() {
             <div className="hidden md:flex items-center space-x-8">
               {[
                 { path: "/about", label: "Giới thiệu" },
+                { path: "/appointment-booking", label: "Đặt lịch hẹn"},
                 { path: "/pricing", label: "Bảng giá" },
                 { path: "/services", label: "Dịch vụ" },
                 { path: "/medical", label: "Nhà thuốc" },

@@ -204,7 +204,7 @@ export const userService = {
 export const doctorService = {
   getAllDoctors: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctoc`, {
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
         method: 'GET',
         headers: getAuthHeaders()
       });

@@ -8,9 +8,13 @@ import ChatWidget from "../components/ChatWidget";
 import newsData from "../data/newsData";
 import doctorsData from "../data/doctorsData";
 import DoctorCarousel from "../components/DoctorCarousel.jsx";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "../utils/auth";
 import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward } from "react-icons/fa";
 
 export default function Home() {
+  const navigate = useNavigate();
+  const loggedIn = isAuthenticated();
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-gray-800">
       <Navbar />
@@ -23,13 +27,22 @@ export default function Home() {
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-lg animate-fade-in">
               Chào mừng đến với dịch vụ y tế và điều trị HIV 3AE
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
-              Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy
-            </p>
-            <button className="group px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition duration-300 shadow-lg flex items-center justify-center gap-2 mx-auto">
-              <span>Khám phá ngay</span>
-              <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-            </button>
+
+            {/* Chỉ hiển thị mô tả và nút nếu chưa đăng nhập */}
+            {!loggedIn && (
+              <>
+                <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
+                  Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy
+                </p>
+                <button
+                  className="group px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition duration-300 shadow-lg flex items-center justify-center gap-2 mx-auto"
+                  onClick={() => navigate("/login")}
+                >
+                  <span>Khám phá ngay</span>
+                  <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
+                </button>
+              </>
+            )}
           </div>
         </section>
 

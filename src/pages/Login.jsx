@@ -73,7 +73,7 @@ export default function Login() {
           <div className="absolute inset-0 flex items-center justify-center p-12 text-white">
             <div className="max-w-md transform hover:scale-105 transition-transform duration-300">
               <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
-                Chào mừng trở lại
+                Chào mừng đến với
               </h2>
               <p className="text-xl mb-8 text-blue-100">
                 Hệ thống quản lý y tế thông minh cho bác sĩ và bệnh nhân
