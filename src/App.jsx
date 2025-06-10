@@ -14,6 +14,8 @@ import PatientDashboard from './pages/PatientDashboard';
 import Medical from './pages/Medicine';
 import Pricing from './pages/Pricing';
 import Services from './pages/Services';
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermOfServices";
 // Import các component quản lý từ thư mục con
 
 
@@ -32,6 +34,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
+        <Route path="/privacy" element={<PrivacyPolicy/>} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Admin routes */}

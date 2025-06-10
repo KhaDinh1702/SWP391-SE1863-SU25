@@ -6,6 +6,8 @@ import Carousel from "../components/Carousel.jsx";
 import CallWidget from "../components/CallWidget";
 import ChatWidget from "../components/ChatWidget";
 import newsData from "../data/newsData";
+import doctorsData from "../data/doctorsData";
+import DoctorCarousel from "../components/DoctorCarousel.jsx";
 import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward } from "react-icons/fa";
 
 export default function Home() {
@@ -107,7 +109,16 @@ export default function Home() {
             </p>
           </div>
         </section>
+        <section className="py-16 bg-white text-center mb-20 max-w-6xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">
+            ĐỘI NGŨ Y TẾ TẠI 3AE
+          </h2>
+          <p className="text-xl text-teal-600 font-semibold mb-10">
+            CHUYÊN GIA TẬN TÂM VÀ CHUYÊN NGHIỆP
+          </p>
 
+          <DoctorCarousel />
+        </section>
         {/* News Section */}
         <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">
           <div className="text-center mb-12">

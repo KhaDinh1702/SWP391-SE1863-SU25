@@ -26,12 +26,6 @@ export default function Footer() {
                   Dịch vụ
                 </Link>
               </li>
-              <li>
-                <Link to="/doctors" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
-                  Đội ngũ bác sĩ
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -51,12 +45,6 @@ export default function Footer() {
                 <Link to="/appointment" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 flex items-center group">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Hướng dẫn đặt lịch
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 flex items-center group">
-                  <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
-                  Liên hệ
                 </Link>
               </li>
             </ul>
