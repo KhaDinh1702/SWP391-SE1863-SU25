@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUser, logout } from "../utils/auth";
-import { FaPhone, FaMapMarkerAlt, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaClock } from "react-icons/fa";
+import { FaPhone, FaMapMarkerAlt, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaClock, FaEnvelope, FaFacebook, FaYoutube, FaInstagram, FaCalendarAlt } from "react-icons/fa";
 
 export default function FullNavbar() {
   const [user, setUser] = useState(null);
@@ -46,12 +46,8 @@ export default function FullNavbar() {
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white text-sm">
         <div className="container mx-auto px-4 py-2">
           <div className="flex flex-wrap justify-between items-center">
+            {/* Left side - Contact Info */}
             <div className="flex items-center space-x-6">
-              <div className="flex items-center gap-2 hover:text-blue-200 transition-colors duration-300">
-                <FaMapMarkerAlt className="text-lg" />
-                <span>Hệ thống phòng khám</span>
-              </div>
-              
               <div className="flex items-center gap-2 hover:text-blue-200 transition-colors duration-300">
                 <FaPhone className="text-lg" />
                 <span>0943 108 138</span>
@@ -60,6 +56,44 @@ export default function FullNavbar() {
               <div className="flex items-center gap-2 hover:text-blue-200 transition-colors duration-300">
                 <FaClock className="text-lg" />
                 <span>8:00 - 20:00</span>
+              </div>
+
+              <div className="flex items-center gap-2 hover:text-blue-200 transition-colors duration-300">
+                <FaEnvelope className="text-lg" />
+                <span>info@trungtamytetonghop.vn</span>
+              </div>
+            </div>
+
+            {/* Right side - Social & Quick Links */}
+            <div className="flex items-center space-x-4">
+              {/* Social Media Links */}
+              <div className="flex items-center space-x-3 border-r border-blue-700 pr-4">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors duration-300">
+                  <FaFacebook className="text-lg" />
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors duration-300">
+                  <FaYoutube className="text-lg" />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-200 transition-colors duration-300">
+                  <FaInstagram className="text-lg" />
+                </a>
+              </div>
+
+              {/* Quick Links */}
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => navigate("/appointment-booking")}
+                  className="flex items-center gap-2 hover:text-blue-200 transition-colors duration-300"
+                >
+                  <FaCalendarAlt className="text-lg" />
+                  <span>Đặt lịch khám</span>
+                </button>
+                <button 
+                  onClick={() => navigate("/emergency")}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors duration-300"
+                >
+                  Cấp cứu 24/7
+                </button>
               </div>
             </div>
           </div>

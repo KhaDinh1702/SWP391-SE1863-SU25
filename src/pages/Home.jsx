@@ -9,7 +9,7 @@ import doctorsData from "../data/doctorsData";
 import DoctorCarousel from "../components/DoctorCarousel.jsx";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../utils/auth";
-import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward } from "react-icons/fa";
+import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone } from "react-icons/fa";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -20,42 +20,65 @@ export default function Home() {
 
       <main className="flex-grow p-4 md:p-6">
         {/* Hero Section */}
-        <section className="mb-16 text-center py-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10"></div>
-          <div className="max-w-4xl mx-auto px-4 relative">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-lg animate-fade-in">
-              Chào mừng đến với dịch vụ y tế và điều trị HIV 3AE
-            </h1>
-
-            {/* Chỉ hiển thị mô tả và nút nếu chưa đăng nhập */}
-            {!loggedIn && (
-              <>
-                <p className="text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed">
+        <section className="mb-16 relative overflow-hidden rounded-3xl shadow-2xl">
+          {/* Background with gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-800 via-indigo-800 to-blue-900 opacity-95"></div>
+          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-5 animate-pulse"></div>
+          
+          {/* Content Container */}
+          <div className="relative max-w-4xl mx-auto px-4 py-20 md:py-32">
+            <div className="text-center space-y-8">
+              {/* Text Content */}
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight animate-fade-in">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-200">
+                    Chào mừng đến với
+                  </span>
+                  <br />
+                  <span className="text-white">
+                    Dịch vụ y tế và điều trị HIV 3AE
+                  </span>
+                </h1>
+                <p className="text-xl md:text-2xl text-blue-200 leading-relaxed animate-fade-in-up">
                   Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy
                 </p>
-                <button
-                  className="group px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition duration-300 shadow-lg flex items-center justify-center gap-2 mx-auto"
-                  onClick={() => navigate("/login")}
-                >
-                  <span>Khám phá ngay</span>
-                  <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-                </button>
-              </>
-            )}
+              </div>
+
+            </div>
           </div>
         </section>
 
         {/* Carousel Section */}
-        <section className="mb-16 transform hover:scale-[1.02] transition-transform duration-300">
+        <section className="mb-16 transform hover:scale-[1.02] transition-all duration-500">
           <Carousel />
         </section>
-
-
+             {/* CTA Section */}
+        <section className="max-w-6xl mx-auto mb-20 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-3xl shadow-xl p-8 md:p-12 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">
+            Bạn cần tư vấn?
+          </h2>
+          <p className="text-xl text-blue-700 mb-8">
+            Đội ngũ y tế của chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7
+          </p>
+          <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <button className="px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+              <FaPhone className="text-lg" />
+              <span>Gọi ngay: 0943 108 138</span>
+            </button>
+            <button 
+              onClick={() => navigate("/appointment-booking")}
+              className="px-8 py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <FaFileAlt className="text-lg" />
+              <span>Đặt lịch khám</span>
+            </button>
+          </div>
+        </section>
 
         {/* ARV Insurance Info Section */}
-        <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">
+        <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-indigo-900">
               ARV BẢO HIỂM Y TẾ
             </h2>
             <p className="text-xl text-blue-700">
@@ -98,9 +121,9 @@ export default function Home() {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 border border-blue-100 transform hover:-translate-y-1"
+                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-100 transform hover:-translate-y-2 hover:bg-blue-50/50"
               >
-                <div className="mb-4">{item.icon}</div>
+                <div className="mb-4 transform hover:scale-110 transition-transform duration-300">{item.icon}</div>
                 <h3 className="text-xl font-semibold text-blue-800 mb-2">
                   {item.title}
                 </h3>
@@ -108,8 +131,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          <div className="mt-12 bg-blue-50 p-6 rounded-2xl">
+            
+          {/* CTA Section */}
+          <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-inner">
             <p className="text-base text-gray-700 text-justify leading-relaxed">
               Tại 3AE, chúng tôi cam kết mang đến cho bạn dịch vụ y tế chất lượng cao với sự tận tâm và chuyên nghiệp.
               Với đội ngũ y bác sĩ giàu kinh nghiệm cùng hệ thống cơ sở vật chất hiện đại, chúng tôi không chỉ hỗ trợ điều trị HIV hiệu quả
@@ -118,8 +142,10 @@ export default function Home() {
             </p>
           </div>
         </section>
-        <section className="py-16 bg-white text-center mb-20 max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">
+
+        {/* Doctors Section */}
+        <section className="py-16 bg-gradient-to-br from-white to-blue-50 text-center mb-20 max-w-6xl mx-auto rounded-3xl shadow-xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-indigo-900">
             ĐỘI NGŨ Y TẾ TẠI 3AE
           </h2>
           <p className="text-xl text-teal-600 font-semibold mb-10">
@@ -128,10 +154,11 @@ export default function Home() {
 
           <DoctorCarousel />
         </section>
+
         {/* News Section */}
-        <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">
+        <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-indigo-900">
               Tin tức về HIV/AIDS
             </h2>
             <p className="text-xl text-blue-700">
@@ -139,19 +166,18 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Horizontal Scroll Container */}
           <div className="overflow-x-auto pb-4">
             <div className="flex space-x-6 min-w-max">
               {newsData.map((news, index) => (
                 <div
                   key={index}
-                  className="min-w-[320px] max-w-[320px] bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 border border-blue-100 flex flex-col transform hover:-translate-y-1"
+                  className="min-w-[320px] max-w-[320px] bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-100 flex flex-col transform hover:-translate-y-2 hover:bg-blue-50/50"
                 >
                   <div className="relative overflow-hidden rounded-xl mb-4">
                     <img
                       src={news.image}
                       alt={news.title}
-                      className="w-full h-48 object-cover transform hover:scale-110 transition-transform duration-300"
+                      className="w-full h-48 object-cover transform hover:scale-110 transition-transform duration-500"
                     />
                   </div>
                   <h3 className="text-lg font-semibold text-blue-800 mb-2 line-clamp-2">{news.title}</h3>
@@ -172,8 +198,8 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </main>
 
+      </main>
       {/* Floating Widgets */}
       <CallWidget />
       <ChatWidget />
