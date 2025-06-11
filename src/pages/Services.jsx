@@ -45,25 +45,25 @@ export default function ServicesPage() {
   return (
     <div className="font-sans bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg')] bg-cover bg-center opacity-20"></div>
+      <div className="relative bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg')] bg-cover bg-center opacity-20 animate-pulse"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-indigo-900/90"></div>
         <div className="container mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+            <h1 className="text-4xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100 animate-fade-in">
               Dịch vụ y tế chất lượng cao
             </h1>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl md:text-2xl text-blue-100 mb-12 leading-relaxed">
               Chúng tôi cung cấp các dịch vụ y tế toàn diện về HIV và các bệnh lây truyền qua đường tình dục với đội ngũ bác sĩ giàu kinh nghiệm.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <FaPhone className="w-5 h-5 mr-2" />
-                <span>Hotline: 1900 1234</span>
+            <div className="flex flex-wrap justify-center gap-6">
+              <div className="flex items-center bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                <FaPhone className="w-6 h-6 mr-3" />
+                <span className="text-lg">Hotline: 1900 1234</span>
               </div>
-              <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <FaClock className="w-5 h-5 mr-2" />
-                <span>Giờ làm việc: 8:00 - 20:00</span>
+              <div className="flex items-center bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                <FaClock className="w-6 h-6 mr-3" />
+                <span className="text-lg">Giờ làm việc: 8:00 - 20:00</span>
               </div>
             </div>
           </div>
@@ -71,47 +71,47 @@ export default function ServicesPage() {
       </div>
 
       {/* Services Grid */}
-      <div className="container mx-auto px-6 py-16 relative">
+      <div className="container mx-auto px-6 py-20 relative">
         {/* Back to Home button */}
-        <div className="absolute top-6 left-6">
+        <div className="absolute top-8 left-8">
           <Link 
             to="/" 
-            className="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-full shadow-md hover:shadow-lg transition-all duration-300 group"
+            className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-blue-50"
           >
-            <FaArrowLeft className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            <span>Quay lại trang chủ</span>
+            <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-semibold">Quay lại trang chủ</span>
           </Link>
         </div>
 
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
             Các dịch vụ của chúng tôi
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+          <p className="text-gray-600 max-w-2xl mx-auto text-xl leading-relaxed">
             Chúng tôi cam kết mang lại dịch vụ chăm sóc sức khỏe tốt nhất với sự tôn trọng và bảo mật tuyệt đối.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {services.map((service, index) => (
             <div 
               key={index}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+              className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
             >
-              <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl inline-block group-hover:scale-110 transition-transform duration-300">
+              <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl inline-block group-hover:scale-110 transition-transform duration-300">
                 <div className="text-blue-600">{service.icon}</div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 group-hover:text-blue-600 transition-colors">
                 {service.title}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
                 {service.description}
               </p>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {service.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center text-gray-700">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2"></div>
-                    <span>{feature}</span>
+                  <div key={idx} className="flex items-center text-gray-700 group/item">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mr-3 group-hover/item:scale-150 transition-transform"></div>
+                    <span className="text-lg">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -120,31 +120,31 @@ export default function ServicesPage() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-20 bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Liên hệ với chúng tôi</h3>
-            <p className="text-gray-600">Chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7</p>
+        <div className="mt-32 bg-white rounded-3xl shadow-2xl p-12 transform hover:scale-[1.02] transition-all duration-300">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-800 mb-4">Liên hệ với chúng tôi</h3>
+            <p className="text-gray-600 text-xl">Chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="flex items-center justify-center p-4 bg-blue-50 rounded-xl">
-              <FaPhone className="w-6 h-6 text-blue-600 mr-3" />
+          <div className="grid md:grid-cols-3 gap-10">
+            <div className="flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <FaPhone className="w-8 h-8 text-blue-600 mr-4" />
               <div>
-                <p className="font-semibold text-gray-800">Hotline</p>
-                <p className="text-gray-600">1900 1234</p>
+                <p className="font-bold text-gray-800 text-lg">Hotline</p>
+                <p className="text-gray-600 text-lg">1900 1234</p>
               </div>
             </div>
-            <div className="flex items-center justify-center p-4 bg-blue-50 rounded-xl">
-              <FaMapMarkerAlt className="w-6 h-6 text-blue-600 mr-3" />
+            <div className="flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <FaMapMarkerAlt className="w-8 h-8 text-blue-600 mr-4" />
               <div>
-                <p className="font-semibold text-gray-800">Địa chỉ</p>
-                <p className="text-gray-600">123 Đường ABC, Quận XYZ</p>
+                <p className="font-bold text-gray-800 text-lg">Địa chỉ</p>
+                <p className="text-gray-600 text-lg">123 Đường ABC, Quận XYZ</p>
               </div>
             </div>
-            <div className="flex items-center justify-center p-4 bg-blue-50 rounded-xl">
-              <FaClock className="w-6 h-6 text-blue-600 mr-3" />
+            <div className="flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <FaClock className="w-8 h-8 text-blue-600 mr-4" />
               <div>
-                <p className="font-semibold text-gray-800">Giờ làm việc</p>
-                <p className="text-gray-600">8:00 - 20:00</p>
+                <p className="font-bold text-gray-800 text-lg">Giờ làm việc</p>
+                <p className="text-gray-600 text-lg">8:00 - 20:00</p>
               </div>
             </div>
           </div>

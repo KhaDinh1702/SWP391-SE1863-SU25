@@ -1,5 +1,13 @@
 import React from 'react';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import {
+  FaPhone,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaFacebook,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedin,
+} from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import boYTeLogo from '../assets/bo-y-te.jpg';
 import boCongThuongLogo from '../assets/bo-cong-thuong.png';
@@ -23,10 +31,10 @@ export default function Footer() {
                   <div>
                     <p className="font-bold text-white">Số 104 Trần Bình Trọng, P.1, Quận 5</p>
                     <p className="font-bold text-white">⏱ 8:00 – 20:00 (Thứ 2 – CN)</p>
-                    <a 
-                      href="https://www.google.com/maps/place/Phòng+khám+đa+khoa+GALANT/@10.7551424,106.681645,15z/data=!4m6!3m5!1s0x31752f03471fc295:0xc6fca72acc3cbf1d!8m2!3d10.7551424!4d106.681645!16s%2Fg%2F11f00hl6b5?entry=ttu&g_ep=EgoyMDI1MDYwOC4wIKXMDSoASAFQAw%3D%3D" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href="https://www.google.com/maps/place/Phòng+khám+đa+khoa+GALANT"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
                     >
                       🗺️Click tại đây
@@ -46,10 +54,10 @@ export default function Footer() {
                   <div>
                     <p className="font-bold text-white">96 Ngô Thị Thu Minh, P.2, Q.Tân Bình</p>
                     <p className="font-bold text-white">⏱ 11:00 – 20:00 (Thứ 2 – Thứ 7)</p>
-                    <a 
-                      href="https://www.google.com/maps/place/Phòng+khám+GALANT/@10.7974487,106.6625612,15z/data=!4m6!3m5!1s0x31752f99b707f4c5:0xf82cc92182ee5491!8m2!3d10.7974487!4d106.6625612!16s%2Fg%2F11kmy8szw4?sa=X&ved=1t:2428&ictx=111&utm_campaign=tt-sps&coh=209934&entry=tts" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href="https://www.google.com/maps/place/Phòng+khám+GALANT"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
                     >
                       🗺️Click tại đây
@@ -70,10 +78,10 @@ export default function Footer() {
                   <div>
                     <p className="font-bold text-white">15 ngõ 143 Trung Kính, Cầu Giấy, Hà Nội</p>
                     <p className="font-bold text-white">⏱ 09:00 – 20:00 (Thứ 2 – Chủ nhật)</p>
-                    <a 
-                      href="https://www.google.com/maps/place/Phòng+Khám+GALANT/@21.0149039,105.7919273,17z/data=!3m1!4b1!4m6!3m5!1s0x3135ab3a86a038d7:0x5c1348702dcd8f87!8m2!3d21.0148989!4d105.7945022!16s%2Fg%2F11tf0vzr3y?entry=tts&g_ep=EgoyMDI0MTIxMS4wIPu8ASoASAFQAw%3D%3D" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href="https://www.google.com/maps/place/Phòng+Khám+GALANT"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-400 hover:text-blue-300 hover:underline font-bold"
                     >
                       🗺️Click tại đây
@@ -95,13 +103,13 @@ export default function Footer() {
             </h2>
             <ul className="space-y-3">
               <li>
-                <Link to="/about" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/about" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Giới thiệu
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/services" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Dịch vụ
                 </Link>
@@ -116,13 +124,13 @@ export default function Footer() {
             </h2>
             <ul className="space-y-3">
               <li>
-                <Link to="/faq" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/faq" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Câu hỏi thường gặp
                 </Link>
               </li>
               <li>
-                <Link to="/appointment-guide" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/appointment-guide" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Hướng dẫn đặt lịch
                 </Link>
@@ -137,13 +145,13 @@ export default function Footer() {
             </h2>
             <ul className="space-y-3">
               <li>
-                <Link to="/privacy" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/privacy" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Chính sách bảo mật
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-white hover:text-blue-400 transition-colors duration-300 flex items-center group font-bold">
+                <Link to="/terms" className="text-white hover:text-blue-400 flex items-center group font-bold">
                   <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 group-hover:scale-150 transition-transform"></span>
                   Điều khoản dịch vụ
                 </Link>
@@ -171,33 +179,29 @@ export default function Footer() {
               </li>
               <li className="flex items-center text-white font-bold">
                 <FaEnvelope className="w-5 h-5 mr-3 text-blue-600" />
-                <span>Email: info@trungtamyte.com</span>
+                <span>Email: info@trungtamytetonghop.vn</span>
               </li>
             </ul>
+            <div className="flex space-x-4 mt-4">
+              <a href="https://facebook.com" className="text-white hover:text-blue-400">
+                <FaFacebook />
+              </a>
+              <a href="https://twitter.com" className="text-white hover:text-blue-400">
+                <FaTwitter />
+              </a>
+              <a href="https://instagram.com" className="text-white hover:text-blue-400">
+                <FaInstagram />
+              </a>
+              <a href="https://linkedin.com" className="text-white hover:text-blue-400">
+                <FaLinkedin />
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* Social Media Links */}
-        <div className="flex justify-center space-x-6 mb-8">
-          <a href="#" className="text-white hover:text-blue-400 transition-colors duration-300">
-            <FaFacebook className="w-6 h-6" />
-          </a>
-          <a href="#" className="text-white hover:text-blue-400 transition-colors duration-300">
-            <FaTwitter className="w-6 h-6" />
-          </a>
-          <a href="#" className="text-white hover:text-blue-400 transition-colors duration-300">
-            <FaInstagram className="w-6 h-6" />
-          </a>
-          <a href="#" className="text-white hover:text-blue-400 transition-colors duration-300">
-            <FaLinkedin className="w-6 h-6" />
-          </a>
-        </div>
-
-        {/* Copyright */}
-        <div className="border-t border-gray-200 dark:border-blue-900 pt-8 text-center">
-          <p className="text-sm text-white font-bold">
-            © 2025 Trung Tâm Y Tế. Tất cả quyền được bảo lưu.
-          </p>
+        {/* Bottom Footer */}
+        <div className="text-center text-white font-bold border-t pt-6 border-blue-800">
+          &copy; {new Date().getFullYear()} Trung tâm y tế GALANT. All rights reserved.
         </div>
       </div>
     </footer>

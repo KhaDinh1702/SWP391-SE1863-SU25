@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/NavBar.jsx";
 import Footer from "../components/Footer.jsx";
-import ARVTreatmentForm from "../components/ARVTreatmentForm.jsx";
 import Carousel from "../components/Carousel.jsx";
 import CallWidget from "../components/CallWidget";
 import ChatWidget from "../components/ChatWidget";
@@ -51,10 +50,7 @@ export default function Home() {
           <Carousel />
         </section>
 
-        {/* ARV Treatment Form */}
-        <section className="max-w-6xl mx-auto mb-16">
-          <ARVTreatmentForm />
-        </section>
+
 
         {/* ARV Insurance Info Section */}
         <section className="max-w-6xl mx-auto mb-20 bg-white/90 backdrop-blur-md border border-blue-100 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">

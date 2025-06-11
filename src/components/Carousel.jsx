@@ -5,34 +5,41 @@ export default function Carousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [imageErrors, setImageErrors] = useState({});
   
   const slides = [
     {
-      image: "https://objstore17034api.superdata.vn/alobacsi-assets/thuoc-ARV.jpg",
+      image: "https://wallpapers.com/images/high/healthcare-medicine-kinds-hueis0en26wjjmbm.webp",
+      fallbackImage: "https://img.freepik.com/free-photo/medicine-capsules-global-health-with-geometric-pattern-digital-remix_53876-126742.jpg",
       title: "Thuốc ARV Chất Lượng",
       description: "Cung cấp đầy đủ các loại thuốc ARV với chất lượng quốc tế"
     },
     {
-      image: "https://i.pinimg.com/736x/d4/ea/55/d4ea556a1359c33fc7fb5d6c7bbd7d71.jpg",
+      image: "https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg",
+      fallbackImage: "https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg",
       title: "Tư Vấn Chuyên Môn",
       description: "Đội ngũ dược sĩ giàu kinh nghiệm luôn sẵn sàng hỗ trợ"
     },
     {
-      image: "https://i.pinimg.com/736x/00/a3/de/00a3dedef07d58b443b76a97ca894f83.jpg",
+      image: "https://wallpapers.com/images/high/healthcare-symbols-blue-9f5arq1i27if6abf.webp",
+      fallbackImage: "https://img.freepik.com/free-photo/medical-banner-with-doctor-working-hospital_23-2149611195.jpg",
       title: "Dịch Vụ Tận Tâm",
       description: "Cam kết mang đến trải nghiệm tốt nhất cho khách hàng"
     },
     {
-      image: "https://i.pinimg.com/736x/12/1f/fd/121ffd0bf46bf2872f80407c9c60d75d.jpg",
-      title: "Giao Hàng Nhanh Chóng",
-      description: "Giao thuốc tận nơi trong nội thành với thời gian nhanh nhất"
-    },
-    {
-      image: "https://jbi.global/sites/default/files/styles/home_page_carousel_image_style/public/2021-03/CarouselEITP1900wide_1.jpg?h=cd163b2d&itok=k2hZSitm",
+      image: "https://wallpapers.com/images/featured/healthcare-oco8w27tkw40cp90.jpg",
+      fallbackImage: "https://img.freepik.com/free-photo/medical-banner-with-doctor-working-hospital_23-2149611195.jpg",
       title: "Hỗ Trợ 24/7",
       description: "Luôn sẵn sàng phục vụ và tư vấn mọi lúc mọi nơi"
     }
   ];
+
+  const handleImageError = (index) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [index]: true
+    }));
+  };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -79,9 +86,10 @@ export default function Carousel() {
           >
             <img
               className="w-full h-full object-cover object-center"
-              src={slide.image}
+              src={imageErrors[index] ? slide.fallbackImage : slide.image}
               alt={slide.title}
               loading="lazy"
+              onError={() => handleImageError(index)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
             
