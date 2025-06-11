@@ -17,6 +17,8 @@ import Services from './pages/Services';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermOfServices";
 import AppointmentBooking from "./pages/AppointmentBooking";
+import FAQ from './pages/FAQ';
+import AppointmentGuide from './pages/AppointmentGuide';
 // Import các component quản lý từ thư mục con
 
 
@@ -39,6 +41,8 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/appointment-guide" element={<AppointmentGuide />} />
 
         {/* Admin routes */}
         <Route

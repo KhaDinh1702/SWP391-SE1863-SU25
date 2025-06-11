@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import PatientAppointmentForm from "../components/PatientAppointmentForm";
 import { getUser } from "../utils/auth";
 import { userService } from "../services/api";
+import { Link } from "react-router-dom";
 
 export default function AppointmentBooking() {
   const user = getUser();
@@ -45,8 +46,25 @@ export default function AppointmentBooking() {
 
   if (!user || user.role !== "Patient") {
     return (
-      <div className="text-center py-20 text-red-600">
-        Bạn cần đăng nhập bằng tài khoản bệnh nhân để đặt lịch hẹn.
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 max-w-md w-full mx-4">
+          <h2 className="text-2xl font-bold text-white mb-4">Cần đăng nhập</h2>
+          <p className="text-gray-300 mb-6">Bạn cần đăng nhập bằng tài khoản bệnh nhân để đặt lịch hẹn.</p>
+          <div className="space-y-4">
+            <Link
+              to="/login"
+              className="inline-block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-300"
+            >
+              Đăng nhập
+            </Link>
+            <Link
+              to="/register"
+              className="inline-block w-full px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors duration-300"
+            >
+              Đăng ký tài khoản
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
