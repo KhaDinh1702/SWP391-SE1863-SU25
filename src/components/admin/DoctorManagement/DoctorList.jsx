@@ -1,9 +1,29 @@
-import { Table, Button, Space } from 'antd';
+import { Table, Button, Space, Image } from 'antd';
 
 const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
   const columns = [
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Specialization', dataIndex: 'specialization', key: 'specialization' },
+    { 
+      title: 'Profile Picture',
+      dataIndex: 'profilePictureURL',
+      key: 'profilePictureURL',
+      render: (url) => url ? <Image src={url} width={50} height={50} style={{ objectFit: 'cover' }} /> : 'No image'
+    },
+    { title: 'Full Name', dataIndex: 'fullName', key: 'fullName' },
+    { title: 'Specializations', dataIndex: 'specializations', key: 'specializations' },
+    { title: 'Qualification', dataIndex: 'qualification', key: 'qualification' },
+    { 
+      title: 'Experience',
+      dataIndex: 'experience',
+      key: 'experience',
+      render: (exp) => `${exp} years`
+    },
+    {
+      title: 'Bio',
+      dataIndex: 'bio',
+      key: 'bio',
+      ellipsis: true,
+      width: 200
+    },
     {
       title: 'Actions',
       key: 'actions',
@@ -22,6 +42,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
       dataSource={doctors}
       loading={isLoading}
       rowKey="id"
+      scroll={{ x: true }}
     />
   );
 };

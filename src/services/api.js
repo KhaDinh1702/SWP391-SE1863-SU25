@@ -15,12 +15,18 @@ export const authService = {
       }
 
       const data = await response.json();
+      console.log('Login response:', data); // Debug log
 
-      // Giả sử server trả về token, username, role, userId
+      // Store user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
       localStorage.setItem('userId', data.userId);
+      
+      // If user is a patient, store patientId
+      if (data.role === 'Patient' && data.patientId) {
+        localStorage.setItem('patientId', data.patientId);
+      }
 
       return data;
     } catch (error) {
@@ -56,12 +62,20 @@ export const authService = {
   getCurrentUser: () => {
     const token = localStorage.getItem('token');
     if (!token) return null;
-    return {
+    
+    const user = {
       token,
       username: localStorage.getItem('username'),
       role: localStorage.getItem('role'),
       userId: localStorage.getItem('userId'),
     };
+
+    // Add patientId if user is a patient
+    if (user.role === 'Patient') {
+      user.patientId = localStorage.getItem('patientId');
+    }
+
+    return user;
   },
 
   logout: () => {
@@ -69,6 +83,7 @@ export const authService = {
     localStorage.removeItem('username');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
+    localStorage.removeItem('patientId'); // Clear patientId on logout
   },
 };
 
@@ -235,21 +250,60 @@ export const doctorService = {
     }
   },
 
-  deleteDoctor: async (id) => {
+  updateDoctor: async (doctorData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Doctor/delete/${id}`, {
-        method: 'DELETE',
+      const response = await fetch(`${API_BASE_URL}/Doctor/update`, {
+        method: 'PUT',
         headers: getAuthHeaders(),
+        body: JSON.stringify({
+          doctorId: doctorData.id,
+          fullName: doctorData.fullName,
+          specializations: doctorData.specializations,
+          qualification: doctorData.qualification,
+          experience: doctorData.experience,
+          bio: doctorData.bio,
+          profilePictureURL: doctorData.profilePictureURL
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Xoá bác sĩ thất bại');
+        const errorData = await response.json().catch(() => ({ message: 'Cập nhật bác sĩ thất bại' }));
+        throw new Error(errorData.message || 'Cập nhật bác sĩ thất bại');
       }
 
-      return await response.json();
+      const text = await response.text();
+      if (!text) {
+        return doctorData; // Return the updated data if server doesn't return anything
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        console.warn('Server response was not JSON, returning updated data');
+        return doctorData;
+      }
     } catch (error) {
-      console.error('Delete doctor error:', error);
+      console.error('Update doctor failed:', error);
       throw error;
     }
   },
+
+  deleteDoctor: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Doctor/delete-doctor?doctorId=${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Xóa bác sĩ thất bại' }));
+        throw new Error(errorData.message || 'Xóa bác sĩ thất bại');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Delete doctor failed:', error);
+      throw error;
+    }
+  }
 };

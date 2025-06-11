@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Spin, Avatar, Typography, message, Card } from 'antd';
+import { Layout, Spin, Avatar, Typography, message, Card, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { UserOutlined, DashboardOutlined, TeamOutlined, UserSwitchOutlined, ProfileOutlined } from '@ant-design/icons';
 
@@ -9,6 +9,7 @@ import DoctorList from '../components/admin/DoctorManagement/DoctorList';
 import UserList from '../components/admin/UserManagement/UserList';
 import AdminProfile from '../components/admin/AdminProfile';
 import StatsCards from '../components/admin/DashboardStatus/StatsCards';
+import EditDoctorModal from '../components/admin/DoctorManagement/EditDoctorModal';
 
 import { userService, doctorService, authService } from '../services/api';
 
@@ -22,6 +23,8 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   // Admin info
   const [admin, setAdmin] = useState({
@@ -128,20 +131,46 @@ const AdminDashboard = () => {
   }, [activeTab]);
 
   const handleEditDoctor = (doctor) => {
-    console.log('Edit doctor:', doctor);
+    setSelectedDoctor(doctor);
+    setIsEditModalVisible(true);
   };
 
-  const handleDeleteDoctor = async (id) => {
+  const handleSaveDoctor = async (updatedDoctor) => {
     try {
       setLoading(true);
-      await doctorService.deleteDoctor(id);
-      setDoctors((prev) => prev.filter((doc) => doc.id !== id));
-      message.success('Xoá bác sĩ thành công');
+      await doctorService.updateDoctor(updatedDoctor);
+      setDoctors(prev => prev.map(doc => 
+        doc.id === updatedDoctor.id ? updatedDoctor : doc
+      ));
+      message.success('Cập nhật bác sĩ thành công');
+      setIsEditModalVisible(false);
     } catch (error) {
-      message.error('Xoá bác sĩ thất bại');
+      message.error('Cập nhật bác sĩ thất bại');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteDoctor = async (id) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa bác sĩ này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await doctorService.deleteDoctor(id);
+          setDoctors(prev => prev.filter(doc => doc.id !== id));
+          message.success('Xóa bác sĩ thành công');
+        } catch (error) {
+          message.error('Xóa bác sĩ thất bại');
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleViewUser = (id) => {
@@ -265,7 +294,7 @@ const AdminDashboard = () => {
 
             {loading ? (
               <div className="flex justify-center items-center h-48">
-                <Spin size="large" tip="Đang tải dữ liệu..." />
+                <Spin size="large" tip="Đang tải dữ liệu..." fullscreen />
               </div>
             ) : (
               <div className="bg-white rounded-lg p-4">
@@ -301,6 +330,15 @@ const AdminDashboard = () => {
           </Card>
         </Content>
       </Layout>
+      <EditDoctorModal
+        visible={isEditModalVisible}
+        doctor={selectedDoctor}
+        onCancel={() => {
+          setIsEditModalVisible(false);
+          setSelectedDoctor(null);
+        }}
+        onSave={handleSaveDoctor}
+      />
     </Layout>
   );
 };

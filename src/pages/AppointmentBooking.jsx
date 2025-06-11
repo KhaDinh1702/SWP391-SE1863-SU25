@@ -1,11 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/NavBar";
 import Footer from "../components/Footer";
 import PatientAppointmentForm from "../components/PatientAppointmentForm";
 import { getUser } from "../utils/auth";
+import { userService } from "../services/api";
 
 export default function AppointmentBooking() {
   const user = getUser();
+  const [patientId, setPatientId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatientId = async () => {
+      if (user && user.role === "Patient") {
+        try {
+          // Lấy thông tin user từ API
+          const userData = await userService.getUserById(user.userId);
+          console.log("User data:", userData); // Debug log
+
+          // Kiểm tra và lấy patientId
+          if (userData) {
+            // Nếu userData có patientId trực tiếp
+            if (userData.patientId) {
+              setPatientId(userData.patientId);
+            }
+            // Nếu userData có patient object
+            else if (userData.patient && userData.patient.id) {
+              setPatientId(userData.patient.id);
+            }
+            // Nếu userData có id và role là Patient
+            else if (userData.id && userData.role === "Patient") {
+              setPatientId(userData.id);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching patient data:", error);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchPatientId();
+  }, [user]);
 
   if (!user || user.role !== "Patient") {
     return (
@@ -15,11 +51,37 @@ export default function AppointmentBooking() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Đang tải thông tin...</p>
+      </div>
+    );
+  }
+
+  if (!patientId) {
+    return (
+      <div className="text-center py-20">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Không tìm thấy thông tin bệnh nhân</h3>
+          <p className="text-gray-600 mb-4">Vui lòng kiểm tra lại thông tin tài khoản của bạn.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-blue-50">
       <Navbar />
       <main className="flex-grow">
-        <PatientAppointmentForm patientId={user.userId} />
+        <PatientAppointmentForm patientId={patientId} />
       </main>
       <Footer />
     </div>
