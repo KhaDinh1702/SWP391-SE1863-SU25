@@ -22,18 +22,20 @@ import {
   FaCheckCircle
 } from 'react-icons/fa';
 
-const Emergency = () => {
+import { FcVideoCall } from "react-icons/fc";
+
+const Contact24h = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(null);
 
-  const emergencyContacts = [
+  const contactInfo = [
     {
-      title: "Cấp cứu 24/7",
+      title: "Hỗ trợ trực tuyến 24/7",
       number: "0943 108 138",
       description: "Đội ngũ y tế sẵn sàng hỗ trợ 24/7",
-      icon: <FaAmbulance className="text-3xl" />,
-      color: "from-red-600 to-red-700",
-      features: ["Phản hồi nhanh chóng", "Đội ngũ chuyên môn cao", "Xe cứu thương sẵn sàng"]
+      icon: <FcVideoCall className="text-3xl" />,
+      color: "from-gray-300 to-gray-200",
+      features: ["Phản hồi nhanh chóng", "Đội ngũ chuyên môn cao", "Đảm bảo an toàn thông tin cá nhân"]
     },
     {
       title: "Tư vấn khẩn cấp",
@@ -53,30 +55,30 @@ const Emergency = () => {
     }
   ];
 
-  const emergencySteps = [
+  const contactSteps = [
     {
-      title: "Gọi cấp cứu",
-      description: "Gọi ngay số hotline cấp cứu 24/7",
+      title: "Gọi hỗ trợ",
+      description: "Gọi ngay số hotline hỗ trợ 24/7",
       icon: <FaPhone className="text-2xl" />,
-      details: "Khi gặp tình huống khẩn cấp, hãy gọi ngay số hotline của chúng tôi. Đội ngũ y tế sẽ phản hồi và hỗ trợ bạn ngay lập tức."
+      details: "Khi cần hỗ trợ, hãy gọi ngay số hotline của chúng tôi. Đội ngũ y tế sẽ phản hồi và hỗ trợ bạn ngay lập tức."
     },
     {
       title: "Cung cấp thông tin",
-      description: "Cung cấp địa chỉ và tình trạng khẩn cấp",
+      description: "Cung cấp thông tin cần hỗ trợ",
       icon: <FaNotesMedical className="text-2xl" />,
-      details: "Cung cấp địa chỉ chính xác và mô tả tình trạng bệnh nhân để đội ngũ y tế có thể chuẩn bị tốt nhất."
+      details: "Cung cấp thông tin chi tiết về vấn đề bạn đang gặp phải để đội ngũ y tế có thể hỗ trợ tốt nhất."
     },
     {
-      title: "Sơ cứu ban đầu",
-      description: "Thực hiện các bước sơ cứu theo hướng dẫn",
+      title: "Hướng dẫn",
+      description: "Nhận hướng dẫn từ chuyên gia",
       icon: <FaFirstAid className="text-2xl" />,
-      details: "Thực hiện các bước sơ cứu cơ bản theo hướng dẫn của nhân viên y tế qua điện thoại."
+      details: "Nhận hướng dẫn chi tiết từ đội ngũ chuyên môn để xử lý tình huống hiện tại."
     },
     {
-      title: "Chờ hỗ trợ",
-      description: "Giữ bình tĩnh và chờ đội ngũ y tế đến",
+      title: "Theo dõi",
+      description: "Theo dõi và hỗ trợ liên tục",
       icon: <FaHeartbeat className="text-2xl" />,
-      details: "Giữ bình tĩnh và theo dõi tình trạng bệnh nhân trong khi chờ đội ngũ y tế đến."
+      details: "Đội ngũ y tế sẽ theo dõi và hỗ trợ bạn cho đến khi vấn đề được giải quyết hoàn toàn."
     }
   ];
 
@@ -87,7 +89,7 @@ const Emergency = () => {
       hours: "24/7",
       phone: "0943 108 138",
       map: "https://maps.app.goo.gl/r4HqLmE7puGDJmJp7",
-      services: ["Cấp cứu 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
+      services: ["Hỗ trợ 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
     },
     {
       name: "3AE TÂN BÌNH",
@@ -95,7 +97,7 @@ const Emergency = () => {
       hours: "24/7",
       phone: "0901 386 618",
       map: "https://maps.app.goo.gl/cpQu7AMMPpxBVRM67",
-      services: ["Cấp cứu 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
+      services: ["Hỗ trợ 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
     },
     {
       name: "3AE HÀ NỘI",
@@ -103,11 +105,11 @@ const Emergency = () => {
       hours: "24/7",
       phone: "0964 269 100",
       map: "https://maps.app.goo.gl/bnQLjuPq6pguu5uE8",
-      services: ["Cấp cứu 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
+      services: ["Hỗ trợ 24/7", "Khám bệnh", "Xét nghiệm", "Cấp phát thuốc"]
     }
   ];
 
-  const handleEmergencyCall = (number) => {
+  const handleContactCall = (number) => {
     window.location.href = `tel:${number}`;
   };
 
@@ -116,12 +118,12 @@ const Emergency = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Emergency Banner */}
+        {/* Contact Banner */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl shadow-xl p-8 mb-8 text-white relative overflow-hidden"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl shadow-xl p-8 mb-8 text-white relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10"></div>
           <div className="relative flex items-center justify-between">
@@ -132,7 +134,7 @@ const Emergency = () => {
                 transition={{ delay: 0.2 }}
                 className="text-4xl font-bold"
               >
-                Cấp cứu 24/7
+                Liên hệ 24/7
               </motion.h1>
               <motion.p 
                 initial={{ opacity: 0, x: -20 }}
@@ -148,8 +150,8 @@ const Emergency = () => {
                 transition={{ delay: 0.4 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => handleEmergencyCall("0943108138")}
-                className="bg-white text-red-600 px-8 py-3 rounded-xl font-bold text-lg hover:bg-red-50 transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                onClick={() => handleContactCall("0943108138")}
+                className="bg-white text-blue-600 px-8 py-3 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
               >
                 <FaPhone className="text-xl" />
                 Gọi ngay: 0943 108 138
@@ -161,17 +163,17 @@ const Emergency = () => {
               transition={{ delay: 0.5 }}
               className="relative"
             >
-              <FaExclamationTriangle className="text-8xl opacity-50" />
+              <FaPhone className="text-8xl opacity-50" />
               <div className="absolute inset-0 animate-ping">
-                <FaExclamationTriangle className="text-8xl opacity-20" />
+                <FaPhone className="text-8xl opacity-20" />
               </div>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Emergency Contacts */}
+        {/* Contact Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {emergencyContacts.map((contact, index) => (
+          {contactInfo.map((contact, index) => (
             <motion.div 
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -194,7 +196,7 @@ const Emergency = () => {
                 ))}
               </ul>
               <button
-                onClick={() => handleEmergencyCall(contact.number.replace(/\s/g, ''))}
+                onClick={() => handleContactCall(contact.number.replace(/\s/g, ''))}
                 className="text-blue-600 font-medium hover:text-blue-800 transition-colors duration-300 flex items-center gap-2 group"
               >
                 {contact.number}
@@ -204,16 +206,16 @@ const Emergency = () => {
           ))}
         </div>
 
-        {/* Emergency Steps */}
+        {/* Contact Steps */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="bg-white rounded-3xl shadow-xl p-8 mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Các bước xử lý khẩn cấp</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Quy trình hỗ trợ</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {emergencySteps.map((step, index) => (
+            {contactSteps.map((step, index) => (
               <motion.div 
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
@@ -250,14 +252,14 @@ const Emergency = () => {
           </div>
         </motion.div>
 
-        {/* Emergency Locations */}
+        {/* Contact Locations */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="bg-white rounded-3xl shadow-xl p-8"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Địa điểm cấp cứu gần nhất</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Địa điểm liên hệ gần nhất</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {locations.map((location, index) => (
               <motion.div 
@@ -321,4 +323,4 @@ const Emergency = () => {
   );
 };
 
-export default Emergency; 
+export default Contact24h; 

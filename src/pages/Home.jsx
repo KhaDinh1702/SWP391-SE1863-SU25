@@ -4,6 +4,7 @@ import Footer from "../components/Footer.jsx";
 import Carousel from "../components/Carousel.jsx";
 import CallWidget from "../components/CallWidget";
 import ChatWidget from "../components/ChatWidget";
+import PatientProfile from "../components/PatientProfile.jsx";
 import newsData from "../data/newsData";
 import doctorsData from "../data/doctorsData";
 import DoctorCarousel from "../components/DoctorCarousel.jsx";
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-gray-800">
       <Navbar />
+      {loggedIn && <PatientProfile />}
 
       <main className="flex-grow p-4 md:p-6">
         {/* Hero Section */}
@@ -40,7 +42,10 @@ export default function Home() {
                   </span>
                 </h1>
                 <p className="text-xl md:text-2xl text-blue-200 leading-relaxed animate-fade-in-up">
-                  Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy
+                  {loggedIn 
+                    ? "Khám phá thông tin dịch vụ y tế đáng tin cậy của chúng tôi"
+                    : "Đăng nhập, đăng ký, hoặc khám phá thông tin dịch vụ đáng tin cậy"
+                  }
                 </p>
               </div>
 

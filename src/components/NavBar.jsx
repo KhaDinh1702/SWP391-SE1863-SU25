@@ -89,10 +89,10 @@ export default function FullNavbar() {
                   <span>Đặt lịch khám</span>
                 </button>
                 <button 
-                  onClick={() => navigate("/emergency")}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors duration-300"
+                  onClick={() => navigate("/contact-24h")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-xs font-medium transition-colors duration-300"
                 >
-                  Cấp cứu 24/7
+                  Liên hệ 24/7
                 </button>
               </div>
             </div>

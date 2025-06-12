@@ -11,6 +11,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import DoctorDashboard from './pages/DoctorDashboard';
 import PatientDashboard from './pages/PatientDashboard';
+import PatientProfile from './pages/PatientProfile';
+import PatientAppointments from './pages/PatientAppointments';
 import Medical from './pages/Medicine';
 import Pricing from './pages/Pricing';
 import Services from './pages/Services';
@@ -19,7 +21,8 @@ import TermsOfService from "./pages/TermOfServices";
 import AppointmentBooking from "./pages/AppointmentBooking";
 import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
-import Emergency from './pages/Emergency';
+import Contact24h from './pages/Contact24h';
+import ProtectedLayout from './components/ProtectedLayout';
 // Import các component quản lý từ thư mục con
 
 
@@ -44,7 +47,7 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/appointment-guide" element={<AppointmentGuide />} />
-        <Route path="/emergency" element={<Emergency />} />
+        <Route path="/contact-24h" element={<Contact24h />} />
 
         {/* Admin routes */}
         <Route
@@ -54,8 +57,7 @@ function App() {
               <AdminDashboard />
             </ProtectedRoute>
           }
-        >
-        </Route>
+        />
 
         {/* Doctor routes */}
         <Route
@@ -72,7 +74,29 @@ function App() {
           path="/patient/dashboard"
           element={
             <ProtectedRoute requiredRoles={["Patient"]}>
-              <PatientDashboard />
+              <ProtectedLayout>
+                <PatientDashboard />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute requiredRoles={["Patient"]}>
+              <ProtectedLayout>
+                <PatientProfile />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute requiredRoles={["Patient"]}>
+              <ProtectedLayout>
+                <PatientAppointments />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />

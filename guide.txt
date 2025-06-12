@@ -5,4 +5,4 @@ npm run dev
  dotnet run --project SWPSU25/SWPSU25.csproj
 
 npm i antd 
-
+npm i framer-motion
