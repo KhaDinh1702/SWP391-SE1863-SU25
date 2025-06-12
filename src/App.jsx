@@ -19,7 +19,7 @@ import TermsOfService from "./pages/TermOfServices";
 import AppointmentBooking from "./pages/AppointmentBooking";
 import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
-import Emergency from './pages/Emergency';
+import Contact24h from './pages/Contact24h';
 // Import các component quản lý từ thư mục con
 
 
@@ -44,7 +44,7 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/appointment-guide" element={<AppointmentGuide />} />
-        <Route path="/emergency" element={<Emergency />} />
+        <Route path="/contact-24h" element={<Contact24h />} />
 
         {/* Admin routes */}
         <Route

@@ -35,7 +35,6 @@ const Footer = () => {
       items: [
         { name: "Giới thiệu", path: "/about" },
         { name: "Dịch vụ", path: "/services" },
-        { name: "Hệ thống phòng khám", path: "/locations" }
       ]
     },
     {
