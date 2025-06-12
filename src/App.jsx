@@ -22,7 +22,6 @@ import AppointmentBooking from "./pages/AppointmentBooking";
 import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
-import ProtectedLayout from './components/ProtectedLayout';
 // Import các component quản lý từ thư mục con
 
 
