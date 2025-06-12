@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import doctorsData from "../data/doctorsData";
+import doctorsData from "../../data/doctorsData";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function DoctorCarousel() {

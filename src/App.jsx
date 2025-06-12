@@ -10,19 +10,18 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import DoctorDashboard from './pages/DoctorDashboard';
-import PatientDashboard from './pages/PatientDashboard';
-import PatientProfile from './pages/PatientProfile';
-import PatientAppointments from './pages/PatientAppointments';
+import PatientProfile from './pages/patient/PatientProfile';
+import PatientAppointments from './pages/patient/PatientAppointments';
 import Medical from './pages/Medicine';
 import Pricing from './pages/Pricing';
 import Services from './pages/Services';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermOfServices";
-import AppointmentBooking from "./pages/AppointmentBooking";
+import AppointmentBooking from './pages/patient/AppointmentBooking';
 import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
-import ProtectedLayout from './components/ProtectedLayout';
+import ProtectedLayout from './components/patient/ProtectedLayout';
 // Import các component quản lý từ thư mục con
 
 
@@ -71,16 +70,7 @@ function App() {
         />
 
         {/* Patient routes */}
-        <Route
-          path="/patient/dashboard"
-          element={
-            <ProtectedRoute requiredRoles={["Patient"]}>
-              <ProtectedLayout>
-                <PatientDashboard />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
+        
         <Route
           path="/profile"
           element={

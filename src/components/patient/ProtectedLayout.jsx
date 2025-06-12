@@ -1,7 +1,7 @@
 import React from 'react';
 import PatientProfile from './PatientProfile';
-import Navbar from './NavBar';
-import Footer from './Footer';
+import Navbar from '../NavBar';
+import Footer from '../Footer';
 
 export default function ProtectedLayout({ children }) {
   return (

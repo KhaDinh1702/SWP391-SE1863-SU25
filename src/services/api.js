@@ -1,6 +1,14 @@
 const API_BASE_URL = 'http://localhost:5275/api';
 
-export const authService = {
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    Authorization: token ? `Bearer ${token}` : '',
+    'Content-Type': 'application/json',
+  };
+};
+
+const authService = {
   login: async (credentials) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -15,7 +23,7 @@ export const authService = {
       }
 
       const data = await response.json();
-      console.log('Login response:', data); // Debug log
+      console.log('Login response:', data);
 
       // Store user data
       localStorage.setItem('token', data.token);
@@ -83,20 +91,15 @@ export const authService = {
     localStorage.removeItem('username');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
-    localStorage.removeItem('patientId'); // Clear patientId on logout
+    localStorage.removeItem('patientId');
   },
 };
 
-const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-  'Content-Type': 'application/json',
-});
-
-export const userService = {
+const userService = {
   getAllUsers: async () => {
     try {
       const headers = getAuthHeaders();
-      console.log('Auth headers:', headers); // Debug log
+      console.log('Auth headers:', headers);
 
       const response = await fetch(`${API_BASE_URL}/User/get-list-user`, {
         headers: headers,
@@ -104,12 +107,12 @@ export const userService = {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Server error response:', errorData); // Debug log
+        console.error('Server error response:', errorData);
         throw new Error(errorData.message || 'Không thể lấy danh sách người dùng');
       }
 
       const data = await response.json();
-      console.log('Received user data:', data); // Debug log
+      console.log('Received user data:', data);
       
       return data.map(user => ({
         ...user,
@@ -151,7 +154,7 @@ export const userService = {
           role: userData.role,
           address: userData.address,
           gender: userData.gender,
-          password: userData.password || undefined // Only send if provided
+          password: userData.password || undefined
         }),
       });
 
@@ -216,7 +219,7 @@ export const userService = {
   },
 };
 
-export const doctorService = {
+const doctorService = {
   getAllDoctors: async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
@@ -273,7 +276,7 @@ export const doctorService = {
 
       const text = await response.text();
       if (!text) {
-        return doctorData; // Return the updated data if server doesn't return anything
+        return doctorData;
       }
 
       try {
@@ -307,3 +310,5 @@ export const doctorService = {
     }
   }
 };
+
+export { authService, userService, doctorService }; 

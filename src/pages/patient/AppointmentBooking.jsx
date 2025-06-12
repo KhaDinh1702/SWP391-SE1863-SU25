@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/NavBar";
-import Footer from "../components/Footer";
-import PatientAppointmentForm from "../components/PatientAppointmentForm";
-import { getUser } from "../utils/auth";
-import { userService } from "../services/api";
+import Navbar from "../../components/NavBar";
+import Footer from "../../components/Footer";
+import PatientAppointmentForm from "../../components/patient/PatientAppointmentForm";
+import { getUser } from "../../utils/auth";
+import { userService } from "../../services/api";
 import { Link } from "react-router-dom";
 
 export default function AppointmentBooking() {

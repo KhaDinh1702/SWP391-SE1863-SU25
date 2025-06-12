@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { doctorService } from "../services/api";
+import { doctorService } from "../../services/api";
 import { CalendarOutlined, UserOutlined, VideoCameraOutlined, EnvironmentOutlined, FileTextOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 
 const API_BASE_URL = 'http://localhost:5275/api';

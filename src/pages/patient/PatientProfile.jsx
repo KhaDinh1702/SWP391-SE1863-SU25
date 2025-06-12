@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-import { authService } from '../services/api';
+import { authService } from '../../services/api';
 
 export default function PatientProfile() {
   const navigate = useNavigate();
@@ -28,14 +28,23 @@ export default function PatientProfile() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+          const errorData = await response.json().catch(() => ({}));
+          console.error('API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData,
+            userId: currentUser.userId
+          });
+          throw new Error(errorData.message || `Failed to fetch user data: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('Fetched user data:', data);
         setUserData(data);
         setEditedData(data);
         setLoading(false);
       } catch (err) {
+        console.error('Error fetching user data:', err);
         setError(err.message);
         setLoading(false);
       }

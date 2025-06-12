@@ -1,13 +1,13 @@
 import { useState } from "react";
 import Navbar from "../components/NavBar.jsx";
 import Footer from "../components/Footer.jsx";
-import Carousel from "../components/Carousel.jsx";
-import CallWidget from "../components/CallWidget";
-import ChatWidget from "../components/ChatWidget";
-import PatientProfile from "../components/PatientProfile.jsx";
+import Carousel from "../components/home/Carousel.jsx";
+import CallWidget from "../components/home/CallWidget";
+import ChatWidget from "../components/home/ChatWidget";
+import PatientProfile from "../components/patient/PatientProfile.jsx";
 import newsData from "../data/newsData";
 import doctorsData from "../data/doctorsData";
-import DoctorCarousel from "../components/DoctorCarousel.jsx";
+import DoctorCarousel from "../components/home/DoctorCarousel.jsx";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../utils/auth";
 import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone } from "react-icons/fa";

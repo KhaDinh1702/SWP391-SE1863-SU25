@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaClock, FaUserMd, FaHospital, FaTimes, FaCheck, FaSpinner, FaVideo } from 'react-icons/fa';
-import { authService } from '../services/api';
+import { authService } from '../../services/api';
 
 export default function PatientAppointments() {
   const navigate = useNavigate();
@@ -28,7 +28,12 @@ export default function PatientAppointments() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Failed to fetch appointments');
+          console.error('API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          });
+          throw new Error(errorData.message || `Failed to fetch appointments: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
@@ -41,70 +46,55 @@ export default function PatientAppointments() {
         );
 
         // Fetch doctor information for each appointment
-        const appointmentsWithDoctors = await Promise.all(
+        const appointmentsWithDoctorInfo = await Promise.all(
           patientAppointments.map(async (apt) => {
-            if (apt.doctorId || apt.DoctorId) {
-              try {
-                // First try to get doctor by ID
-                const doctorResponse = await fetch(
-                  `http://localhost:5275/api/Doctor/get-by-id?doctorId=${apt.doctorId || apt.DoctorId}`,
-                  {
-                    headers: {
-                      'Authorization': `Bearer ${currentUser.token}`,
-                      'Content-Type': 'application/json'
-                    }
-                  }
+            try {
+              const doctorId = apt.doctorId || apt.DoctorId;
+              if (!doctorId) return apt;
+
+              const allDoctorsResponse = await fetch('http://localhost:5275/api/Doctor/get-list-doctor', {
+                headers: {
+                  'Authorization': `Bearer ${currentUser.token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (!allDoctorsResponse.ok) {
+                console.error('Error fetching doctors:', {
+                  status: allDoctorsResponse.status,
+                  statusText: allDoctorsResponse.statusText
+                });
+                return apt;
+              }
+
+              if (allDoctorsResponse.ok) {
+                const allDoctors = await allDoctorsResponse.json();
+                const doctor = allDoctors.find(d => 
+                  d.id === doctorId || 
+                  d.Id === doctorId
                 );
-                
-                if (doctorResponse.ok) {
-                  const doctorData = await doctorResponse.json();
+                if (doctor) {
                   return {
                     ...apt,
-                    doctorName: doctorData.fullName,
-                    doctorSpecialization: doctorData.specialization || doctorData.specializations
+                    doctorName: doctor.fullName || doctor.FullName,
+                    doctorSpecialization: doctor.specialization || doctor.Specialization || 
+                                        doctor.specializations || doctor.Specializations
                   };
-                } else {
-                  // If getting by ID fails, try getting from the list of doctors
-                  const allDoctorsResponse = await fetch(
-                    'http://localhost:5275/api/Doctor/get-list-doctor',
-                    {
-                      headers: {
-                        'Authorization': `Bearer ${currentUser.token}`,
-                        'Content-Type': 'application/json'
-                      }
-                    }
-                  );
-
-                  if (allDoctorsResponse.ok) {
-                    const allDoctors = await allDoctorsResponse.json();
-                    const doctor = allDoctors.find(d => d.id === (apt.doctorId || apt.DoctorId));
-                    if (doctor) {
-                      return {
-                        ...apt,
-                        doctorName: doctor.fullName,
-                        doctorSpecialization: doctor.specialization || doctor.specializations
-                      };
-                    }
-                  }
                 }
-              } catch (error) {
-                console.error('Error fetching doctor data:', error);
               }
+              return apt;
+            } catch (error) {
+              console.error('Error fetching doctor info:', error);
+              return apt;
             }
-            return {
-              ...apt,
-              doctorName: 'Không xác định',
-              doctorSpecialization: 'Không xác định'
-            };
           })
         );
-        
-        console.log('Appointments with doctors:', appointmentsWithDoctors); // Debug log
-        setAppointments(appointmentsWithDoctors);
+
+        setAppointments(appointmentsWithDoctorInfo);
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching appointments:', err);
-        setError(err.message || 'Failed to load appointments');
-      } finally {
+        setError(err.message);
         setLoading(false);
       }
     };

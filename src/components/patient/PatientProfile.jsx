@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaUser, FaChevronDown, FaChevronUp, FaFileAlt, FaFileMedical, FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/api';
+import { authService } from '../../services/api';
 
 export default function PatientProfile() {
   const [isExpanded, setIsExpanded] = useState(false);
