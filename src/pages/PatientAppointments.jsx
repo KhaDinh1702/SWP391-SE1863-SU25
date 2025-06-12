@@ -27,16 +27,84 @@ export default function PatientAppointments() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch appointments');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to fetch appointments');
         }
 
         const data = await response.json();
+        console.log('Fetched appointments:', data); // Debug log
+        
         // Filter appointments for the current patient
-        const patientAppointments = data.filter(apt => apt.PatientId === currentUser.patientId);
-        setAppointments(patientAppointments);
-        setLoading(false);
+        const patientAppointments = data.filter(apt => 
+          apt.patientId === currentUser.patientId || 
+          apt.PatientId === currentUser.patientId
+        );
+
+        // Fetch doctor information for each appointment
+        const appointmentsWithDoctors = await Promise.all(
+          patientAppointments.map(async (apt) => {
+            if (apt.doctorId || apt.DoctorId) {
+              try {
+                // First try to get doctor by ID
+                const doctorResponse = await fetch(
+                  `http://localhost:5275/api/Doctor/get-by-id?doctorId=${apt.doctorId || apt.DoctorId}`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${currentUser.token}`,
+                      'Content-Type': 'application/json'
+                    }
+                  }
+                );
+                
+                if (doctorResponse.ok) {
+                  const doctorData = await doctorResponse.json();
+                  return {
+                    ...apt,
+                    doctorName: doctorData.fullName,
+                    doctorSpecialization: doctorData.specialization || doctorData.specializations
+                  };
+                } else {
+                  // If getting by ID fails, try getting from the list of doctors
+                  const allDoctorsResponse = await fetch(
+                    'http://localhost:5275/api/Doctor/get-list-doctor',
+                    {
+                      headers: {
+                        'Authorization': `Bearer ${currentUser.token}`,
+                        'Content-Type': 'application/json'
+                      }
+                    }
+                  );
+
+                  if (allDoctorsResponse.ok) {
+                    const allDoctors = await allDoctorsResponse.json();
+                    const doctor = allDoctors.find(d => d.id === (apt.doctorId || apt.DoctorId));
+                    if (doctor) {
+                      return {
+                        ...apt,
+                        doctorName: doctor.fullName,
+                        doctorSpecialization: doctor.specialization || doctor.specializations
+                      };
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('Error fetching doctor data:', error);
+              }
+            }
+            return {
+              ...apt,
+              doctorName: 'Không xác định',
+              doctorSpecialization: 'Không xác định'
+            };
+          })
+        );
+        
+        console.log('Appointments with doctors:', appointmentsWithDoctors); // Debug log
+        setAppointments(appointmentsWithDoctors);
       } catch (err) {
-        setError(err.message);
+        console.error('Error fetching appointments:', err);
+        setError(err.message || 'Failed to load appointments');
+      } finally {
         setLoading(false);
       }
     };
@@ -45,7 +113,12 @@ export default function PatientAppointments() {
   }, [navigate]);
 
   const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) {
+      return;
+    }
+
     try {
+      setLoading(true);
       const currentUser = authService.getCurrentUser();
       const response = await fetch(`http://localhost:5275/api/Appointment/cancel-appointment/${appointmentId}`, {
         method: 'PUT',
@@ -56,127 +129,119 @@ export default function PatientAppointments() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to cancel appointment');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to cancel appointment');
       }
 
       // Update local state
       setAppointments(appointments.map(apt => 
-        apt.Id === appointmentId ? { ...apt, Status: 'Cancelled' } : apt
+        apt.id === appointmentId || apt.Id === appointmentId ? { ...apt, status: 3, Status: 3 } : apt
       ));
+      alert('Hủy lịch hẹn thành công');
     } catch (err) {
-      setError(err.message);
+      console.error('Error canceling appointment:', err);
+      alert(err.message || 'Failed to cancel appointment');
+    } finally {
+      setLoading(false);
     }
   };
 
   const getStatusColor = (status) => {
-    // Convert status to string and handle null/undefined
-    const statusStr = String(status || '').toLowerCase();
+    const statusNum = parseInt(status);
     
-    switch (statusStr) {
-      case 'scheduled':
-      case '1':
+    switch (statusNum) {
+      case 0:
+        return 'bg-yellow-100 text-yellow-800';
+      case 1:
         return 'bg-blue-100 text-blue-800';
-      case 'completed':
-      case '2':
+      case 2:
         return 'bg-green-100 text-green-800';
-      case 'cancelled':
-      case '3':
+      case 3:
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status) => {
-    // Convert status to string and handle null/undefined
-    const statusStr = String(status || '').toLowerCase();
-    
-    switch (statusStr) {
-      case 'scheduled':
-      case '1':
-        return <FaClock className="text-blue-600" />;
-      case 'completed':
-      case '2':
-        return <FaCheck className="text-green-600" />;
-      case 'cancelled':
-      case '3':
-        return <FaTimes className="text-red-600" />;
-      default:
-        return <FaSpinner className="text-gray-600" />;
-    }
-  };
-
   const getStatusText = (status) => {
-    // Convert status to string and handle null/undefined
-    const statusStr = String(status || '').toLowerCase();
+    const statusNum = parseInt(status);
     
-    switch (statusStr) {
-      case 'scheduled':
-      case '1':
-        return 'Đã lên lịch';
-      case 'completed':
-      case '2':
+    switch (statusNum) {
+      case 0:
+        return 'Chờ xác nhận';
+      case 1:
+        return 'Đã xác nhận';
+      case 2:
         return 'Đã hoàn thành';
-      case 'cancelled':
-      case '3':
+      case 3:
         return 'Đã hủy';
       default:
         return 'Không xác định';
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Chưa có ngày';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Ngày không hợp lệ';
-      return date.toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return 'Ngày không hợp lệ';
+  const getStatusIcon = (status) => {
+    const statusNum = parseInt(status);
+    
+    switch (statusNum) {
+      case 0:
+        return <FaClock className="text-yellow-600" />;
+      case 1:
+        return <FaClock className="text-blue-600" />;
+      case 2:
+        return <FaCheck className="text-green-600" />;
+      case 3:
+        return <FaTimes className="text-red-600" />;
+      default:
+        return <FaSpinner className="text-gray-600" />;
     }
   };
 
-  const formatTime = (dateString) => {
-    if (!dateString) return 'Chưa có giờ';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Giờ không hợp lệ';
-      return date.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return 'Giờ không hợp lệ';
-    }
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const filteredAppointments = appointments.filter(apt => {
-    if (filter === 'all') return true;
-    const statusStr = String(apt.Status || '').toLowerCase();
-    console.log('Filtering by status:', {
-      appointmentStatus: statusStr,
-      filter: filter.toLowerCase(),
-      matches: statusStr === filter.toLowerCase()
-    }); // Debug log
-    return statusStr === filter.toLowerCase();
+    const status = parseInt(apt.status || apt.Status);
+    switch (filter) {
+      case 'upcoming':
+        return status === 0 || status === 1;
+      case 'completed':
+        return status === 2;
+      case 'cancelled':
+        return status === 3;
+      default:
+        return true;
+    }
   });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="text-red-600">Error: {error}</div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-red-600 bg-red-50 p-4 rounded-lg">
+          <p className="font-medium">Lỗi: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 text-sm text-red-700 hover:text-red-800 underline"
+          >
+            Thử lại
+          </button>
+        </div>
       </div>
     );
   }
@@ -206,7 +271,7 @@ export default function PatientAppointments() {
           <nav className="flex -mb-px">
             {[
               { id: 'all', label: 'Tất cả' },
-              { id: 'scheduled', label: 'Đã lên lịch' },
+              { id: 'upcoming', label: 'Sắp tới' },
               { id: 'completed', label: 'Đã hoàn thành' },
               { id: 'cancelled', label: 'Đã hủy' }
             ].map((tab) => (
@@ -228,66 +293,87 @@ export default function PatientAppointments() {
         {/* Appointments List */}
         <div className="divide-y divide-gray-200">
           {filteredAppointments.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              Không có lịch hẹn nào
+            <div className="text-center py-12">
+              <FaCalendarAlt className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {filter === 'all' 
+                  ? 'Bạn chưa có lịch hẹn nào.'
+                  : `Không có lịch hẹn ${filter === 'upcoming' ? 'sắp tới' : filter === 'completed' ? 'đã hoàn thành' : 'đã hủy'}.`}
+              </p>
+              <div className="mt-6">
+                <button
+                  onClick={() => navigate('/appointment-booking')}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <FaCalendarAlt className="-ml-1 mr-2 h-5 w-5" />
+                  Đặt lịch mới
+                </button>
+              </div>
             </div>
           ) : (
             filteredAppointments.map((appointment) => (
-              <div key={appointment.Id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={appointment.id || appointment.Id} className="p-6 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-full ${getStatusColor(appointment.Status)}`}>
-                        {getStatusIcon(appointment.Status)}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {appointment.AppointmentTitle || 'Chưa có tiêu đề'}
-                        </h3>
-                        <div className="mt-1 flex flex-wrap gap-4 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <FaCalendarAlt />
-                            <span>{formatDate(appointment.AppointmentStartDate)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <FaClock />
-                            <span>{formatTime(appointment.AppointmentStartDate)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <FaUserMd />
-                            <span>Bác sĩ: {appointment.DoctorID || 'Chưa phân công'}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(appointment.Status)}`}>
-                              {getStatusText(appointment.Status)}
-                            </span>
-                          </div>
-                          {appointment.OnlineLink && (
-                            <div className="flex items-center gap-1">
-                              <FaVideo />
-                              <a href={appointment.OnlineLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                Link trực tuyến
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                        {appointment.Notes && (
-                          <p className="mt-2 text-sm text-gray-600">
-                            Ghi chú: {appointment.Notes}
-                          </p>
-                        )}
-                      </div>
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-2 rounded-full ${getStatusColor(appointment.status || appointment.Status)}`}>
+                      {getStatusIcon(appointment.status || appointment.Status)}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {appointment.apointmentTitle || 'Khám bệnh'}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(appointment.appointmentStartDate || appointment.AppointmentStartDate)}
+                      </p>
                     </div>
                   </div>
-                  {String(appointment.Status).toLowerCase() === 'scheduled' || appointment.Status === '1' ? (
-                    <button
-                      onClick={() => handleCancelAppointment(appointment.Id)}
-                      className="px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                    >
-                      Hủy lịch
-                    </button>
-                  ) : null}
+                  <div className="flex items-center space-x-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(appointment.status || appointment.Status)}`}>
+                      {getStatusText(appointment.status || appointment.Status)}
+                    </span>
+                    {(appointment.status === 0 || appointment.status === 1 || appointment.Status === 0 || appointment.Status === 1) && (
+                      <button
+                        onClick={() => handleCancelAppointment(appointment.id || appointment.Id)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Hủy lịch
+                      </button>
+                    )}
+                  </div>
                 </div>
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FaUserMd className="mr-2" />
+                    <span>
+                      Bác sĩ: {appointment.doctorName || appointment.DoctorName || 
+                        (appointment.doctorId || appointment.DoctorId ? 'Đang tải thông tin...' : 'Chưa phân công')}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    {appointment.appointmentType === 0 || appointment.AppointmentType === 0 ? (
+                      <FaVideo className="mr-2" />
+                    ) : (
+                      <FaHospital className="mr-2" />
+                    )}
+                    <span>
+                      {appointment.appointmentType === 0 || appointment.AppointmentType === 0
+                        ? 'Khám trực tuyến'
+                        : 'Khám tại phòng khám'}
+                    </span>
+                  </div>
+                </div>
+                {appointment.doctorSpecialization && (
+                  <div className="mt-2 text-sm text-gray-500">
+                    <span>Chuyên khoa: {appointment.doctorSpecialization}</span>
+                  </div>
+                )}
+                {appointment.notes || appointment.Notes ? (
+                  <div className="mt-4 text-sm text-gray-500">
+                    <p className="font-medium text-gray-700">Ghi chú:</p>
+                    <p className="mt-1">{appointment.notes || appointment.Notes}</p>
+                  </div>
+                ) : null}
               </div>
             ))
           )}
