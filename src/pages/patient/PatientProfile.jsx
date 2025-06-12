@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-import { authService } from '../../services/api';
+import { authService } from "../../services/authService";
 
 export default function PatientProfile() {
   const navigate = useNavigate();

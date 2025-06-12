@@ -1,6 +1,6 @@
 // src/components/ProtectedRoute.jsx
 import { Navigate } from 'react-router-dom';
-import { authService } from '../services/api';
+import { authService } from '../services/authService';
 
 export default function ProtectedRoute({ children, requiredRoles = [] }) {
   const currentUser = authService.getCurrentUser();

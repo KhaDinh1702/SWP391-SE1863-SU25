@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Layout, Spin, Avatar, Typography, message, Card, Modal } from 'antd';
+import { Layout, Spin, Avatar, Typography, message, Card, Modal, Row, Col, Statistic, Table, Button, Space, Form, Input, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { UserOutlined, DashboardOutlined, TeamOutlined, UserSwitchOutlined, ProfileOutlined } from '@ant-design/icons';
+import { UserOutlined, DashboardOutlined, TeamOutlined, UserSwitchOutlined, ProfileOutlined, MedicineBoxOutlined, CalendarOutlined } from '@ant-design/icons';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -10,8 +10,11 @@ import UserList from '../components/admin/UserManagement/UserList';
 import AdminProfile from '../components/admin/AdminProfile';
 import StatsCards from '../components/admin/DashboardStatus/StatsCards';
 import EditDoctorModal from '../components/admin/DoctorManagement/EditDoctorModal';
+import DoctorForm from '../components/admin/DoctorManagement/DoctorForm';
 
-import { userService, doctorService, authService } from '../services/api';
+import { userService } from "../services/userService";
+import { doctorService } from "../services/doctorService";
+import { authService } from "../services/authService";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;

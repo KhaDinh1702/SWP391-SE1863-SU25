@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaClock, FaUserMd, FaHospital, FaTimes, FaCheck, FaSpinner, FaVideo } from 'react-icons/fa';
-import { authService } from '../../services/api';
+import { authService } from "../../services/authService";
 
 export default function PatientAppointments() {
   const navigate = useNavigate();

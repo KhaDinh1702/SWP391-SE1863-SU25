@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getUser, logout } from "../utils/auth";
+import { authService } from "../services/authService";
 import { FaPhone, FaMapMarkerAlt, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaClock, FaEnvelope, FaFacebook, FaYoutube, FaInstagram, FaCalendarAlt } from "react-icons/fa";
 
 export default function FullNavbar() {
@@ -11,7 +11,7 @@ export default function FullNavbar() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const userData = getUser();
+      const userData = authService.getCurrentUser();
       setUser(userData);
     };
 
@@ -30,10 +30,10 @@ export default function FullNavbar() {
   }, []);
 
   const handleLogout = () => {
-    logout();
+    authService.logout();
     setUser(null);
     alert("Bạn đã đăng xuất thành công");
-    navigate("/login");
+    navigate("/");
   };
 
   const isActive = (path) => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/NavBar.jsx";
 import Footer from "../components/Footer.jsx";
 import Carousel from "../components/home/Carousel.jsx";
@@ -9,12 +9,12 @@ import newsData from "../data/newsData";
 import doctorsData from "../data/doctorsData";
 import DoctorCarousel from "../components/home/DoctorCarousel.jsx";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated } from "../utils/auth";
+import { authService } from "../services/authService";
 import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone } from "react-icons/fa";
 
 export default function Home() {
   const navigate = useNavigate();
-  const loggedIn = isAuthenticated();
+  const loggedIn = authService.isAuthenticated();
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-gray-800">
       <Navbar />

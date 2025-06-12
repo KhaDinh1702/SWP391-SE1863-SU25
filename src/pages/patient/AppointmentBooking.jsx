@@ -2,21 +2,23 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../components/NavBar";
 import Footer from "../../components/Footer";
 import PatientAppointmentForm from "../../components/patient/PatientAppointmentForm";
-import { getUser } from "../../utils/auth";
-import { userService } from "../../services/api";
-import { Link } from "react-router-dom";
+import { userService } from "../../services/userService";
+import { Link, useNavigate } from "react-router-dom";
+import { authService } from "../../services/authService";
 
 export default function AppointmentBooking() {
-  const user = getUser();
+  const navigate = useNavigate();
   const [patientId, setPatientId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const currentUser = authService.getCurrentUser();
 
   useEffect(() => {
     const fetchPatientId = async () => {
-      if (user && user.role === "Patient") {
+      if (currentUser && currentUser.role === "Patient") {
         try {
           // Lấy thông tin user từ API
-          const userData = await userService.getUserById(user.userId);
+          const userData = await userService.getUserById(currentUser.userId);
           console.log("User data:", userData); // Debug log
 
           // Kiểm tra và lấy patientId
@@ -42,9 +44,9 @@ export default function AppointmentBooking() {
     };
 
     fetchPatientId();
-  }, [user]);
+  }, [currentUser]);
 
-  if (!user || user.role !== "Patient") {
+  if (!currentUser || currentUser.role !== "Patient") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 flex items-center justify-center">
         <div className="text-center p-8 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 max-w-md w-full mx-4">

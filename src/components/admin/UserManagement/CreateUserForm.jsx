@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Select, message } from 'antd';
-import { userService } from '../../../services/api';
+import { userService } from '../../../services/userService';
 
 const { Option } = Select;
 
