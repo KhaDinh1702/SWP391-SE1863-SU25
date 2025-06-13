@@ -1,13 +1,40 @@
-import { Card, Col, Row } from 'antd';
+import { Card, Col, Row, Statistic } from 'antd';
+import { UserOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 
 const StatsCards = ({ stats }) => {
-  const { totalUsers, newUsers, activeAppointments, completedTreatments } = stats;
+  const { totalUsers, activeUsers, inactiveUsers } = stats;
+  
   return (
-    <Row gutter={16}>
-      <Col span={6}><Card title="Total Users">{totalUsers}</Card></Col>
-      <Col span={6}><Card title="New Users Today">{newUsers}</Card></Col>
-      <Col span={6}><Card title="Active Appointments">{activeAppointments}</Card></Col>
-      <Col span={6}><Card title="Completed Treatments">{completedTreatments}</Card></Col>
+    <Row gutter={[16, 16]}>
+      <Col xs={24} sm={12} lg={6}>
+        <Card className="shadow-sm">
+          <Statistic
+            title="Tổng số người dùng"
+            value={totalUsers}
+            prefix={<UserOutlined />}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} lg={6}>
+        <Card className="shadow-sm">
+          <Statistic
+            title="Đang hoạt động"
+            value={activeUsers}
+            valueStyle={{ color: '#3f8600' }}
+            prefix={<CheckCircleOutlined />}
+          />
+        </Card>
+      </Col>
+      <Col xs={24} sm={12} lg={6}>
+        <Card className="shadow-sm">
+          <Statistic
+            title="Đã vô hiệu hóa"
+            value={inactiveUsers}
+            valueStyle={{ color: '#cf1322' }}
+            prefix={<StopOutlined />}
+          />
+        </Card>
+      </Col>
     </Row>
   );
 };

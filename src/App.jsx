@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -24,7 +24,6 @@ import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
 import ProtectedLayout from './components/patient/ProtectedLayout';
 // Import các component quản lý từ thư mục con
-
 
 
 function App() {
@@ -52,7 +51,7 @@ function App() {
 
         {/* Admin routes */}
         <Route
-          path="/admin/*"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute requiredRoles={["Admin"]}>
               <AdminDashboard />
@@ -102,6 +101,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Add other role-based routes here */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

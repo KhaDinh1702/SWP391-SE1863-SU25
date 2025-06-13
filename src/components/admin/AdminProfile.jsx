@@ -1,4 +1,4 @@
-import { Card, Descriptions, Avatar, Button } from 'antd';
+import { Card, Descriptions, Avatar, Button, Tag } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 
 const AdminProfile = ({ admin }) => {
@@ -20,7 +20,9 @@ const AdminProfile = ({ admin }) => {
         <Descriptions.Item label="Họ tên">{admin?.fullName || 'N/A'}</Descriptions.Item>
         <Descriptions.Item label="Email">{admin?.email || 'N/A'}</Descriptions.Item>
         <Descriptions.Item label="Số điện thoại">{admin?.phone || 'N/A'}</Descriptions.Item>
-        <Descriptions.Item label="Chức vụ">{admin?.role || 'Administrator'}</Descriptions.Item>
+        <Descriptions.Item label="Chức vụ">
+          <Tag color="red">Quản trị viên</Tag>
+        </Descriptions.Item>
         <Descriptions.Item label="Ngày tham gia">{admin?.joinedDate || 'N/A'}</Descriptions.Item>
       </Descriptions>
     </Card>

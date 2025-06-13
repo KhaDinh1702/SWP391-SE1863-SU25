@@ -10,6 +10,17 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
 
+  const getRoleText = (roleNumber) => {
+    const roleMap = {
+      0: 'Patient',
+      1: 'Staff',
+      2: 'Doctor',
+      3: 'Manager',
+      4: 'Admin'
+    };
+    return roleMap[roleNumber] || 'Unknown';
+  };
+
   const handleEdit = (user) => {
     setEditingUser(user);
   };
@@ -73,45 +84,27 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
       width: 120,
     },
     {
-      title: 'Địa chỉ',
-      dataIndex: 'address',
-      key: 'address',
-      width: 200,
-      ellipsis: true,
-    },
-    {
-      title: 'Giới tính',
-      dataIndex: 'gender',
-      key: 'gender',
-      width: 100,
-      render: (gender) => {
-        const genderMap = {
-          'Male': 'Nam',
-          'Female': 'Nữ',
-          'Other': 'Khác'
-        };
-        return genderMap[gender] || gender;
-      }
-    },
-    {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
       width: 100,
       render: (role) => {
+        const roleText = getRoleText(role);
         const color = {
           Admin: 'volcano',
           Manager: 'gold',
           Staff: 'geekblue',
           Doctor: 'green',
           Patient: 'purple',
-        }[role] || 'default';
-        return <Tag color={color}>{role}</Tag>;
+        }[roleText] || 'default';
+        return <Tag color={color}>{roleText}</Tag>;
       },
       filters: [
-        { text: 'Admin', value: 'Admin' },
-        { text: 'Doctor', value: 'Doctor' },
-        { text: 'Patient', value: 'Patient' },
+        { text: 'Admin', value: 4 },
+        { text: 'Manager', value: 3 },
+        { text: 'Staff', value: 1 },
+        { text: 'Doctor', value: 2 },
+        { text: 'Patient', value: 0 },
       ],
       onFilter: (value, record) => record.role === value,
     },
@@ -175,8 +168,17 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
           type="primary"
           icon={<UserAddOutlined />}
           onClick={() => setIsCreateModalVisible(true)}
+          size="large"
+          className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg"
+          style={{
+            borderRadius: '8px',
+            padding: '0 24px',
+            height: '40px',
+            fontSize: '14px',
+            fontWeight: 500
+          }}
         >
-          Tạo người dùng mới
+          <span>Tạo người dùng mới</span>
         </Button>
       </div>
 
@@ -247,7 +249,7 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
                viewingUser.gender === 'Female' ? 'Nữ' : 
                viewingUser.gender === 'Other' ? 'Khác' : 'Chưa cập nhật'}
             </Descriptions.Item>
-            <Descriptions.Item label="Vai trò">{viewingUser.role}</Descriptions.Item>
+            <Descriptions.Item label="Vai trò">{getRoleText(viewingUser.role)}</Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
               {viewingUser.isActive ? (
                 <Tag color="green">Hoạt động</Tag>
