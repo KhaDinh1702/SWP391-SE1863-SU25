@@ -34,6 +34,42 @@ export const doctorService = {
     }
   },
 
+  createDoctor: async (doctorData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Doctor/create`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          fullName: doctorData.fullName,
+          email: doctorData.email,
+          phone: doctorData.phone,
+          specialty: doctorData.specialty,
+          status: doctorData.status
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Thêm bác sĩ thất bại' }));
+        throw new Error(errorData.message || 'Thêm bác sĩ thất bại');
+      }
+
+      const text = await response.text();
+      if (!text) {
+        return doctorData;
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        console.warn('Server response was not JSON, returning created data');
+        return doctorData;
+      }
+    } catch (error) {
+      console.error('Create doctor failed:', error);
+      throw error;
+    }
+  },
+
   updateDoctor: async (doctorData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/Doctor/update`, {

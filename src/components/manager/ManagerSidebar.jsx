@@ -3,12 +3,14 @@ import {
   DashboardOutlined,
   TeamOutlined,
   ProfileOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 
-const AdminSidebar = ({ activeTab, setActiveTab }) => {
+const ManagerSidebar = ({ activeTab, setActiveTab }) => {
   const items = [
     { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: 'users', icon: <TeamOutlined />, label: 'Người dùng' },  // <-- phải có
+    { key: 'doctors', icon: <TeamOutlined />, label: 'Bác sĩ' },
+    { key: 'schedule', icon: <CalendarOutlined />, label: 'Lịch làm việc' },
     { key: 'profile', icon: <ProfileOutlined />, label: 'Hồ sơ' },
   ];
 
@@ -23,4 +25,4 @@ const AdminSidebar = ({ activeTab, setActiveTab }) => {
   );
 };
 
-export default AdminSidebar;
+export default ManagerSidebar; 

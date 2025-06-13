@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Layout, Spin, Avatar, Typography, message, Card, Modal, Row, Col, Statistic, Table, Button, Space, Form, Input, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { UserOutlined, DashboardOutlined, TeamOutlined, UserSwitchOutlined, ProfileOutlined, MedicineBoxOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, DashboardOutlined, UserSwitchOutlined, ProfileOutlined } from '@ant-design/icons';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
-import DoctorList from '../components/admin/DoctorManagement/DoctorList';
 import UserList from '../components/admin/UserManagement/UserList';
 import AdminProfile from '../components/admin/AdminProfile';
 import StatsCards from '../components/admin/DashboardStatus/StatsCards';
-import EditDoctorModal from '../components/admin/DoctorManagement/EditDoctorModal';
-import DoctorForm from '../components/admin/DoctorManagement/DoctorForm';
 
 import { userService } from "../services/userService";
-import { doctorService } from "../services/doctorService";
 import { authService } from "../services/authService";
 
 const { Content } = Layout;
@@ -22,12 +18,9 @@ const { Title, Text } = Typography;
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [doctors, setDoctors] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState('');
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   // Admin info
   const [admin, setAdmin] = useState({
@@ -84,7 +77,6 @@ const AdminDashboard = () => {
 
         // Fetch stats
         const userData = await userService.getAllUsers();
-        const doctorData = await doctorService.getAllDoctors();
         
         setStats({
           totalUsers: userData.length,
@@ -111,14 +103,6 @@ const AdminDashboard = () => {
         if (activeTab === 'users') {
           const userData = await userService.getAllUsers();
           setUsers(userData);
-        } else if (activeTab === 'doctors') {
-          const doctorData = await doctorService.getAllDoctors();
-          if (Array.isArray(doctorData)) {
-            setDoctors(doctorData);
-          } else {
-            console.error('Invalid doctors data format:', doctorData);
-            message.error('Dữ liệu bác sĩ không hợp lệ');
-          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -128,53 +112,10 @@ const AdminDashboard = () => {
       }
     };
 
-    if (activeTab === 'users' || activeTab === 'doctors') {
+    if (activeTab === 'users') {
       fetchData();
     }
   }, [activeTab]);
-
-  const handleEditDoctor = (doctor) => {
-    setSelectedDoctor(doctor);
-    setIsEditModalVisible(true);
-  };
-
-  const handleSaveDoctor = async (updatedDoctor) => {
-    try {
-      setLoading(true);
-      await doctorService.updateDoctor(updatedDoctor);
-      setDoctors(prev => prev.map(doc => 
-        doc.id === updatedDoctor.id ? updatedDoctor : doc
-      ));
-      message.success('Cập nhật bác sĩ thành công');
-      setIsEditModalVisible(false);
-    } catch (error) {
-      message.error('Cập nhật bác sĩ thất bại');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteDoctor = async (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa bác sĩ này?',
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          setLoading(true);
-          await doctorService.deleteDoctor(id);
-          setDoctors(prev => prev.filter(doc => doc.id !== id));
-          message.success('Xóa bác sĩ thành công');
-        } catch (error) {
-          message.error('Xóa bác sĩ thất bại');
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
 
   const handleViewUser = (id) => {
     navigate(`/admin/users/${id}`);
@@ -230,8 +171,6 @@ const AdminDashboard = () => {
     switch (activeTab) {
       case 'dashboard':
         return 'Dashboard Tổng quan';
-      case 'doctors':
-        return 'Quản lý Bác sĩ';
       case 'users':
         return 'Quản lý Người dùng';
       case 'profile':
@@ -245,8 +184,6 @@ const AdminDashboard = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardOutlined className="text-2xl text-blue-600" />;
-      case 'doctors':
-        return <TeamOutlined className="text-2xl text-green-600" />;
       case 'users':
         return <UserSwitchOutlined className="text-2xl text-purple-600" />;
       case 'profile':
@@ -306,16 +243,6 @@ const AdminDashboard = () => {
                     <StatsCards stats={stats} />
                   </div>
                 )}
-                {activeTab === 'doctors' && (
-                  <div className="overflow-x-auto">
-                    <DoctorList
-                      doctors={doctors}
-                      onEdit={handleEditDoctor}
-                      onDelete={handleDeleteDoctor}
-                      isLoading={loading}
-                    />
-                  </div>
-                )}
                 {activeTab === 'users' && (
                   <div className="overflow-x-auto">
                     <UserList
@@ -333,15 +260,6 @@ const AdminDashboard = () => {
           </Card>
         </Content>
       </Layout>
-      <EditDoctorModal
-        visible={isEditModalVisible}
-        doctor={selectedDoctor}
-        onCancel={() => {
-          setIsEditModalVisible(false);
-          setSelectedDoctor(null);
-        }}
-        onSave={handleSaveDoctor}
-      />
     </Layout>
   );
 };

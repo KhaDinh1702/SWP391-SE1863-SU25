@@ -7,6 +7,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
 import AdminDashboard from "./pages/AdminDashboard";
+import ManagerDashboard from "./pages/ManagerDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import DoctorDashboard from './pages/DoctorDashboard';
@@ -55,6 +56,16 @@ function App() {
           element={
             <ProtectedRoute requiredRoles={["Admin"]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Manager routes */}
+        <Route
+          path="/manager/*"
+          element={
+            <ProtectedRoute requiredRoles={["Manager"]}>
+              <ManagerDashboard />
             </ProtectedRoute>
           }
         />
