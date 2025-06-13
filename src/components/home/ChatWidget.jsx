@@ -165,7 +165,7 @@ const ChatWidget = () => {
       {isChatOpen ? (
         <div className="w-[28rem] bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all duration-300" style={{ height: "480px" }}>
           {/* Chat Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-t-2xl">
+          <div className="bg-[#3B9AB8] text-white p-4 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <FaComments className="text-xl" />
@@ -188,15 +188,15 @@ const ChatWidget = () => {
                 className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} items-end gap-2`}
               >
                 {msg.sender === "bot" && (
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                  <div className="w-8 h-8 rounded-full bg-[#3B9AB8] flex items-center justify-center text-white">
                     <FaRobot className="text-sm" />
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm whitespace-pre-line ${
                     msg.sender === "user"
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-white text-gray-800 rounded-bl-none shadow-sm"
+                      ? "bg-[#3B9AB8] text-white rounded-br-none"
+                      : "bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-100"
                   }`}
                 >
                   {msg.text}
@@ -211,11 +211,11 @@ const ChatWidget = () => {
 
             {isTyping && (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-full bg-[#3B9AB8] flex items-center justify-center text-white">
                   <FaRobot className="text-sm" />
                 </div>
-                <div className="bg-white px-4 py-2 rounded-2xl rounded-bl-none shadow-sm">
-                  <FaSpinner className="animate-spin text-blue-600" />
+                <div className="bg-white px-4 py-2 rounded-2xl rounded-bl-none shadow-sm border border-gray-100">
+                  <FaSpinner className="animate-spin text-[#3B9AB8]" />
                 </div>
               </div>
             )}
@@ -226,7 +226,7 @@ const ChatWidget = () => {
                   <button
                     key={i}
                     onClick={() => handleQuickReply(option)}
-                    className="bg-blue-100 text-blue-800 text-xs px-3 py-1.5 rounded-full hover:bg-blue-200 transition-colors"
+                    className="bg-[#3B9AB8]/10 text-[#3B9AB8] text-xs px-3 py-1.5 rounded-full hover:bg-[#3B9AB8]/20 transition-colors"
                   >
                     {option}
                   </button>
@@ -238,7 +238,7 @@ const ChatWidget = () => {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 bg-white">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -246,12 +246,12 @@ const ChatWidget = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Nhập tin nhắn..."
-                className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B9AB8] focus:border-transparent transition-all"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim()}
-                className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="bg-[#3B9AB8] text-white p-2 rounded-full hover:bg-[#2d7a94] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FaPaperPlane />
               </button>
@@ -261,7 +261,7 @@ const ChatWidget = () => {
       ) : (
         <button
           onClick={() => setIsChatOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          className="bg-[#3B9AB8] text-white p-4 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
           aria-label="Mở chat hỗ trợ"
         >
           <FaComments className="text-xl" />

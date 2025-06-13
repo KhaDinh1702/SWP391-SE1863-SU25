@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { 
+  FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, 
+  FaCalendarAlt, FaEdit, FaSave, FaTimes, FaIdCard 
+} from 'react-icons/fa';
 import { authService } from "../../services/authService";
+import { motion } from 'framer-motion';
 
 export default function PatientProfile() {
   const navigate = useNavigate();
@@ -27,25 +31,14 @@ export default function PatientProfile() {
           }
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('API Error:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorData,
-            userId: currentUser.userId
-          });
-          throw new Error(errorData.message || `Failed to fetch user data: ${response.status} ${response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch user data');
+        
         const data = await response.json();
-        console.log('Fetched user data:', data);
         setUserData(data);
         setEditedData(data);
-        setLoading(false);
       } catch (err) {
-        console.error('Error fetching user data:', err);
         setError(err.message);
+      } finally {
         setLoading(false);
       }
     };
@@ -53,10 +46,7 @@ export default function PatientProfile() {
     fetchUserData();
   }, [navigate]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
+  const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
     setEditedData(userData);
     setIsEditing(false);
@@ -71,16 +61,20 @@ export default function PatientProfile() {
           'Authorization': `Bearer ${currentUser.token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(editedData)
+        body: JSON.stringify({
+          userId: currentUser.userId,
+          fullName: editedData.fullName,
+          email: editedData.email,
+          phoneNumber: editedData.phoneNumber,
+          address: editedData.address || '',
+          dateOfBirth: editedData.dateOfBirth || null
+        })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-
+      if (!response.ok) throw new Error('Failed to update profile');
+      
       const updatedData = await response.json();
       setUserData(updatedData);
-      setEditedData(updatedData);
       setIsEditing(false);
     } catch (err) {
       setError(err.message);
@@ -89,177 +83,244 @@ export default function PatientProfile() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setEditedData(prev => ({ ...prev, [name]: value }));
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3B9AB8]/10 to-white">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-16 w-16 rounded-full border-4 border-[#3B9AB8] border-t-transparent"
+        />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-600">Error: {error}</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3B9AB8]/10 to-white">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Oops!</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-[#3B9AB8] text-white rounded-lg hover:bg-[#2d7a94] transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Profile Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8">
-          <div className="flex items-center space-x-6">
-            <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center">
-              {userData.avatar ? (
-                <img src={userData.avatar} alt={userData.fullName} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <FaUser className="text-blue-600 text-4xl" />
-              )}
-            </div>
-            <div className="text-white">
-              <h1 className="text-2xl font-bold">{userData.fullName}</h1>
-              <p className="text-blue-100">{userData.email}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Profile Content */}
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Thông tin cá nhân</h2>
-            {!isEditing ? (
-              <button
-                onClick={handleEdit}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto"
+      >
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Header with Gradient Background */}
+          <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2d7a94] p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Profile Picture */}
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="relative w-28 h-28 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-white"
               >
-                <FaEdit className="mr-2" />
-                Chỉnh sửa
-              </button>
-            ) : (
-              <div className="space-x-2">
-                <button
-                  onClick={handleSave}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                >
-                  <FaSave className="mr-2" />
-                  Lưu
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  <FaTimes className="mr-2" />
-                  Hủy
-                </button>
-              </div>
-            )}
-          </div>
+                {userData.avatar ? (
+                  <img 
+                    src={userData.avatar} 
+                    alt={userData.fullName} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <FaUser className="text-[#3B9AB8] text-5xl" />
+                )}
+              </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <FaUser className="text-blue-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={editedData.fullName}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
+              {/* User Info */}
+              <div className="text-white text-center md:text-left">
+                <h1 className="text-2xl md:text-3xl font-bold mb-1">{userData.fullName}</h1>
+                <p className="text-white/90 mb-3">{userData.email}</p>
+                
+                <div className="flex justify-center md:justify-start gap-4">
+                  {!isEditing ? (
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleEdit}
+                      className="flex items-center px-5 py-2 bg-white text-[#3B9AB8] rounded-full hover:bg-gray-100 transition-all shadow-md"
+                    >
+                      <FaEdit className="mr-2" />
+                      Edit Profile
+                    </motion.button>
                   ) : (
-                    <p className="mt-1 text-gray-900">{userData.fullName}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <FaEnvelope className="text-blue-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={editedData.email}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-900">{userData.email}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <FaPhone className="text-blue-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={editedData.phoneNumber}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-900">{userData.phoneNumber}</p>
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleSave}
+                        className="flex items-center px-5 py-2 bg-white text-green-600 rounded-full hover:bg-green-50 transition-all shadow-md"
+                      >
+                        <FaSave className="mr-2" />
+                        Save
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleCancel}
+                        className="flex items-center px-5 py-2 bg-white text-gray-600 rounded-full hover:bg-gray-100 transition-all shadow-md"
+                      >
+                        <FaTimes className="mr-2" />
+                        Cancel
+                      </motion.button>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <FaMapMarkerAlt className="text-blue-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="address"
-                      value={editedData.address}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-900">{userData.address}</p>
-                  )}
+          {/* Profile Details */}
+          <div className="p-6 md:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Personal Information */}
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <FaIdCard className="text-[#3B9AB8]" />
+                  Personal Information
+                </h2>
+                
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaUser />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Full Name</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="fullName"
+                          value={editedData.fullName}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">{userData.fullName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaEnvelope />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          name="email"
+                          value={editedData.email}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">{userData.email}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <FaCalendarAlt className="text-blue-600" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700">Ngày sinh</label>
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      name="dateOfBirth"
-                      value={editedData.dateOfBirth}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <p className="mt-1 text-gray-900">{new Date(userData.dateOfBirth).toLocaleDateString()}</p>
-                  )}
+              {/* Contact Information */}
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <FaPhone className="text-[#3B9AB8]" />
+                  Contact Details
+                </h2>
+                
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaPhone />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          name="phoneNumber"
+                          value={editedData.phoneNumber}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">{userData.phoneNumber}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaMapMarkerAlt />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Address</label>
+                      {isEditing ? (
+                        <textarea
+                          name="address"
+                          value={editedData.address || ''}
+                          onChange={handleInputChange}
+                          rows="3"
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all resize-none"
+                          placeholder="Enter your address"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium whitespace-pre-wrap">{userData.address || 'No address provided'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaCalendarAlt />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Date of Birth</label>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="dateOfBirth"
+                          value={editedData.dateOfBirth || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {userData.dateOfBirth ? new Date(userData.dateOfBirth).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'Not provided'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
-} 
+}

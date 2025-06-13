@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaClock, FaUserMd, FaHospital, FaTimes, FaCheck, FaSpinner, FaVideo } from 'react-icons/fa';
 import { authService } from "../../services/authService";
+import { doctorService } from "../../services/doctorService";
 
 export default function PatientAppointments() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function PatientAppointments() {
         }
 
         const data = await response.json();
-        console.log('Fetched appointments:', data); // Debug log
+        console.log('Raw appointment data:', data); // Debug log
         
         // Filter appointments for the current patient
         const patientAppointments = data.filter(apt => 
@@ -49,47 +50,54 @@ export default function PatientAppointments() {
         const appointmentsWithDoctorInfo = await Promise.all(
           patientAppointments.map(async (apt) => {
             try {
-              const doctorId = apt.doctorId || apt.DoctorId;
-              if (!doctorId) return apt;
-
-              const allDoctorsResponse = await fetch('http://localhost:5275/api/Doctor/get-list-doctor', {
-                headers: {
-                  'Authorization': `Bearer ${currentUser.token}`,
-                  'Content-Type': 'application/json'
-                }
+              // Extract doctor ID with proper casing
+              const doctorId = apt.doctorId || apt.DoctorId || apt.doctor?.id || apt.Doctor?.Id;
+              console.log('Processing appointment:', {
+                appointmentId: apt.id || apt.Id,
+                doctorId: doctorId,
+                rawDoctorData: apt.doctor || apt.Doctor
               });
 
-              if (!allDoctorsResponse.ok) {
-                console.error('Error fetching doctors:', {
-                  status: allDoctorsResponse.status,
-                  statusText: allDoctorsResponse.statusText
-                });
-                return apt;
+              if (!doctorId) {
+                console.warn('No doctor ID found for appointment:', apt);
+                return {
+                  ...apt,
+                  doctorName: 'Không có thông tin',
+                  doctorSpecialization: 'Không có thông tin'
+                };
               }
 
-              if (allDoctorsResponse.ok) {
-                const allDoctors = await allDoctorsResponse.json();
-                const doctor = allDoctors.find(d => 
-                  d.id === doctorId || 
-                  d.Id === doctorId
-                );
-                if (doctor) {
+              // Try to get individual doctor info
+              try {
+                const doctorInfo = await doctorService.getDoctorById(doctorId);
+                console.log('Fetched doctor data:', doctorInfo);
+                
+                if (doctorInfo) {
                   return {
                     ...apt,
-                    doctorName: doctor.fullName || doctor.FullName,
-                    doctorSpecialization: doctor.specialization || doctor.Specialization || 
-                                        doctor.specializations || doctor.Specializations
+                    doctorName: doctorInfo.fullName || 'Không có thông tin',
+                    doctorSpecialization: doctorInfo.specialization || 'Chưa cập nhật',
+                    doctorId: doctorId
                   };
                 }
+              } catch (doctorError) {
+                console.warn(`Could not fetch doctor info for ID ${doctorId}:`, doctorError);
+                // Return appointment without doctor info if fetch fails
+                return {
+                  ...apt,
+                  doctorName: 'Không có thông tin',
+                  doctorSpecialization: 'Không có thông tin'
+                };
               }
               return apt;
             } catch (error) {
-              console.error('Error fetching doctor info:', error);
+              console.error('Error processing appointment:', error);
               return apt;
             }
           })
         );
 
+        console.log('Processed appointments:', appointmentsWithDoctorInfo);
         setAppointments(appointmentsWithDoctorInfo);
         setLoading(false);
       } catch (err) {
@@ -138,16 +146,15 @@ export default function PatientAppointments() {
 
   const getStatusColor = (status) => {
     const statusNum = parseInt(status);
-    
     switch (statusNum) {
       case 0:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#FFF8E1] text-[#C46547]'; // Chờ xác nhận - orange
       case 1:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-[#E3F6FB] text-[#3B9AB8]'; // Đã xác nhận - primary
       case 2:
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#E6F9F0] text-[#2D7A94]'; // Đã hoàn thành - secondary
       case 3:
-        return 'bg-red-100 text-red-800';
+        return 'bg-[#FDE8E8] text-[#E53935]'; // Đã hủy - red
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -172,16 +179,15 @@ export default function PatientAppointments() {
 
   const getStatusIcon = (status) => {
     const statusNum = parseInt(status);
-    
     switch (statusNum) {
       case 0:
-        return <FaClock className="text-yellow-600" />;
+        return <FaClock className="text-[#C46547]" />;
       case 1:
-        return <FaClock className="text-blue-600" />;
+        return <FaClock className="text-[#3B9AB8]" />;
       case 2:
-        return <FaCheck className="text-green-600" />;
+        return <FaCheck className="text-[#2D7A94]" />;
       case 3:
-        return <FaTimes className="text-red-600" />;
+        return <FaTimes className="text-[#E53935]" />;
       default:
         return <FaSpinner className="text-gray-600" />;
     }
@@ -237,18 +243,18 @@ export default function PatientAppointments() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-[#3B9AB8]/10 to-white min-h-screen">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8">
+        <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white">Lịch hẹn của tôi</h1>
-              <p className="text-blue-100 mt-1">Quản lý và theo dõi các cuộc hẹn khám bệnh</p>
+              <p className="text-[#BEE6F5] mt-1">Quản lý và theo dõi các cuộc hẹn khám bệnh</p>
             </div>
             <button
               onClick={() => navigate('/appointment-booking')}
-              className="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition-colors flex items-center gap-2"
+              className="bg-[#3B9AB8] text-white px-4 py-2 rounded-md hover:bg-[#2D7A94] transition-colors flex items-center gap-2 shadow"
             >
               <FaCalendarAlt />
               <span>Đặt lịch mới</span>
@@ -257,7 +263,7 @@ export default function PatientAppointments() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[#3B9AB8]/30">
           <nav className="flex -mb-px">
             {[
               { id: 'all', label: 'Tất cả' },
@@ -268,10 +274,10 @@ export default function PatientAppointments() {
               <button
                 key={tab.id}
                 onClick={() => setFilter(tab.id)}
-                className={`px-4 py-3 text-sm font-medium ${
+                className={`px-4 py-3 text-sm font-medium transition-colors duration-150 ${
                   filter === tab.id
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-b-2 border-[#3B9AB8] text-[#3B9AB8] bg-[#3B9AB8]/10'
+                    : 'text-gray-500 hover:text-[#3B9AB8] hover:border-[#3B9AB8]/40'
                 }`}
               >
                 {tab.label}
@@ -294,7 +300,7 @@ export default function PatientAppointments() {
               <div className="mt-6">
                 <button
                   onClick={() => navigate('/appointment-booking')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#3B9AB8] hover:bg-[#2D7A94] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3B9AB8]"
                 >
                   <FaCalendarAlt className="-ml-1 mr-2 h-5 w-5" />
                   Đặt lịch mới

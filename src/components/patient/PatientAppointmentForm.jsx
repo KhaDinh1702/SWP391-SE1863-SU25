@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { doctorService } from "../../services/doctorService";
 import { CalendarOutlined, UserOutlined, VideoCameraOutlined, EnvironmentOutlined, FileTextOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { FaClock } from 'react-icons/fa';
 
 const API_BASE_URL = 'http://localhost:5275/api';
 
@@ -12,6 +13,7 @@ const PatientAppointmentForm = ({ patientId }) => {
   const [formData, setFormData] = useState({
     doctorId: "",
     appointmentDate: "",
+    appointmentTime: "",
     reason: "",
     appointmentType: 0, // 0 for Online, 1 for Offline
     isAnonymousAppointment: false,
@@ -64,13 +66,15 @@ const PatientAppointmentForm = ({ patientId }) => {
       return;
     }
 
-    // Format the date to match the backend's expected format
-    const appointmentDate = new Date(formData.appointmentDate).toISOString();
+    // Kết hợp ngày và giờ thành chuỗi ISO
+    const appointmentDateTime = new Date(
+      `${formData.appointmentDate}T${formData.appointmentTime}`
+    ).toISOString();
 
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
-      appointmentStartDate: appointmentDate,
+      appointmentStartDate: appointmentDateTime,
       appointmentType: parseInt(formData.appointmentType),
       notes: formData.reason,
       isAnonymousAppointment: formData.isAnonymousAppointment,
@@ -99,6 +103,7 @@ const PatientAppointmentForm = ({ patientId }) => {
       setFormData({
         doctorId: "",
         appointmentDate: "",
+        appointmentTime: "",
         reason: "",
         appointmentType: 0,
         isAnonymousAppointment: false,
@@ -126,7 +131,7 @@ const PatientAppointmentForm = ({ patientId }) => {
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
+          <div className="bg-[#3B9AB8] px-6 py-8">
             <h2 className="text-3xl font-bold text-white text-center">
               Đặt lịch hẹn khám bệnh
             </h2>
@@ -140,7 +145,7 @@ const PatientAppointmentForm = ({ patientId }) => {
             {/* Anonymous Toggle */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-center space-x-3">
-                <EyeInvisibleOutlined className="text-xl text-gray-600" />
+                <EyeInvisibleOutlined className="text-xl text-[#3B9AB8]" />
                 <div>
                   <h3 className="font-medium text-gray-900">Đặt lịch ẩn danh</h3>
                   <p className="text-sm text-gray-500">Thông tin của bạn sẽ được bảo mật</p>
@@ -156,21 +161,21 @@ const PatientAppointmentForm = ({ patientId }) => {
                   }))}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#3B9AB8] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3B9AB8]"></div>
               </label>
             </div>
 
             {/* Doctor Selection */}
             <div className="space-y-2">
               <label className="flex items-center text-gray-700 font-medium">
-                <UserOutlined className="mr-2" />
+                <UserOutlined className="mr-2 text-[#3B9AB8]" />
                 Chọn bác sĩ
               </label>
               <select
                 name="doctorId"
                 value={formData.doctorId}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                 required
               >
                 <option value="">-- Chọn bác sĩ --</option>
@@ -185,7 +190,7 @@ const PatientAppointmentForm = ({ patientId }) => {
             {/* Appointment Type */}
             <div className="space-y-2">
               <label className="flex items-center text-gray-700 font-medium">
-                <VideoCameraOutlined className="mr-2" />
+                <VideoCameraOutlined className="mr-2 text-[#3B9AB8]" />
                 Loại cuộc hẹn
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -194,11 +199,11 @@ const PatientAppointmentForm = ({ patientId }) => {
                   onClick={() => setFormData(prev => ({ ...prev, appointmentType: 0 }))}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     formData.appointmentType === 0
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
+                      : 'border-gray-200 hover:border-[#3B9AB8]'
                   }`}
                 >
-                  <VideoCameraOutlined className="text-xl mb-2" />
+                  <VideoCameraOutlined className="text-xl mb-2 text-[#3B9AB8]" />
                   <div className="font-medium">Trực tuyến</div>
                   <div className="text-sm text-gray-500">Khám qua video call</div>
                 </button>
@@ -207,29 +212,44 @@ const PatientAppointmentForm = ({ patientId }) => {
                   onClick={() => setFormData(prev => ({ ...prev, appointmentType: 1 }))}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     formData.appointmentType === 1
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
+                      : 'border-gray-200 hover:border-[#3B9AB8]'
                   }`}
                 >
-                  <EnvironmentOutlined className="text-xl mb-2" />
+                  <EnvironmentOutlined className="text-xl mb-2 text-[#3B9AB8]" />
                   <div className="font-medium">Tại phòng khám</div>
                   <div className="text-sm text-gray-500">Khám trực tiếp</div>
                 </button>
               </div>
             </div>
 
-            {/* Date and Time */}
+            {/* Appointment Date */}
             <div className="space-y-2">
               <label className="flex items-center text-gray-700 font-medium">
-                <CalendarOutlined className="mr-2" />
-                Ngày giờ hẹn
+                <CalendarOutlined className="mr-2 text-[#3B9AB8]" />
+                Chọn ngày
               </label>
               <input
-                type="datetime-local"
+                type="date"
                 name="appointmentDate"
                 value={formData.appointmentDate}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
+                required
+              />
+            </div>
+            {/* Appointment Time */}
+            <div className="space-y-2">
+              <label className="flex items-center text-gray-700 font-medium">
+                <FaClock className="mr-2 text-[#3B9AB8]" />
+                Chọn giờ
+              </label>
+              <input
+                type="time"
+                name="appointmentTime"
+                value={formData.appointmentTime}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                 required
               />
             </div>
@@ -237,14 +257,14 @@ const PatientAppointmentForm = ({ patientId }) => {
             {/* Reason */}
             <div className="space-y-2">
               <label className="flex items-center text-gray-700 font-medium">
-                <FileTextOutlined className="mr-2" />
+                <FileTextOutlined className="mr-2 text-[#3B9AB8]" />
                 Lý do khám
               </label>
               <textarea
                 name="reason"
                 value={formData.reason}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-h-[120px]"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors min-h-[120px]"
                 placeholder="Mô tả triệu chứng hoặc lý do khám của bạn..."
                 required
               />
@@ -257,7 +277,7 @@ const PatientAppointmentForm = ({ patientId }) => {
               className={`w-full py-4 px-6 rounded-lg text-white font-medium text-lg transition-all ${
                 loading
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:-translate-y-0.5'
+                  : 'bg-[#3B9AB8] hover:bg-[#2d7a94] transform hover:-translate-y-0.5'
               }`}
             >
               {loading ? (

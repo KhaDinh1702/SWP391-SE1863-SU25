@@ -6,3 +6,4 @@ npm run dev
 
 npm i antd 
 npm i framer-motion
+npm i recharts   

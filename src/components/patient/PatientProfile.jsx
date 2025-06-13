@@ -47,14 +47,14 @@ export default function PatientProfile() {
         
         {/* Header - Always visible */}
         <div 
-          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-blue-50"
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-[#3B9AB8]/10"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#3B9AB8]/20 flex items-center justify-center">
             {userData.avatar ? (
               <img src={userData.avatar} alt={userData.fullName} className="w-full h-full rounded-full object-cover" />
             ) : (
-              <FaUser className="text-blue-600 text-xl" />
+              <FaUser className="text-[#3B9AB8] text-xl" />
             )}
           </div>
           {isExpanded && (
@@ -64,9 +64,9 @@ export default function PatientProfile() {
             </div>
           )}
           {isExpanded ? (
-            <FaChevronUp className="text-gray-500" />
+            <FaChevronUp className="text-[#3B9AB8]" />
           ) : (
-            <FaChevronDown className="text-gray-500" />
+            <FaChevronDown className="text-[#3B9AB8]" />
           )}
         </div>
 
@@ -76,23 +76,23 @@ export default function PatientProfile() {
             <div className="p-3 space-y-2">
               <button 
                 onClick={() => navigate('/profile')}
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-2"
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-[#3B9AB8]/10 text-gray-700 hover:text-[#3B9AB8] transition-colors flex items-center gap-2"
               >
-                <FaUser className="text-blue-600" />
+                <FaUser className="text-[#3B9AB8]" />
                 <span>Thông tin cá nhân</span>
               </button>
               <button 
                 onClick={() => navigate('/appointments')}
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-2"
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-[#3B9AB8]/10 text-gray-700 hover:text-[#3B9AB8] transition-colors flex items-center gap-2"
               >
-                <FaFileAlt className="text-blue-600" />
+                <FaFileAlt className="text-[#3B9AB8]" />
                 <span>Lịch hẹn của tôi</span>
               </button>
               <button 
                 onClick={() => navigate('/medical-records')}
-                className="w-full text-left px-3 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-2"
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-[#3B9AB8]/10 text-gray-700 hover:text-[#3B9AB8] transition-colors flex items-center gap-2"
               >
-                <FaFileMedical className="text-blue-600" />
+                <FaFileMedical className="text-[#3B9AB8]" />
                 <span>Hồ sơ y tế</span>
               </button>
               <button 
@@ -108,4 +108,4 @@ export default function PatientProfile() {
       </div>
     </div>
   );
-} 
+}

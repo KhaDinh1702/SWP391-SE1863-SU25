@@ -1,4 +1,3 @@
-// src/pages/Register.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/NavBar.jsx";
@@ -6,12 +5,11 @@ import { authService } from "../services/authService";
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaVenusMars } from "react-icons/fa";
 import { message } from "antd";
 
-// Eye icon toggle for password visibility
 function EyeIcon({ visible, onClick }) {
   return (
     <span
       onClick={onClick}
-      className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+      className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#3B9AB8] transition-colors"
       tabIndex={0}
       aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
     >
@@ -77,12 +75,12 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 to-white">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+            <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] px-6 py-4">
               <h2 className="text-2xl font-bold text-white text-center">
                 Đăng ký tài khoản bệnh nhân
               </h2>
@@ -100,7 +98,7 @@ export default function Register() {
                       type="text"
                       name="username"
                       placeholder="Tên đăng nhập"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.username}
                       onChange={handleChange}
                       required
@@ -116,7 +114,7 @@ export default function Register() {
                       type="text"
                       name="fullName"
                       placeholder="Họ và tên"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.fullName}
                       onChange={handleChange}
                       required
@@ -132,7 +130,7 @@ export default function Register() {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.email}
                       onChange={handleChange}
                       required
@@ -148,7 +146,7 @@ export default function Register() {
                       type="tel"
                       name="phoneNumber"
                       placeholder="Số điện thoại"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.phoneNumber}
                       onChange={handleChange}
                       required
@@ -164,7 +162,7 @@ export default function Register() {
                       type={showPassword ? "text" : "password"}
                       name="password"
                       placeholder="Mật khẩu"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.password}
                       onChange={handleChange}
                       required
@@ -184,7 +182,7 @@ export default function Register() {
                       type={showPassword ? "text" : "password"}
                       name="confirmPassword"
                       placeholder="Xác nhận mật khẩu"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       required
@@ -200,7 +198,7 @@ export default function Register() {
                       type="text"
                       name="address"
                       placeholder="Địa chỉ"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.address}
                       onChange={handleChange}
                       required
@@ -215,7 +213,7 @@ export default function Register() {
                     <input
                       type="date"
                       name="dateOfBirth"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.dateOfBirth}
                       onChange={handleChange}
                       required
@@ -229,7 +227,7 @@ export default function Register() {
                     </div>
                     <select
                       name="gender"
-                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors appearance-none"
                       value={formData.gender}
                       onChange={handleChange}
                     >
@@ -243,7 +241,7 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white py-3 rounded-lg font-medium hover:from-[#2D7A94] hover:to-[#3B9AB8] focus:outline-none focus:ring-2 focus:ring-[#3B9AB8] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Đang xử lý..." : "Đăng ký"}
                 </button>
@@ -254,7 +252,7 @@ export default function Register() {
                   Đã có tài khoản?{" "}
                   <a
                     href="/login"
-                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    className="text-[#3B9AB8] hover:text-[#2D7A94] font-medium transition-colors"
                   >
                     Đăng nhập ngay
                   </a>

@@ -4,13 +4,12 @@ import Navbar from "../components/NavBar";
 import { authService } from "../services/authService";
 import { FaEye, FaEyeSlash, FaUser, FaLock, FaSpinner, FaSignInAlt } from "react-icons/fa";
 
-// Component for password visibility toggle icon
 function EyeIcon({ visible, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 focus:outline-none transition-colors duration-300"
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#3B9AB8] focus:outline-none transition-colors duration-300"
       aria-label={visible ? "Hide password" : "Show password"}
     >
       {visible ? <FaEyeSlash className="w-5 h-5" /> : <FaEye className="w-5 h-5" />}
@@ -59,13 +58,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 to-white">
       <Navbar />
       
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
         {/* Image Section - Left Side */}
         <div className="hidden md:block w-full md:w-1/2 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-indigo-900/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/90 to-[#2D7A94]/90"></div>
           <img 
             src="https://images.pexels.com/photos/16450237/pexels-photo-16450237.jpeg?cs=srgb&dl=pexels-njeromin-16450237.jpg&fm=jpg"
             alt="Medical illustration"
@@ -73,15 +72,15 @@ export default function Login() {
           />
           <div className="absolute inset-0 flex items-center justify-center p-12 text-white">
             <div className="max-w-md transform hover:scale-105 transition-transform duration-300">
-              <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+              <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#d1e9f3]">
                 Chào mừng đến với
               </h2>
-              <p className="text-xl mb-8 text-blue-100">
+              <p className="text-xl mb-8 text-[#d1e9f3]">
                 Hệ thống quản lý y tế thông minh cho bác sĩ và bệnh nhân
               </p>
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-1 bg-blue-400"></div>
-                <span className="text-blue-200">Đăng nhập để tiếp tục</span>
+                <div className="w-12 h-1 bg-[#3B9AB8]"></div>
+                <span className="text-[#d1e9f3]">Đăng nhập để tiếp tục</span>
               </div>
             </div>
           </div>
@@ -91,7 +90,7 @@ export default function Login() {
         <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 transform hover:scale-[1.02] transition-transform duration-300">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-indigo-900 bg-clip-text text-transparent">
+              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] bg-clip-text text-transparent">
                 Đăng nhập
               </h2>
               <p className="mt-2 text-sm text-gray-600">
@@ -123,7 +122,7 @@ export default function Login() {
                     autoComplete="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B9AB8] focus:border-transparent transition-all duration-300"
                     placeholder="Nhập tên đăng nhập"
                   />
                 </div>
@@ -143,7 +142,7 @@ export default function Login() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B9AB8] focus:border-transparent transition-all duration-300"
                     placeholder="Nhập mật khẩu"
                   />
                   <EyeIcon
@@ -159,7 +158,7 @@ export default function Login() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors duration-300"
+                    className="h-4 w-4 text-[#3B9AB8] focus:ring-[#3B9AB8] border-gray-300 rounded transition-colors duration-300"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                     Ghi nhớ đăng nhập
@@ -168,7 +167,7 @@ export default function Login() {
 
                 <Link 
                   to="/forgot-password" 
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-300"
+                  className="text-sm font-medium text-[#3B9AB8] hover:text-[#2D7A94] transition-colors duration-300"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -178,7 +177,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:-translate-y-0.5 ${
+                  className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] hover:from-[#2D7A94] hover:to-[#3B9AB8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3B9AB8] transition-all duration-300 transform hover:-translate-y-0.5 ${
                     isLoading ? "opacity-70 cursor-not-allowed" : ""
                   }`}
                 >
@@ -187,7 +186,12 @@ export default function Login() {
                       <FaSpinner className="animate-spin -ml-1 mr-3 h-5 w-5" />
                       Đang đăng nhập...
                     </>
-                  ) : "Đăng nhập"}
+                  ) : (
+                    <>
+                      <FaSignInAlt className="-ml-1 mr-3 h-5 w-5" />
+                      Đăng nhập
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -197,7 +201,7 @@ export default function Login() {
                 Chưa có tài khoản?{' '}
                 <Link 
                   to="/register" 
-                  className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-300"
+                  className="font-medium text-[#3B9AB8] hover:text-[#2D7A94] transition-colors duration-300"
                 >
                   Đăng ký ngay
                 </Link>
