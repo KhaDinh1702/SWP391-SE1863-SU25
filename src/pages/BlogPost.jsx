@@ -158,20 +158,20 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 flex items-center justify-center px-4">
         <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-xl">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Bài viết không tồn tại</h2>
+          <h2 className="text-2xl font-bold text-[#3B9AB8] mb-4">Bài viết không tồn tại</h2>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link 
               to="/" 
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center group"
+              className="px-6 py-3 bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white rounded-full hover:from-[#2D7A94] hover:to-[#3B9AB8] transition-all duration-300 flex items-center justify-center group"
             >
               <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Về trang chủ
             </Link>
             <Link 
               to="/blog" 
-              className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center group"
+              className="px-6 py-3 bg-white text-[#3B9AB8] rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center group"
             >
               <FaArrowLeft className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Quay lại Blog
@@ -183,7 +183,7 @@ export default function BlogPost() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6">
+    <main className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <article className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Article Header */}
@@ -196,12 +196,7 @@ export default function BlogPost() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                  post.category === "Kiến Thức Cơ Bản" ? "bg-blue-100 text-blue-800" :
-                  post.category === "Phòng Ngừa" ? "bg-green-100 text-green-800" :
-                  post.category === "Điều Trị" ? "bg-purple-100 text-purple-800" :
-                  "bg-orange-100 text-orange-800"
-                }`}>
+                <span className="px-4 py-2 text-sm font-semibold rounded-full bg-[#3B9AB8]/10 text-[#3B9AB8]">
                   {post.category}
                 </span>
                 <div className="flex items-center text-white/80">
@@ -222,23 +217,23 @@ export default function BlogPost() {
             {post.content.map((section, index) => {
               if (section.type === "heading") {
                 return (
-                  <h2 key={index} className="text-2xl font-semibold text-gray-800 mt-8 mb-4 border-b border-gray-200 pb-2">
+                  <h2 key={index} className="text-2xl font-semibold text-[#3B9AB8] mt-8 mb-4 border-b border-[#3B9AB8]/20 pb-2">
                     {section.text}
                   </h2>
                 );
               }
               if (section.type === "paragraph") {
                 return (
-                  <p key={index} className="text-gray-700 mb-6 leading-relaxed">
+                  <p key={index} className="text-[#2D7A94] mb-6 leading-relaxed">
                     {section.text}
                   </p>
                 );
               }
               if (section.type === "list") {
                 return (
-                  <ul key={index} className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+                  <ul key={index} className="list-disc pl-6 mb-6 space-y-2 text-[#2D7A94]">
                     {section.items.map((item, i) => (
-                      <li key={i} className="hover:text-blue-600 transition-colors">{item}</li>
+                      <li key={i} className="hover:text-[#3B9AB8] transition-colors">{item}</li>
                     ))}
                   </ul>
                 );
@@ -248,16 +243,16 @@ export default function BlogPost() {
           </div>
 
           {/* Tags */}
-          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+          <div className="px-8 py-6 bg-[#3B9AB8]/5 border-t border-[#3B9AB8]/20">
             <div className="flex items-center gap-2 mb-4">
-              <FaTag className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-700">Tags:</span>
+              <FaTag className="w-5 h-5 text-[#3B9AB8]" />
+              <span className="font-semibold text-[#3B9AB8]">Tags:</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag, index) => (
                 <span 
                   key={index}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="px-3 py-1 bg-[#3B9AB8]/10 text-[#3B9AB8] rounded-full text-sm hover:bg-[#3B9AB8]/20 transition-colors cursor-pointer"
                 >
                   {tag}
                 </span>
@@ -266,28 +261,28 @@ export default function BlogPost() {
           </div>
 
           {/* Share Section */}
-          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+          <div className="px-8 py-6 bg-[#3B9AB8]/5 border-t border-[#3B9AB8]/20">
             <div className="flex items-center gap-2 mb-4">
-              <FaShareAlt className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-700">Chia sẻ bài viết:</span>
+              <FaShareAlt className="w-5 h-5 text-[#3B9AB8]" />
+              <span className="font-semibold text-[#3B9AB8]">Chia sẻ bài viết:</span>
             </div>
             <div className="flex gap-3">
-              <button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors">
+              <button className="p-2 bg-[#3B9AB8] text-white rounded-full hover:bg-[#2D7A94] transition-colors">
                 <FaFacebook className="w-5 h-5" />
               </button>
-              <button className="p-2 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-colors">
+              <button className="p-2 bg-[#3B9AB8] text-white rounded-full hover:bg-[#2D7A94] transition-colors">
                 <FaTwitter className="w-5 h-5" />
               </button>
-              <button className="p-2 bg-blue-700 text-white rounded-full hover:bg-blue-800 transition-colors">
+              <button className="p-2 bg-[#3B9AB8] text-white rounded-full hover:bg-[#2D7A94] transition-colors">
                 <FaLinkedin className="w-5 h-5" />
               </button>
             </div>
           </div>
 
           {/* Article Footer */}
-          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+          <div className="px-8 py-6 bg-[#3B9AB8]/5 border-t border-[#3B9AB8]/20">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex items-center text-gray-600">
+              <div className="flex items-center text-[#3B9AB8]">
                 <FaUserMd className="w-5 h-5 mr-2" />
                 <span className="font-semibold">Tác giả:</span> {post.author}
               </div>
@@ -295,14 +290,14 @@ export default function BlogPost() {
               <div className="flex flex-wrap gap-3">
                 <Link 
                   to="/blog" 
-                  className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center group"
+                  className="px-6 py-3 bg-white text-[#3B9AB8] rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center group"
                 >
                   <FaArrowLeft className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   Quay lại Blog
                 </Link>
                 <Link 
                   to="/" 
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center group"
+                  className="px-6 py-3 bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white rounded-full hover:from-[#2D7A94] hover:to-[#3B9AB8] transition-all duration-300 flex items-center group"
                 >
                   <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   Về trang chủ

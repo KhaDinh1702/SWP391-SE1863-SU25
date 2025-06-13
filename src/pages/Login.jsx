@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/NavBar";
 import { authService } from "../services/authService";
-import { FaEye, FaEyeSlash, FaUser, FaLock, FaSpinner } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaUser, FaLock, FaSpinner, FaSignInAlt } from "react-icons/fa";
 
 // Component for password visibility toggle icon
 function EyeIcon({ visible, onClick }) {

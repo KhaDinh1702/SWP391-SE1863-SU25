@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaHome, FaCalendarAlt, FaUserMd, FaArrowRight } from 'react-icons/fa';
+import { FaArrowLeft, FaCalendarAlt, FaUserMd, FaArrowRight } from 'react-icons/fa';
 
 const blogPosts = [
   {
@@ -43,16 +43,16 @@ const blogPosts = [
 
 const Blog = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-3xl transform -skew-y-2"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/10 to-[#2D7A94]/10 rounded-3xl transform -skew-y-2"></div>
           <div className="relative">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94]">
               Kiến Thức Về HIV/AIDS
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-[#2D7A94] max-w-2xl mx-auto">
               Cập nhật thông tin chính xác về phòng ngừa và điều trị HIV tại Việt Nam
             </p>
           </div>
@@ -61,10 +61,10 @@ const Blog = () => {
         {/* Back to Home Button */}
         <Link 
           to="/" 
-          className="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:bg-blue-50 mb-8 group"
+          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/5"
         >
-          <FaHome className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-          <span>Về trang chủ</span>
+          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-semibold">Quay lại trang chủ</span>
         </Link>
 
         {/* Blog Posts Grid */}
@@ -83,19 +83,14 @@ const Blog = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-4 left-4">
-                  <span className={`px-4 py-2 text-sm font-semibold rounded-full ${
-                    post.category === "Kiến Thức Cơ Bản" ? "bg-blue-100 text-blue-800" :
-                    post.category === "Phòng Ngừa" ? "bg-green-100 text-green-800" :
-                    post.category === "Điều Trị" ? "bg-purple-100 text-purple-800" :
-                    "bg-orange-100 text-orange-800"
-                  }`}>
+                  <span className="px-4 py-2 text-sm font-semibold rounded-full bg-[#3B9AB8]/10 text-[#3B9AB8]">
                     {post.category}
                   </span>
                 </div>
               </div>
 
               <div className="p-6">
-                <div className="flex items-center text-sm text-gray-500 mb-4">
+                <div className="flex items-center text-sm text-[#2D7A94] mb-4">
                   <FaCalendarAlt className="w-4 h-4 mr-2" />
                   <span>{post.date}</span>
                   <span className="mx-2">•</span>
@@ -103,14 +98,14 @@ const Blog = () => {
                   <span>{post.author}</span>
                 </div>
 
-                <h2 className="text-2xl font-bold text-gray-800 mb-3 hover:text-blue-600 transition-colors">
+                <h2 className="text-2xl font-bold text-[#3B9AB8] mb-3 hover:text-[#2D7A94] transition-colors">
                   {post.title}
                 </h2>
-                <p className="text-gray-600 mb-6 line-clamp-3">{post.summary}</p>
+                <p className="text-[#2D7A94] mb-6 line-clamp-3">{post.summary}</p>
                 
                 <Link 
                   to={`/blog/${post.id}`}
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 group"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white rounded-full hover:from-[#2D7A94] hover:to-[#3B9AB8] transition-all duration-300 group"
                 >
                   <span>Tìm hiểu thêm</span>
                   <FaArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

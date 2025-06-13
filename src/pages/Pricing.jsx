@@ -6,7 +6,7 @@ export default function PricingPage() {
   const pricingCategories = [
     {
       title: "Khám và Tư vấn",
-      icon: <FaClinicMedical className="text-3xl text-blue-600" />,
+      icon: <FaClinicMedical className="text-3xl text-white" />,
       description: "Dịch vụ khám và tư vấn chuyên sâu về HIV và các bệnh lây truyền qua đường tình dục",
       services: [
         { 
@@ -33,7 +33,7 @@ export default function PricingPage() {
     },
     {
       title: "Xét nghiệm",
-      icon: <FaVial className="text-3xl text-blue-600" />,
+      icon: <FaVial className="text-3xl text-white" />,
       description: "Các dịch vụ xét nghiệm chính xác và bảo mật về HIV và các bệnh lây truyền qua đường tình dục",
       services: [
         { 
@@ -70,7 +70,7 @@ export default function PricingPage() {
     },
     {
       title: "Điều trị ARV",
-      icon: <FaPills className="text-3xl text-blue-600" />,
+      icon: <FaPills className="text-3xl text-white" />,
       description: "Dịch vụ điều trị ARV và theo dõi điều trị cho người nhiễm HIV",
       services: [
         { 
@@ -97,7 +97,7 @@ export default function PricingPage() {
     },
     {
       title: "Dự phòng",
-      icon: <FaUserShield className="text-3xl text-blue-600" />,
+      icon: <FaUserShield className="text-3xl text-white" />,
       description: "Các dịch vụ dự phòng lây nhiễm HIV và các bệnh lây truyền qua đường tình dục",
       services: [
         { 
@@ -124,7 +124,7 @@ export default function PricingPage() {
     },
     {
       title: "Chăm sóc sức khỏe",
-      icon: <FaHeartbeat className="text-3xl text-blue-600" />,
+      icon: <FaHeartbeat className="text-3xl text-white" />,
       description: "Dịch vụ chăm sóc sức khỏe toàn diện cho người nhiễm HIV",
       services: [
         { 
@@ -151,7 +151,7 @@ export default function PricingPage() {
     },
     {
       title: "Dịch vụ khác",
-      icon: <MdLocalHospital className="text-3xl text-blue-600" />,
+      icon: <MdLocalHospital className="text-3xl text-white" />,
       description: "Các dịch vụ y tế khác tại phòng khám",
       services: [
         { 
@@ -179,17 +179,17 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="font-sans bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    <div className="font-sans bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-32 overflow-hidden">
+      <div className="relative bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white py-32 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg')] bg-cover bg-center opacity-20 animate-pulse"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-indigo-900/90"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/90 to-[#2D7A94]/90"></div>
         <div className="container mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#3B9AB8]/80 animate-fade-in">
               Bảng Giá Dịch Vụ
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-12 leading-relaxed">
+            <p className="text-xl md:text-2xl text-white/90 mb-12 leading-relaxed">
               Thông tin chi tiết về giá các dịch vụ khám chữa bệnh và điều trị HIV tại phòng khám chúng tôi
             </p>
             <div className="flex flex-wrap justify-center gap-6">
@@ -210,7 +210,7 @@ export default function PricingPage() {
       <div className="container mx-auto px-6 pt-8">
         <Link 
           to="/" 
-          className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-blue-50"
+          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/5"
         >
           <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold">Quay lại trang chủ</span>
@@ -220,13 +220,13 @@ export default function PricingPage() {
       {/* Pricing Content */}
       <div className="container mx-auto px-6 py-20">
         {/* Notice */}
-        <div className="bg-white/80 backdrop-blur-sm border-l-4 border-blue-500 p-6 mb-16 rounded-r-xl shadow-lg transform hover:scale-[1.02] transition-all duration-300">
+        <div className="bg-white/80 backdrop-blur-sm border-l-4 border-[#3B9AB8] p-6 mb-16 rounded-r-xl shadow-lg transform hover:scale-[1.02] transition-all duration-300">
           <div className="flex items-start">
             <div className="flex-shrink-0 mt-1">
-              <FaInfoCircle className="h-6 w-6 text-blue-500" />
+              <FaInfoCircle className="h-6 w-6 text-[#3B9AB8]" />
             </div>
             <div className="ml-4">
-              <p className="text-lg text-blue-800">
+              <p className="text-lg text-[#2D7A94]">
                 <span className="font-bold">Lưu ý:</span> Giá dịch vụ có thể thay đổi theo chính sách của Bảo hiểm Y tế. 
                 Một số dịch vụ được miễn phí cho người có thẻ BHYT đúng tuyến. 
                 Vui lòng liên hệ để biết thêm chi tiết.
@@ -239,14 +239,14 @@ export default function PricingPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
           {pricingCategories.map((category, index) => (
             <div key={index} className="bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+              <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] px-8 py-6">
                 <div className="flex items-center mb-4">
                   <div className="mr-4 text-white group-hover:scale-110 transition-transform duration-300">
                     {category.icon}
                   </div>
                   <h2 className="text-2xl font-bold text-white">{category.title}</h2>
                 </div>
-                <p className="text-blue-100 text-sm">{category.description}</p>
+                <p className="text-white/90 text-sm">{category.description}</p>
               </div>
               <div className="p-8">
                 <ul className="divide-y divide-gray-100">
@@ -254,12 +254,12 @@ export default function PricingPage() {
                     <li key={sIndex} className="py-4">
                       <div className="flex justify-between items-start group/item">
                         <div>
-                          <span className="text-gray-700 text-lg font-medium group-hover/item:text-blue-600 transition-colors">
+                          <span className="text-gray-700 text-lg font-medium group-hover/item:text-[#3B9AB8] transition-colors">
                             {service.name}
                           </span>
                           <p className="text-gray-500 text-sm mt-1">{service.details}</p>
                         </div>
-                        <span className="font-bold text-blue-600 text-lg ml-4 whitespace-nowrap">
+                        <span className="font-bold text-[#3B9AB8] text-lg ml-4 whitespace-nowrap">
                           {service.price}
                         </span>
                       </div>
@@ -273,44 +273,44 @@ export default function PricingPage() {
 
         {/* Additional Info */}
         <div className="mt-20 bg-white p-12 rounded-3xl shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
-          <h2 className="text-3xl font-bold text-blue-800 mb-8 flex items-center">
+          <h2 className="text-3xl font-bold text-[#3B9AB8] mb-8 flex items-center">
             <MdPayment className="w-8 h-8 mr-4" />
             Chính sách giá và thanh toán
           </h2>
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-[#3B9AB8] max-w-none">
             <ul className="list-none space-y-4">
               <li className="flex items-start text-lg text-gray-700">
-                <FaCheckCircle className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
+                <FaCheckCircle className="w-6 h-6 text-[#3B9AB8] mr-3 mt-1 flex-shrink-0" />
                 <div>
                   <span className="font-semibold">VAT:</span> Giá trên chưa bao gồm 10% VAT (nếu có hóa đơn VAT)
                 </div>
               </li>
               <li className="flex items-start text-lg text-gray-700">
-                <FaCheckCircle className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
+                <FaCheckCircle className="w-6 h-6 text-[#3B9AB8] mr-3 mt-1 flex-shrink-0" />
                 <div>
                   <span className="font-semibold">Giảm giá:</span> Giảm 5% cho khách hàng đăng ký gói dịch vụ từ 3 tháng trở lên
                 </div>
               </li>
               <li className="flex items-start text-lg text-gray-700">
-                <FaCheckCircle className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
+                <FaCheckCircle className="w-6 h-6 text-[#3B9AB8] mr-3 mt-1 flex-shrink-0" />
                 <div>
                   <span className="font-semibold">Miễn phí:</span> Miễn phí khám ban đầu cho người nhiễm HIV lần đầu tiên
                 </div>
               </li>
               <li className="flex items-start text-lg text-gray-700">
-                <FaCheckCircle className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
+                <FaCheckCircle className="w-6 h-6 text-[#3B9AB8] mr-3 mt-1 flex-shrink-0" />
                 <div>
                   <span className="font-semibold">Thanh toán:</span> Chấp nhận thanh toán bằng tiền mặt, chuyển khoản hoặc thẻ BHYT
                 </div>
               </li>
               <li className="flex items-start text-lg text-gray-700">
-                <FaCheckCircle className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
+                <FaCheckCircle className="w-6 h-6 text-[#3B9AB8] mr-3 mt-1 flex-shrink-0" />
                 <div>
                   <span className="font-semibold">Trả góp:</span> Hỗ trợ thanh toán trả góp 0% lãi suất cho gói điều trị dài hạn
                 </div>
               </li>
             </ul>
-            <div className="mt-8 p-6 bg-blue-50 rounded-xl">
+            <div className="mt-8 p-6 bg-[#3B9AB8]/5 rounded-xl">
               <p className="text-base text-gray-600 italic">
                 * Miễn phí thuốc ARV cho người có thẻ BHYT theo quy định của Bộ Y tế. 
                 Để biết thêm chi tiết về điều kiện và thủ tục, vui lòng liên hệ với chúng tôi.
