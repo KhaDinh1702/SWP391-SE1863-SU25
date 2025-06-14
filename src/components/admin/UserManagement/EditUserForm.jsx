@@ -78,6 +78,28 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
       </Form.Item>
 
       <Form.Item
+        name="role"
+        label="Vai trò"
+        rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+      >
+        <Select>
+          <Option value="Patient">Patient</Option>
+          <Option value="Staff">Staff</Option>
+          <Option value="Doctor">Doctor</Option>
+          <Option value="Manager">Manager</Option>
+          <Option value="Admin">Admin</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="fullName"
+        label="Họ tên"
+        rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
         name="password"
         label="Mật khẩu mới"
         rules={[
@@ -85,19 +107,6 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
         ]}
       >
         <Input.Password placeholder="Để trống nếu không muốn thay đổi" />
-      </Form.Item>
-
-      <Form.Item
-        name="role"
-        label="Vai trò"
-        rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-      >
-        <Select>
-          <Option value="Admin">Admin</Option>
-          <Option value="Doctor">Doctor</Option>
-          <Option value="Staff">Staff</Option>
-          <Option value="Patient">Patient</Option>
-        </Select>
       </Form.Item>
 
       <Form.Item className="mb-0 text-right">

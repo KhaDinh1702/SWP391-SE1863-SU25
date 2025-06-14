@@ -49,17 +49,26 @@ export const userService = {
 
   updateUser: async (userData) => {
     try {
+      const roleMap = {
+        0: 'Patient',
+        1: 'Staff',
+        2: 'Doctor',
+        3: 'Manager',
+        4: 'Admin'
+      };
+
       const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           userId: userData.id,
+          username: userData.username,
           email: userData.email,
           phoneNumber: userData.phoneNumber,
-          role: userData.role,
+          role: roleMap[userData.role] || userData.role,
+          fullName: userData.fullName,
           address: userData.address,
-          gender: userData.gender,
-          password: userData.password || undefined
+          gender: userData.gender
         }),
       });
 
