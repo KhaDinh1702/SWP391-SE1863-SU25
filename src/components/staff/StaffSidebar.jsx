@@ -1,12 +1,22 @@
 import { Button } from 'antd';
 import {
   DashboardOutlined,
+  CalendarOutlined,
   TeamOutlined,
   ProfileOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
-const ManagerSidebar = ({ activeTab, setActiveTab, onLogout }) => {
+const StaffSidebar = ({ activeTab, setActiveTab }) => {
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    navigate('/login');
+  };
   return (
     <div>
       <Button
@@ -18,12 +28,20 @@ const ManagerSidebar = ({ activeTab, setActiveTab, onLogout }) => {
         Dashboard
       </Button>
       <Button
-        type={activeTab === 'doctors' ? 'primary' : 'text'}
+        type={activeTab === 'appointments' ? 'primary' : 'text'}
+        icon={<CalendarOutlined />}
+        className="w-full text-left flex items-center h-7 px-4 border-0"
+        onClick={() => setActiveTab('appointments')}
+      >
+        Quản lý Lịch hẹn
+      </Button>
+      <Button
+        type={activeTab === 'doctor-schedule' ? 'primary' : 'text'}
         icon={<TeamOutlined />}
         className="w-full text-left flex items-center h-7 px-4 border-0"
-        onClick={() => setActiveTab('doctors')}
+        onClick={() => setActiveTab('doctor-schedule')}
       >
-        Quản lý Bác sĩ
+        Lịch làm việc Bác sĩ
       </Button>
       <Button
         type={activeTab === 'profile' ? 'primary' : 'text'}
@@ -37,7 +55,7 @@ const ManagerSidebar = ({ activeTab, setActiveTab, onLogout }) => {
         type="text"
         icon={<LogoutOutlined />}
         className="w-full text-left flex items-center h-7 px-4 border-0 text-red-500"
-        onClick={onLogout}
+        onClick={handleLogout}
       >
         Đăng xuất
       </Button>
@@ -45,4 +63,4 @@ const ManagerSidebar = ({ activeTab, setActiveTab, onLogout }) => {
   );
 };
 
-export default ManagerSidebar; 
+export default StaffSidebar;

@@ -8,7 +8,8 @@ import {
   CalendarOutlined,
   UserAddOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
 
 import ManagerSidebar from '../components/manager/ManagerSidebar';
@@ -16,13 +17,13 @@ import ManagerHeader from '../components/manager/ManagerHeader';
 import DoctorList from '../components/manager/DoctorManagement/DoctorList';
 import ManagerProfile from '../components/manager/ManagerProfile';
 import StatsCards from '../components/manager/DashboardStatus/StatsCards';
-import DoctorSchedule from '../components/manager/DoctorSchedule/DoctorSchedule';
 
 import { userService } from "../services/userService";
 import { doctorService } from "../services/doctorService";
 import { authService } from "../services/authService";
+import hivLogo from '../assets/hiv.png';
 
-const { Content } = Layout;
+const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
 const ManagerDashboard = () => {
@@ -163,6 +164,11 @@ const ManagerDashboard = () => {
     });
   };
 
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
+
   const getPageTitle = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -195,10 +201,24 @@ const ManagerDashboard = () => {
 
   return (
     <Layout className="min-h-screen">
-      <ManagerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Layout>
+      <Sider
+        width={200}
+        className="fixed left-0 h-screen overflow-y-auto bg-white shadow-sm"
+        theme="light"
+      >
+        <div className="p-4 flex items-center gap-2">
+          <img src={hivLogo} alt="Manager Logo" className="w-8 h-8 rounded-lg object-cover" />
+          <span className="text-lg font-semibold">Manager Panel</span>
+        </div>
+        
+        <div className="px-4 pb-1 text-gray-400 text-sm">MENU CHÍNH</div>
+        
+        <ManagerSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+      </Sider>
+
+      <Layout className="ml-[10px]">
         <ManagerHeader manager={manager} />
-        <Content className="p-6">
+        <Content className="bg-gray-50 p-6">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               {getPageIcon()}
@@ -242,11 +262,6 @@ const ManagerDashboard = () => {
                       onDelete={handleDeleteDoctor}
                       isLoading={loading}
                     />
-                  </div>
-                )}
-                {activeTab === 'schedule' && (
-                  <div className="space-y-6">
-                    <DoctorSchedule doctors={doctors} />
                   </div>
                 )}
                 {activeTab === 'profile' && (

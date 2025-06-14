@@ -1,4 +1,4 @@
-import { Layout, Dropdown, Avatar } from 'antd';
+import { Layout } from 'antd';
 import {
   LogoutOutlined,
   UserOutlined,
@@ -40,11 +40,7 @@ const ManagerHeader = ({ manager }) => {
       }}
     >
       <div></div>
-      <div style={{ marginRight: 24 }}>
-        <Dropdown menu={{ items, onClick: handleMenuClick }}>
-          <Avatar icon={<UserOutlined />} style={{ cursor: 'pointer' }} />
-        </Dropdown>
-      </div>
+      {/* Avatar and dropdown removed as requested */}
     </Header>
   );
 };

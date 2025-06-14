@@ -23,6 +23,7 @@ import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
 import ProtectedLayout from './components/patient/ProtectedLayout';
+import StaffDashboard from './pages/StaffDashboard';
 // Import các component quản lý từ thư mục con
 
 
@@ -98,6 +99,16 @@ function App() {
               <ProtectedLayout>
                 <PatientAppointments />
               </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Staff routes */}
+        <Route
+          path="/staff/dashboard"
+          element={
+            <ProtectedRoute requiredRoles={["Staff"]}>
+              <StaffDashboard />
             </ProtectedRoute>
           }
         />

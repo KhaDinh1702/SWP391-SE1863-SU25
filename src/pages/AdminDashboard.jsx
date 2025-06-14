@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Layout, Input, Typography, message, Card, Row, Col, Avatar, Statistic, Button, Table, Modal, Form, Select, Tag, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import {
-  UserOutlined,
-  DashboardOutlined,
-  UsergroupAddOutlined,
-  LogoutOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  PlusOutlined,
-  BarChartOutlined,
-  StopOutlined,
-  CheckCircleOutlined
-} from '@ant-design/icons';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";

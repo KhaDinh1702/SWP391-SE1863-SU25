@@ -48,6 +48,7 @@ export default function Login() {
         case "Admin": navigate("/admin/dashboard"); break;
         case "Doctor": navigate("/doctor/dashboard"); break;
         case "Manager": navigate("/manager/dashboard"); break;
+        case "Staff": navigate("/staff/dashboard"); break;
         default: navigate("/");
       }
     } catch (err) {

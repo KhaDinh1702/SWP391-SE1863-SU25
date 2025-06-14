@@ -9,11 +9,11 @@ export const doctorService = {
         throw new Error('Vui lòng đăng nhập để xem danh sách bác sĩ');
       }
 
-      console.log('Fetching doctors from:', `${API_BASE_URL}/Doctor/get-list-doctoc`);
+      console.log('Fetching doctors from:', `${API_BASE_URL}/Doctor/get-list-doctor`);
       const headers = getAuthHeaders();
       console.log('Auth headers:', headers);
 
-      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctoc`, {
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
         method: 'GET',
         headers: headers
       });
