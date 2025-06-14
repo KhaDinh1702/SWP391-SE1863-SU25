@@ -44,14 +44,27 @@ export default function Login() {
       localStorage.setItem("role", data.role);
       localStorage.setItem("userId", data.userId);
 
-      switch (data.role) {
-        case "Admin": navigate("/admin/dashboard"); break;
-        case "Doctor": navigate("/doctor/dashboard"); break;
-        case "Manager": navigate("/manager/dashboard"); break;
-        case "Staff": navigate("/staff/dashboard"); break;
-        default: navigate("/");
+      const role = data.role;
+      console.log("User role:", role);
+
+      switch (role) {
+        case "Admin":
+          navigate("/admin/dashboard");
+          break;
+        case "Doctor":
+          navigate("/doctor/dashboard");
+          break;
+        case "Manager":
+          navigate("/manager/dashboard");
+          break;
+        case "Staff":
+          navigate("/staff/dashboard");
+          break;
+        default:
+          navigate("/");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setIsLoading(false);

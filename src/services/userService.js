@@ -49,35 +49,42 @@ export const userService = {
 
   updateUser: async (userData) => {
     try {
-      const roleMap = {
-        0: 'Patient',
-        1: 'Staff',
-        2: 'Doctor',
-        3: 'Manager',
-        4: 'Admin'
-      };
-
       const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          userId: userData.id,
-          username: userData.username,
-          email: userData.email,
-          phoneNumber: userData.phoneNumber,
-          role: roleMap[userData.role] || userData.role,
-          fullName: userData.fullName,
-          address: userData.address,
-          gender: userData.gender
+          UserId: userData.id,
+          Username: userData.username,
+          Email: userData.email,
+          PhoneNumber: userData.phoneNumber,
+          Role: userData.role,
+          FullName: userData.fullName,
+          Specialization: userData.specialization,
+          Qualifications: userData.qualifications,
+          Experience: userData.experience,
+          Bio: userData.bio,
+          ProfilePictureURL: userData.profilePictureURL
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Cập nhật người dùng thất bại');
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || 'Cập nhật người dùng thất bại';
+        } catch (e) {
+          errorMessage = errorText || 'Cập nhật người dùng thất bại';
+        }
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const responseData = await response.json();
+      return responseData;
     } catch (error) {
       console.error('Update user failed:', error);
       throw error;

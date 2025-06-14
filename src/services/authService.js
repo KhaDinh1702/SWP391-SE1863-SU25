@@ -3,34 +3,62 @@ import { API_BASE_URL } from './config';
 export const authService = {
   login: async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      console.log('Attempting login with:', { username: credentials.username });
+      
+      const response = await fetch(`${API_BASE_URL}/Auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          Username: credentials.username,
+          Password: credentials.password
+        }),
       });
 
+      const responseData = await response.json().catch(() => null);
+      console.log('Server response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng nhập thất bại');
+        if (response.status === 500) {
+          console.error('Server error details:', responseData);
+          throw new Error('Lỗi máy chủ. Vui lòng thử lại sau.');
+        }
+        if (response.status === 401) {
+          throw new Error(responseData?.message || 'Tên đăng nhập hoặc mật khẩu không đúng');
+        }
+        throw new Error(responseData?.message || 'Đăng nhập thất bại');
       }
 
-      const data = await response.json();
-      console.log('Login response:', data);
-
-      // Store user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('role', data.role);
-      localStorage.setItem('userId', data.userId);
-      
-      // If user is a patient, store patientId
-      if (data.role === 'Patient' && data.patientId) {
-        localStorage.setItem('patientId', data.patientId);
+      if (!responseData) {
+        throw new Error('Không nhận được phản hồi từ máy chủ');
       }
 
-      return data;
+      if (!responseData.success) {
+        throw new Error(responseData.message || 'Đăng nhập thất bại');
+      }
+
+      // Store user data based on the backend response
+      localStorage.setItem('token', responseData.token);
+      localStorage.setItem('username', responseData.username);
+      localStorage.setItem('role', responseData.role);
+      localStorage.setItem('userId', responseData.userId);
+
+      // Store role-specific IDs
+      if (responseData.role === 'Patient' && responseData.patientId) {
+        localStorage.setItem('patientId', responseData.patientId);
+      }
+      if (responseData.role === 'Doctor' && responseData.doctorId) {
+        localStorage.setItem('doctorId', responseData.doctorId);
+      }
+
+      return responseData;
     } catch (error) {
       console.error('Login error:', error);
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau.');
+      }
       throw error;
     }
   },
