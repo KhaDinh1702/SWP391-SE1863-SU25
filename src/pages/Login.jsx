@@ -44,14 +44,25 @@ export default function Login() {
       localStorage.setItem("role", data.role);
       localStorage.setItem("userId", data.userId);
 
+      if (data.role === "Patient" && data.patientId) {
+        localStorage.setItem("patientId", data.patientId);
+      }
+      if (data.role === "Doctor" && data.doctorId) {
+        localStorage.setItem("doctorId", data.doctorId);
+      }
+
       const role = data.role;
       console.log("User role:", role);
+      console.log("User data:", data);
 
       switch (role) {
         case "Admin":
           navigate("/admin/dashboard");
           break;
         case "Doctor":
+          if (!data.doctorId) {
+            throw new Error("Không tìm thấy thông tin bác sĩ. Vui lòng liên hệ quản trị viên.");
+          }
           navigate("/doctor/dashboard");
           break;
         case "Manager":

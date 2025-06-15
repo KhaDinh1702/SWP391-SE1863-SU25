@@ -98,9 +98,12 @@ export const authService = {
       userId: localStorage.getItem('userId'),
     };
 
-    // Add patientId if user is a patient
+    // Add role-specific IDs
     if (user.role === 'Patient') {
       user.patientId = localStorage.getItem('patientId');
+    }
+    if (user.role === 'Doctor') {
+      user.doctorId = localStorage.getItem('doctorId');
     }
 
     return user;
@@ -112,5 +115,6 @@ export const authService = {
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
     localStorage.removeItem('patientId');
+    localStorage.removeItem('doctorId');
   },
 }; 
