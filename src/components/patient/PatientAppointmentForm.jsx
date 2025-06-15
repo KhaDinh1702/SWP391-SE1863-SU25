@@ -71,12 +71,19 @@ const PatientAppointmentForm = ({ patientId }) => {
     // Kết hợp ngày và giờ thành chuỗi ISO
     const appointmentDateTime = new Date(
       `${formData.appointmentDate}T${formData.appointmentTime}`
-    ).toISOString();
+    );
+
+    // Kiểm tra xem thời gian đặt lịch có trong quá khứ không
+    if (appointmentDateTime < new Date()) {
+      alert("Không thể đặt lịch hẹn trong quá khứ");
+      setLoading(false);
+      return;
+    }
 
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
-      appointmentStartDate: appointmentDateTime,
+      appointmentStartDate: appointmentDateTime.toISOString(),
       appointmentType: parseInt(formData.appointmentType),
       notes: formData.reason,
       isAnonymousAppointment: formData.isAnonymousAppointment,
