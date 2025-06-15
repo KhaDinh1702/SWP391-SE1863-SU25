@@ -22,7 +22,7 @@ export default function About() {
         <div className="flex items-center justify-center gap-4 mb-6">
           <img src={logo} alt="Logo" className="h-16 w-auto" />
           <h1 className="text-4xl md:text-5xl font-bold text-[#3B9AB8] animate-fade-in">
-            Giới thiệu về HIV 3AE 
+            Giới thiệu về dịch vụ y tế và điều trị HIV 3AE 
           </h1>
         </div>
         <div className="text-xl md:text-2xl font-medium text-[#3B9AB8] mb-8 flex flex-wrap justify-center gap-4">

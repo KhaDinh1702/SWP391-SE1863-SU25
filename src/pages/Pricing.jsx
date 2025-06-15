@@ -186,7 +186,7 @@ export default function PricingPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/90 to-[#2D7A94]/90"></div>
         <div className="container mx-auto px-6 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#3B9AB8]/80 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#3B9AB8]/80 animate-fade-in leading-[1.4]">
               Bảng Giá Dịch Vụ
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-12 leading-relaxed">

@@ -28,13 +28,31 @@ const StaffAppointmentList = () => {
       content: 'Bạn có chắc chắn muốn xác nhận lịch hẹn này?',
       onOk: async () => {
         try {
-          await appointmentService.staffManageAppointment({
+          // Ensure we have all required fields
+          if (!record.appointmentStartDate && !record.AppointmentStartDate) {
+            throw new Error('Thời gian bắt đầu cuộc hẹn là bắt buộc');
+          }
+
+          const requestData = {
             appointmentId: record.id || record.Id,
             newStatus: 1, // 1 = Confirmed
-          });
+            appointmentType: record.appointmentType || record.AppointmentType || 0, // 0 = Offline, 1 = Online
+            appointmentStartDate: record.appointmentStartDate || record.AppointmentStartDate,
+            appointmentEndDate: record.appointmentEndDate || record.AppointmentEndDate || 
+              new Date(new Date(record.appointmentStartDate || record.AppointmentStartDate).getTime() + 60*60*1000).toISOString(), // Add 1 hour if not set
+            doctorId: record.doctorId || record.DoctorId,
+            notes: record.notes || record.Notes || '',
+            onlineLink: record.onlineLink || record.OnlineLink || '',
+            appointmentTitle: record.appointmentTitle || record.AppointmentTitle || 'Cuộc hẹn khám bệnh'
+          };
+
+          console.log('Sending request data:', requestData);
+          const response = await appointmentService.staffManageAppointment(requestData);
+          console.log('Response:', response);
           message.success('Đã xác nhận lịch hẹn');
           fetchAppointments();
         } catch (err) {
+          console.error('Error details:', err);
           message.error(err.message || 'Lỗi khi xác nhận');
         }
       },
@@ -47,13 +65,31 @@ const StaffAppointmentList = () => {
       content: 'Bạn có chắc chắn muốn hủy lịch hẹn này?',
       onOk: async () => {
         try {
-          await appointmentService.staffManageAppointment({
+          // Ensure we have all required fields
+          if (!record.appointmentStartDate && !record.AppointmentStartDate) {
+            throw new Error('Thời gian bắt đầu cuộc hẹn là bắt buộc');
+          }
+
+          const requestData = {
             appointmentId: record.id || record.Id,
             newStatus: 3, // 3 = Cancelled
-          });
+            appointmentType: record.appointmentType || record.AppointmentType || 0, // 0 = Offline, 1 = Online
+            appointmentStartDate: record.appointmentStartDate || record.AppointmentStartDate,
+            appointmentEndDate: record.appointmentEndDate || record.AppointmentEndDate || 
+              new Date(new Date(record.appointmentStartDate || record.AppointmentStartDate).getTime() + 60*60*1000).toISOString(), // Add 1 hour if not set
+            doctorId: record.doctorId || record.DoctorId,
+            notes: record.notes || record.Notes || 'Lịch hẹn đã bị hủy',
+            onlineLink: record.onlineLink || record.OnlineLink || '',
+            appointmentTitle: record.appointmentTitle || record.AppointmentTitle || 'Cuộc hẹn khám bệnh'
+          };
+
+          console.log('Sending request data:', requestData);
+          const response = await appointmentService.staffManageAppointment(requestData);
+          console.log('Response:', response);
           message.success('Đã hủy lịch hẹn');
           fetchAppointments();
         } catch (err) {
+          console.error('Error details:', err);
           message.error(err.message || 'Lỗi khi hủy');
         }
       },

@@ -13,13 +13,25 @@ export const appointmentService = {
 
   // Staff manages appointment (confirm, cancel, reschedule)
   staffManageAppointment: async (data) => {
+    console.log('Making request to:', `${API_BASE_URL}/Appointment/staff-manages-appointment`);
+    console.log('With headers:', getAuthHeaders());
+    
     const response = await fetch(`${API_BASE_URL}/Appointment/staff-manages-appointment`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('Server response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
       throw new Error(errorData.message || 'Không thể cập nhật lịch hẹn');
     }
     return response.json();

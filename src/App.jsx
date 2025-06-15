@@ -24,6 +24,10 @@ import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
 import ProtectedLayout from './components/patient/ProtectedLayout';
 import StaffDashboard from './pages/StaffDashboard';
+import MedicalTeam from "./pages/MedicalTeam";
+import Licenses from "./pages/Licenses";
+import TermsOfUse from "./pages/TermsOfUse";
+import AdvisoryContact from './pages/AdvisoryContact';
 // Import các component quản lý từ thư mục con
 
 
@@ -43,11 +47,15 @@ function App() {
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/privacy" element={<PrivacyPolicy/>} />
         <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/appointment-guide" element={<AppointmentGuide />} />
         <Route path="/contact-24h" element={<Contact24h />} />
+        <Route path="/medical-team" element={<MedicalTeam />} />
+        <Route path="/licenses" element={<Licenses />} />
+        <Route path="/advisory-contact" element={<AdvisoryContact />} />
 
 
         {/* Admin routes */}

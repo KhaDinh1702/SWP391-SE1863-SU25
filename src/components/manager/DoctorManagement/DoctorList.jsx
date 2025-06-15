@@ -7,6 +7,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingDoctor, setEditingDoctor] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleAddDoctor = () => {
     setEditingDoctor(null);
@@ -16,7 +17,18 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
 
   const handleEdit = (record) => {
     setEditingDoctor(record);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      ...record,
+      // Ensure all fields are properly set
+      fullName: record.fullName || '',
+      email: record.email || '',
+      phone: record.phone || '',
+      specialty: record.specialty || '',
+      status: record.status || 'active',
+      qualification: record.qualification || '',
+      experience: record.experience || '',
+      description: record.description || ''
+    });
     setIsModalVisible(true);
   };
 
@@ -33,20 +45,42 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
 
   const handleSubmit = async () => {
     try {
+      setSubmitting(true);
       const values = await form.validateFields();
+      console.log('Form values:', values); // Debug log
+
+      const doctorData = {
+        ...values,
+        // Ensure all required fields are present
+        fullName: values.fullName?.trim(),
+        email: values.email?.trim(),
+        phone: values.phone?.trim(),
+        specialty: values.specialty,
+        status: values.status,
+        qualification: values.qualification?.trim(),
+        experience: values.experience?.trim(),
+        description: values.description?.trim()
+      };
+
       if (editingDoctor) {
-        onEdit({ ...editingDoctor, ...values });
+        await onEdit({ ...editingDoctor, ...doctorData });
+        message.success('Cập nhật thông tin bác sĩ thành công');
       } else {
-        const newDoctor = await doctorService.createDoctor(values);
-        message.success('Thêm bác sĩ thành công');
-        // Refresh the doctor list
-        const updatedDoctors = await doctorService.getAllDoctors();
-        setDoctors(updatedDoctors);
+        await doctorService.createDoctor(doctorData);
+        message.success('Thêm bác sĩ mới thành công');
       }
       setIsModalVisible(false);
+      form.resetFields();
     } catch (error) {
-      console.error('Validation failed:', error);
-      message.error(error.message || 'Có lỗi xảy ra');
+      console.error('Form validation error:', error);
+      if (error.errorFields) {
+        const firstError = error.errorFields[0];
+        message.error(firstError.errors[0]);
+      } else {
+        message.error('Có lỗi xảy ra khi lưu thông tin bác sĩ');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -131,21 +165,32 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
         title={editingDoctor ? 'Sửa thông tin bác sĩ' : 'Thêm bác sĩ mới'}
         open={isModalVisible}
         onOk={handleSubmit}
-        onCancel={() => setIsModalVisible(false)}
-        okText={editingDoctor ? 'Cập nhật' : 'Thêm mới'}
-        cancelText="Hủy"
+        onCancel={() => {
+          setIsModalVisible(false);
+          form.resetFields();
+        }}
+        confirmLoading={submitting}
+        width={600}
       >
         <Form
           form={form}
           layout="vertical"
+          initialValues={{
+            status: 'active',
+            specialty: 'HIV/AIDS'
+          }}
         >
           <Form.Item
             name="fullName"
             label="Họ và tên"
-            rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập họ tên' },
+              { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự' }
+            ]}
           >
-            <Input />
+            <Input placeholder="Nhập họ và tên bác sĩ" />
           </Form.Item>
+
           <Form.Item
             name="email"
             label="Email"
@@ -154,37 +199,80 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
               { type: 'email', message: 'Email không hợp lệ' }
             ]}
           >
-            <Input />
+            <Input placeholder="example@email.com" />
           </Form.Item>
+
           <Form.Item
             name="phone"
             label="Số điện thoại"
-            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại' },
+              { pattern: /^[0-9]{10}$/, message: 'Số điện thoại phải có 10 chữ số' }
+            ]}
           >
-            <Input />
+            <Input placeholder="0123456789" />
           </Form.Item>
+
           <Form.Item
             name="specialty"
             label="Chuyên khoa"
             rules={[{ required: true, message: 'Vui lòng chọn chuyên khoa' }]}
           >
-            <Select>
+            <Select placeholder="Chọn chuyên khoa">
+              <Select.Option value="HIV/AIDS">HIV/AIDS</Select.Option>
               <Select.Option value="Nội tổng quát">Nội tổng quát</Select.Option>
-              <Select.Option value="Ngoại tổng quát">Ngoại tổng quát</Select.Option>
-              <Select.Option value="Nhi khoa">Nhi khoa</Select.Option>
-              <Select.Option value="Sản phụ khoa">Sản phụ khoa</Select.Option>
               <Select.Option value="Da liễu">Da liễu</Select.Option>
+              <Select.Option value="Tâm lý">Tâm lý</Select.Option>
             </Select>
           </Form.Item>
+
           <Form.Item
             name="status"
             label="Trạng thái"
             rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
           >
-            <Select>
+            <Select placeholder="Chọn trạng thái">
               <Select.Option value="active">Đang làm việc</Select.Option>
               <Select.Option value="inactive">Nghỉ phép</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="qualification"
+            label="Bằng cấp"
+            rules={[
+              { required: true, message: 'Vui lòng nhập bằng cấp' },
+              { min: 10, message: 'Bằng cấp phải có ít nhất 10 ký tự' }
+            ]}
+          >
+            <Input.TextArea 
+              rows={3} 
+              placeholder="Nhập thông tin bằng cấp của bác sĩ"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="experience"
+            label="Kinh nghiệm"
+            rules={[
+              { required: true, message: 'Vui lòng nhập kinh nghiệm' },
+              { min: 10, message: 'Kinh nghiệm phải có ít nhất 10 ký tự' }
+            ]}
+          >
+            <Input.TextArea 
+              rows={3} 
+              placeholder="Nhập kinh nghiệm làm việc của bác sĩ"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Mô tả"
+          >
+            <Input.TextArea 
+              rows={3} 
+              placeholder="Nhập mô tả thêm về bác sĩ (không bắt buộc)"
+            />
           </Form.Item>
         </Form>
       </Modal>

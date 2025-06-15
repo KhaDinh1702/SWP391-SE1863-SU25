@@ -86,11 +86,11 @@ export default function Login() {
           />
           <div className="absolute inset-0 flex items-center justify-center p-12 text-white">
             <div className="max-w-md transform hover:scale-105 transition-transform duration-300">
-              <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#d1e9f3]">
-                Chào mừng đến với
+              <h2 className="text-4xl font-bold mb-6 leading-relaxed bg-clip-text text-transparent bg-gradient-to-r from-white to-[#d1e9f3]">
+                CHÀO MỪNG ĐẾN VỚI 
               </h2>
               <p className="text-xl mb-8 text-[#d1e9f3]">
-                Hệ thống quản lý y tế thông minh cho bác sĩ và bệnh nhân
+                DỊCH VỤ Y TẾ VÀ ĐIỀU TRỊ HIV
               </p>
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-1 bg-[#3B9AB8]"></div>

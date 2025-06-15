@@ -10,18 +10,61 @@ import doctorsData from "../data/doctorsData";
 import DoctorCarousel from "../components/home/DoctorCarousel.jsx";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
-import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone, FaCalendarAlt, FaBookMedical } from "react-icons/fa";
+import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone, FaCalendarAlt, FaBookMedical, FaArrowUp, FaClock, FaUserFriends, FaTruck, FaMicroscope, FaTransgenderAlt, FaUserTie, FaSyringe } from "react-icons/fa";
 import { GiMedicinePills, GiHealthNormal } from "react-icons/gi";
 
 export default function Home() {
   const navigate = useNavigate();
   const loggedIn = authService.isAuthenticated();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 5);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 text-gray-800">
       <Navbar />
       {loggedIn && <PatientProfile />}
 
       <main className="flex-grow p-4 md:p-6">
+        {/* Top Feature Section */}
+        <section className="w-full bg-gradient-to-r from-[#3B9AB8] via-[#2D7A94] to-[#3B9AB8] py-12 px-2 md:px-0 mb-12">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
+            {/* Image with decoration */}
+            <div className="flex-1 w-full md:w-1/2 flex justify-center relative">
+              <div className="relative w-80 h-80 flex items-center justify-center">
+                <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#0090e7]/40 rounded-full z-0"></div>
+                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#1cb5fc]/30 rounded-full z-0"></div>
+                <img src="src/assets/1.png" alt="Galant Person" className="relative z-10 w-72 h-80 object-cover rounded-3xl shadow-xl bg-[#1a237e]/10" />
+              </div>
+            </div>
+            {/* Features */}
+            <div className="flex-1 w-full md:w-1/2 flex flex-col gap-5">
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaShieldAlt /></span>
+                <span className="font-bold text-[#1a237e] text-lg">ARV Bảo hiểm y tế</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaPhone /></span>
+                <span className="font-bold text-[#1a237e] text-lg">PEP 72 giờ (Điều trị dự phòng HIV)</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaSyringe /></span>
+                <span className="font-bold text-[#1a237e] text-lg">Tiêm chủng (Vaccine)</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaMicroscope /></span>
+                <span className="font-bold text-[#1a237e] text-lg">Xét nghiệm   </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Hero Section */}
         <section className="mb-16 relative overflow-hidden rounded-3xl shadow-2xl">
           {/* Background with gradient overlay */}
@@ -115,7 +158,7 @@ export default function Home() {
               <span>Gọi ngay: 0943 108 138</span>
             </button>
             <button 
-              onClick={() => navigate("/contact")}
+              onClick={() => navigate("/advisory-contact")}
               className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl hover:bg-white/10 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-semibold"
             >
               <FaHeadset className="text-lg" />
@@ -196,13 +239,40 @@ export default function Home() {
                   Đội ngũ chuyên gia của chúng tôi sẽ tư vấn và hướng dẫn bạn quy trình đăng ký BHYT và nhận thuốc ARV miễn phí.
                 </p>
               </div>
-              <button 
-                onClick={() => navigate("/arv-treatment")}
-                className="px-8 py-3 bg-[#3B9AB8] text-white rounded-xl hover:bg-[#2D7A94] transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-semibold whitespace-nowrap"
-              >
-                <FaFileAlt className="text-lg" />
-                <span>Tìm hiểu thêm</span>
-              </button>
+            </div>
+          </div>
+        </section>
+               {/* Why Choose 3AE Section */}
+               <section className="w-full bg-gradient-to-r from-[#3B9AB8] via-[#2D7A94] to-[#3B9AB8] py-16 px-2 md:px-0">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
+            {/* Video */}
+            <div className="flex-1 w-full md:w-1/2 flex justify-center">
+              <div className="w-full max-w-xl aspect-video rounded-2xl overflow-hidden shadow-xl">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src="https://www.youtube.com/embed/5g1ijpBI6Dk?start=13"
+                  title="XÉT NGHIỆM HIV VÀ ĐIỀU TRỊ HIV BẢO HIỂM Y TẾ - PKDK 3AE CÓ KHÁM BHYT (ARV - BHYT)."
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              </div>
+            </div>
+            {/* Features */}
+            <div className="flex-1 w-full md:w-1/2">
+              <h2 className="text-white text-3xl md:text-4xl font-bold mb-8 text-center md:text-left">VÌ SAO NÊN CHỌN 3AE</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-white text-lg">
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaClock /></span> Mở cửa xuyên suốt: 8h - 20h (T2 - CN)</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaUserMd /></span> Xét nghiệm 30 phút, nhận kết quả Online</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaFileAlt /></span> Thanh toán bằng bảo hiểm y tế</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaUserFriends /></span> Chăm sóc, hỗ trợ tâm lý xã hội, tâm thần</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaTruck /></span> Tư vấn ONLINE & Giao thuốc tại nhà</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaUserTie /></span> Bác sĩ, nhân viên có chuyên môn cao</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaMicroscope /></span> Công nghệ thiết bị y tế hiện đại</div>
+                <div className="flex items-center gap-3"><span className="text-cyan-200"><FaTransgenderAlt /></span> Đồng cảm và thấu hiểu cộng đồng LGBT+</div>
+              </div>
             </div>
           </div>
         </section>
@@ -274,20 +344,26 @@ export default function Home() {
           </div>
 
           <div className="mt-12 text-center">
-            <button 
-              onClick={() => navigate("/news")}
-              className="px-8 py-3 bg-[#3B9AB8] text-white rounded-xl hover:bg-[#2D7A94] transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 font-semibold mx-auto"
-            >
-              <span>Xem tất cả tin tức</span>
-              <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-            </button>
           </div>
         </section>
+
+ 
       </main>
 
       {/* Floating Widgets */}
-      <CallWidget />
-      <ChatWidget />
+      <div className="fixed bottom-6 right-6 z-50 flex flex-row items-end gap-4">
+        <CallWidget />
+        <ChatWidget />
+        {showScrollTop && (
+          <button
+            onClick={() => window.scrollTo(0, 0)}
+            className="bg-[#3B9AB8] hover:bg-[#2D7A94] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center animate-fade-in"
+            aria-label="Quay lại đầu trang"
+          >
+            <FaArrowUp className="text-xl" />
+          </button>
+        )}
+      </div>
 
       <Footer />
     </div>

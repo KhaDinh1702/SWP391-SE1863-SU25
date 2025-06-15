@@ -18,14 +18,6 @@ const { Title, Text } = Typography;
 
 const DoctorDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const doctor = {
-    fullName: 'Doctor',
-    email: 'doctor@example.com',
-    phone: '',
-    role: 'Doctor',
-    joinedDate: '',
-    avatarUrl: '',
-  };
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -49,7 +41,7 @@ const DoctorDashboard = () => {
         <DoctorSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       </Sider>
       <Layout className="ml-[220px]">
-        <DoctorHeader doctor={doctor} />
+        <DoctorHeader />
         <Content className="bg-gray-50 p-6">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -78,7 +70,7 @@ const DoctorDashboard = () => {
             {activeTab === 'arv' && <ARVProtocols />}
             {activeTab === 'treatment' && <TreatmentProtocol />}
             {activeTab === 'consultation' && <OnlineConsultation />}
-            {activeTab === 'profile' && <DoctorProfile doctor={doctor} />}
+            {activeTab === 'profile' && <DoctorProfile />}
           </div>
         </Content>
       </Layout>

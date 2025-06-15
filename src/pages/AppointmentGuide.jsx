@@ -30,104 +30,81 @@ const AppointmentGuide = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Back Button */}
-        <div className="flex justify-start mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-300"
+    <div className="min-h-screen bg-gradient-to-b from-[#3B9AB8]/10 to-white font-sans px-4 py-8 max-w-6xl mx-auto text-gray-800 md:px-8 md:py-12">
+      {/* Back Button */}
+      <div className="absolute top-6 left-6">
+        <Link
+          to="/"
+          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/10"
+        >
+          <svg
+            className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Quay lại trang chủ
-          </Link>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          <span className="font-semibold">Quay lại trang chủ</span>
+        </Link>
+      </div>
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-extrabold text-white mb-4">Hướng Dẫn Đặt Lịch</h1>
-          <p className="text-xl text-gray-300">Quy trình đặt lịch hẹn khám bệnh đơn giản và nhanh chóng</p>
-        </motion.div>
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-5xl font-bold text-[#3B9AB8] mb-4">Hướng Dẫn Đặt Lịch</h1>
+        <p className="text-xl md:text-2xl font-medium text-[#3B9AB8]">Quy trình đặt lịch hẹn khám bệnh đơn giản và nhanh chóng</p>
+      </div>
 
-        {/* Steps */}
-        <div className="space-y-8 mb-12">
-          {steps.map((step, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  {step.icon}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {index + 1}. {step.title}
-                  </h3>
-                  <p className="text-gray-300">{step.description}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Important Notes */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="bg-blue-600/20 rounded-xl p-6 border border-blue-500/20"
-        >
-          <div className="flex items-center mb-4">
-            <FaInfoCircle className="w-6 h-6 text-blue-400 mr-2" />
-            <h2 className="text-xl font-bold text-white">Lưu ý quan trọng</h2>
+      {/* Steps */}
+      <div className="space-y-8 mb-12">
+        {steps.map((step, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-2xl shadow-lg p-8 flex items-start space-x-4 hover:scale-[1.02] transition-transform duration-300"
+          >
+            <div className="flex-shrink-0">
+              {step.icon}
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-[#3B9AB8] mb-2">
+                {index + 1}. {step.title}
+              </h3>
+              <p className="text-gray-700">{step.description}</p>
+            </div>
           </div>
-          <ul className="space-y-3">
-            {importantNotes.map((note, index) => (
-              <li key={index} className="flex items-start">
-                <FaClock className="w-5 h-5 text-blue-400 mr-3 mt-1" />
-                <span className="text-gray-300">{note}</span>
-              </li>
-            ))}
-          </ul>
-        </motion.div>
+        ))}
+      </div>
 
-        {/* CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-          className="mt-12 text-center"
+      {/* Important Notes */}
+      <div className="bg-[#3B9AB8]/10 rounded-2xl p-8 border border-[#3B9AB8]/20 mb-12">
+        <div className="flex items-center mb-4">
+          <FaInfoCircle className="w-6 h-6 text-[#3B9AB8] mr-2" />
+          <h2 className="text-xl font-bold text-[#3B9AB8]">Lưu ý quan trọng</h2>
+        </div>
+        <ul className="space-y-3">
+          {importantNotes.map((note, index) => (
+            <li key={index} className="flex items-start">
+              <FaClock className="w-5 h-5 text-[#3B9AB8] mr-3 mt-1" />
+              <span className="text-gray-700">{note}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* CTA Button */}
+      <div className="mt-12 text-center">
+        <Link
+          to="/appointment-booking"
+          className="inline-flex items-center px-8 py-3 bg-[#3B9AB8] hover:bg-[#2D7A94] text-white font-bold rounded-lg transition-colors duration-300 text-lg"
         >
-          <Link
-            to="/appointment-booking"
-            className="inline-flex items-center px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors duration-300 text-lg"
-          >
-            <FaCalendarAlt className="w-5 h-5 mr-2" />
-            Đặt lịch ngay
-          </Link>
-        </motion.div>
+          <FaCalendarAlt className="w-5 h-5 mr-2" />
+          Đặt lịch ngay
+        </Link>
       </div>
     </div>
   );

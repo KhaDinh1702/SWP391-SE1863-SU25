@@ -106,16 +106,33 @@ export const doctorService = {
 
   createDoctor: async (doctorData) => {
     try {
+      // Validate required fields
+      if (!doctorData.fullName || !doctorData.email || !doctorData.phone || !doctorData.specialty) {
+        throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      }
+
+      // Format the data according to the backend model
+      const formattedData = {
+        fullName: doctorData.fullName.trim(),
+        email: doctorData.email.trim(),
+        phone: doctorData.phone.trim(),
+        specialization: doctorData.specialty.trim(),
+        isActive: doctorData.status === 'active',
+        qualifications: doctorData.qualification?.trim() || null,
+        experience: doctorData.experience?.trim() || null,
+        bio: doctorData.description?.trim() || null,
+        profilePictureURL: null
+      };
+
+      console.log('Creating doctor with data:', formattedData);
+
       const response = await fetch(`${API_BASE_URL}/Doctor/create`, {
         method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          fullName: doctorData.fullName,
-          email: doctorData.email,
-          phone: doctorData.phone,
-          specialty: doctorData.specialty,
-          status: doctorData.status
-        })
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formattedData)
       });
 
       if (!response.ok) {
@@ -125,14 +142,14 @@ export const doctorService = {
 
       const text = await response.text();
       if (!text) {
-        return doctorData;
+        return formattedData;
       }
 
       try {
         return JSON.parse(text);
       } catch (parseError) {
         console.warn('Server response was not JSON, returning created data');
-        return doctorData;
+        return formattedData;
       }
     } catch (error) {
       console.error('Create doctor failed:', error);
@@ -142,18 +159,36 @@ export const doctorService = {
 
   updateDoctor: async (doctorData) => {
     try {
+      // Validate required fields
+      if (!doctorData.id || !doctorData.fullName) {
+        throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      }
+
+      // Format the data according to the backend model
+      const formattedData = {
+        id: doctorData.id,
+        userId: doctorData.userId, // Keep the existing userId
+        fullName: doctorData.fullName.trim(),
+        specialization: doctorData.specialty?.trim() || null,
+        qualifications: doctorData.qualification?.trim() || null,
+        experience: doctorData.experience?.trim() || null,
+        bio: doctorData.description?.trim() || null,
+        profilePictureURL: null,
+        isActive: doctorData.status === 'active',
+        doctorSchedules: null,
+        medicalRecords: null,
+        patientTreatmentProtocols: null
+      };
+
+      console.log('Updating doctor with data:', formattedData);
+
       const response = await fetch(`${API_BASE_URL}/Doctor/update`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          doctorId: doctorData.id,
-          fullName: doctorData.fullName,
-          specializations: doctorData.specializations,
-          qualification: doctorData.qualification,
-          experience: doctorData.experience,
-          bio: doctorData.bio,
-          profilePictureURL: doctorData.profilePictureURL
-        })
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formattedData)
       });
 
       if (!response.ok) {
@@ -163,14 +198,14 @@ export const doctorService = {
 
       const text = await response.text();
       if (!text) {
-        return doctorData;
+        return formattedData;
       }
 
       try {
         return JSON.parse(text);
       } catch (parseError) {
         console.warn('Server response was not JSON, returning updated data');
-        return doctorData;
+        return formattedData;
       }
     } catch (error) {
       console.error('Update doctor failed:', error);
@@ -180,6 +215,10 @@ export const doctorService = {
 
   deleteDoctor: async (id) => {
     try {
+      if (!id) {
+        throw new Error('ID bác sĩ không hợp lệ');
+      }
+
       const response = await fetch(`${API_BASE_URL}/Doctor/delete-doctor?doctorId=${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders()

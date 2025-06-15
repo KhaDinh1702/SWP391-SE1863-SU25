@@ -1,6 +1,6 @@
 import React from 'react';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaShieldAlt, FaUserShield, FaFileContract, FaClock } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaShieldAlt, FaUserShield, FaFileContract, FaClock, FaYoutube } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
 import boYTeLogo from '../assets/bo-y-te.jpg';
 import boCongThuongLogo from '../assets/bo-cong-thuong.png';
 
@@ -35,8 +35,7 @@ const Footer = () => {
       items: [
         { name: "Giới thiệu", path: "/about" },
         { name: "Dịch vụ", path: "/services" },
-        { name: "Đội ngũ bác sĩ", path: "/doctors" },
-        { name: "Cơ sở vật chất", path: "/facilities" }
+        { name: "Đội ngũ y tế", path: "/medical-team" }
       ]
     },
     {
@@ -44,8 +43,7 @@ const Footer = () => {
       items: [
         { name: "Câu hỏi thường gặp", path: "/faq" },
         { name: "Hướng dẫn đặt lịch", path: "/appointment-guide" },
-        { name: "Hướng dẫn thanh toán", path: "/payment-guide" },
-        { name: "Chính sách bảo hiểm", path: "/insurance" }
+        { name: "Chính sách sử dụng", path: "/terms-of-use" }
       ]
     },
     {
@@ -54,7 +52,6 @@ const Footer = () => {
         { name: "Chính sách bảo mật", path: "/privacy" },
         { name: "Điều khoản dịch vụ", path: "/terms" },
         { name: "Giấy phép hoạt động", path: "/licenses" },
-        { name: "Khiếu nại", path: "/complaints" }
       ]
     }
   ];
@@ -76,6 +73,8 @@ const Footer = () => {
       description: "Được cấp bởi Sở Y tế TP.HCM"
     }
   ];
+
+  const navigate = useNavigate();
 
   return (
     <footer className="bg-gradient-to-b from-[#3B9AB8] to-[#2D7A94] text-white">
@@ -126,13 +125,17 @@ const Footer = () => {
               <ul className="space-y-3">
                 {section.items.map((item, i) => (
                   <li key={i}>
-                    <Link 
-                      to={item.path} 
-                      className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-200 group"
+                    <span
+                      onClick={e => {
+                        e.preventDefault();
+                        navigate(item.path);
+                        window.scrollTo(0, 0);
+                      }}
+                      className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-200 group cursor-pointer"
                     >
                       <span className="w-2 h-2 bg-white/80 rounded-full mr-3 group-hover:bg-white transition-all duration-200"></span>
                       {item.name}
-                    </Link>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -172,7 +175,7 @@ const Footer = () => {
                   { icon: <FaFacebook className="w-5 h-5" />, url: "https://facebook.com" },
                   { icon: <FaTwitter className="w-5 h-5" />, url: "https://twitter.com" },
                   { icon: <FaInstagram className="w-5 h-5" />, url: "https://instagram.com" },
-                  { icon: <FaLinkedin className="w-5 h-5" />, url: "https://linkedin.com" }
+                  { icon: <FaYoutube className="w-5 h-5" />, url: "https://www.youtube.com/@GALANTClinic" }
                 ].map((social, index) => (
                   <a 
                     key={index}
