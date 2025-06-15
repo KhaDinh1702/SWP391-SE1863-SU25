@@ -328,14 +328,6 @@ export default function PatientAppointments() {
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(appointment.status || appointment.Status)}`}>
                       {getStatusText(appointment.status || appointment.Status)}
                     </span>
-                    {(appointment.status === 0 || appointment.status === 1 || appointment.Status === 0 || appointment.Status === 1) && (
-                      <button
-                        onClick={() => handleCancelAppointment(appointment.id || appointment.Id)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        Hủy lịch
-                      </button>
-                    )}
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
