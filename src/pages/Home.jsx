@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import { FaArrowRight, FaShieldAlt, FaFileAlt, FaUserMd, FaHeadset, FaAward, FaPhone, FaCalendarAlt, FaBookMedical, FaArrowUp, FaClock, FaUserFriends, FaTruck, FaMicroscope, FaTransgenderAlt, FaUserTie, FaSyringe } from "react-icons/fa";
 import { GiMedicinePills, GiHealthNormal } from "react-icons/gi";
+import BackToTop from "../components/home/BackToTop.jsx";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -404,6 +405,7 @@ export default function Home() {
       <div className="fixed bottom-6 right-6 z-50 flex flex-row items-end gap-4">
         <CallWidget />
         <ChatWidget />
+        <BackToTop/>
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo(0, 0)}
