@@ -15,6 +15,7 @@ import {
 import ManagerSidebar from '../components/manager/ManagerSidebar';
 import ManagerHeader from '../components/manager/ManagerHeader';
 import DoctorList from '../components/manager/DoctorManagement/DoctorList';
+import DoctorScheduleList from '../components/manager/DoctorManagement/DoctorScheduleList';
 import ManagerProfile from '../components/manager/ManagerProfile';
 import StatsCards from '../components/manager/DashboardStatus/StatsCards';
 
@@ -175,10 +176,10 @@ const ManagerDashboard = () => {
         return 'Dashboard Tổng quan';
       case 'doctors':
         return 'Quản lý Bác sĩ';
-      case 'schedule':
-        return 'Lịch làm việc';
+      case 'schedules':
+        return 'Quản lý Lịch làm việc';
       case 'profile':
-        return 'Hồ sơ';
+        return 'Hồ sơ cá nhân';
       default:
         return 'Dashboard';
     }
@@ -190,12 +191,27 @@ const ManagerDashboard = () => {
         return <DashboardOutlined className="text-2xl text-blue-600" />;
       case 'doctors':
         return <TeamOutlined className="text-2xl text-green-600" />;
-      case 'schedule':
+      case 'schedules':
         return <CalendarOutlined className="text-2xl text-orange-600" />;
       case 'profile':
         return <ProfileOutlined className="text-2xl text-purple-600" />;
       default:
         return <DashboardOutlined className="text-2xl text-blue-600" />;
+    }
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <StatsCards stats={stats} />;
+      case 'doctors':
+        return <DoctorList doctors={doctors} onEdit={handleEditDoctor} onDelete={handleDeleteDoctor} isLoading={loading} />;
+      case 'schedules':
+        return <DoctorScheduleList />;
+      case 'profile':
+        return <ManagerProfile manager={manager} />;
+      default:
+        return <StatsCards stats={stats} />;
     }
   };
 
@@ -227,7 +243,7 @@ const ManagerDashboard = () => {
             <Text type="secondary">
               {activeTab === 'dashboard' && 'Tổng quan về hoạt động của phòng khám'}
               {activeTab === 'doctors' && 'Quản lý thông tin và lịch làm việc của bác sĩ'}
-              {activeTab === 'schedule' && 'Xem và quản lý lịch làm việc của bác sĩ'}
+              {activeTab === 'schedules' && 'Xem và quản lý lịch làm việc của bác sĩ'}
               {activeTab === 'profile' && 'Thông tin cá nhân của quản lý'}
             </Text>
           </div>
@@ -239,34 +255,7 @@ const ManagerDashboard = () => {
               </div>
             ) : (
               <>
-                {activeTab === 'dashboard' && (
-                  <div className="space-y-6">
-                    <StatsCards stats={stats} />
-                    <Row gutter={[16, 16]}>
-                      <Col span={24}>
-                        <Card title="Thống kê hoạt động">
-                          {/* TODO: Add activity charts and graphs */}
-                          <div className="h-64 flex items-center justify-center text-gray-400">
-                            Biểu đồ thống kê sẽ được hiển thị ở đây
-                          </div>
-                        </Card>
-                      </Col>
-                    </Row>
-                  </div>
-                )}
-                {activeTab === 'doctors' && (
-                  <div className="overflow-x-auto">
-                    <DoctorList
-                      doctors={doctors}
-                      onEdit={handleEditDoctor}
-                      onDelete={handleDeleteDoctor}
-                      isLoading={loading}
-                    />
-                  </div>
-                )}
-                {activeTab === 'profile' && (
-                  <ManagerProfile manager={manager} />
-                )}
+                {renderContent()}
               </>
             )}
           </div>
