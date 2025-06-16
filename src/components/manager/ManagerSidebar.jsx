@@ -20,48 +20,45 @@ const ManagerSidebar = ({ activeTab, setActiveTab }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1">
-        <Button
-          type={activeTab === 'dashboard' ? 'primary' : 'text'}
-          icon={<DashboardOutlined />}
-          className="w-full text-left flex items-center h-10 px-4 border-0"
-          onClick={() => setActiveTab('dashboard')}
-        >
-          Dashboard
-        </Button>
+    <div>
+      <Button
+        type={activeTab === 'dashboard' ? 'primary' : 'text'}
+        icon={<DashboardOutlined />}
+        className="w-full text-left flex items-center h-10 px-4 border-0"
+        onClick={() => setActiveTab('dashboard')}
+      >
+        Dashboard
+      </Button>
 
-        <Button
-          type={activeTab === 'doctors' ? 'primary' : 'text'}
-          icon={<TeamOutlined />}
-          className="w-full text-left flex items-center h-10 px-4 border-0"
-          onClick={() => setActiveTab('doctors')}
-        >
-          Quản lý Bác sĩ
-        </Button>
+      <Button
+        type={activeTab === 'doctors' ? 'primary' : 'text'}
+        icon={<TeamOutlined />}
+        className="w-full text-left flex items-center h-10 px-4 border-0"
+        onClick={() => setActiveTab('doctors')}
+      >
+        Quản lý Bác sĩ
+      </Button>
 
-        <Button
-          type={activeTab === 'schedules' ? 'primary' : 'text'}
-          icon={<CalendarOutlined />}
-          className="w-full text-left flex items-center h-10 px-4 border-0"
-          onClick={() => setActiveTab('schedules')}
-        >
-          Lịch làm việc
-        </Button>
+      <Button
+        type={activeTab === 'schedules' ? 'primary' : 'text'}
+        icon={<CalendarOutlined />}
+        className="w-full text-left flex items-center h-10 px-4 border-0"
+        onClick={() => setActiveTab('schedules')}
+      >
+        Lịch làm việc
+      </Button>
 
-        <Button
-          type={activeTab === 'profile' ? 'primary' : 'text'}
-          icon={<ProfileOutlined />}
-          className="w-full text-left flex items-center h-10 px-4 border-0"
-          onClick={() => setActiveTab('profile')}
-        >
-          Hồ sơ cá nhân
-        </Button>
-      </div>
+      <Button
+        type={activeTab === 'profile' ? 'primary' : 'text'}
+        icon={<ProfileOutlined />}
+        className="w-full text-left flex items-center h-10 px-4 border-0"
+        onClick={() => setActiveTab('profile')}
+      >
+        Hồ sơ cá nhân
+      </Button>
 
       <Button
         type="text"
-        danger
         icon={<LogoutOutlined />}
         className="w-full text-left flex items-center h-10 px-4 border-0"
         onClick={handleLogout}
