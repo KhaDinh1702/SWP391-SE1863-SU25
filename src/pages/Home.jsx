@@ -17,6 +17,20 @@ export default function Home() {
   const navigate = useNavigate();
   const loggedIn = authService.isAuthenticated();
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isPartnersPaused, setIsPartnersPaused] = useState(false);
+
+  // Partner logos array for easy management
+  const partnerLogos = [
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg",
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,39 +46,6 @@ export default function Home() {
       {loggedIn && <PatientProfile />}
 
       <main className="flex-grow p-4 md:p-6">
-        {/* Top Feature Section */}
-        <section className="w-full bg-gradient-to-r from-[#3B9AB8] via-[#2D7A94] to-[#3B9AB8] py-12 px-2 md:px-0 mb-12">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
-            {/* Image with decoration */}
-            <div className="flex-1 w-full md:w-1/2 flex justify-center relative">
-              <div className="relative w-80 h-80 flex items-center justify-center">
-                <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#0090e7]/40 rounded-full z-0"></div>
-                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#1cb5fc]/30 rounded-full z-0"></div>
-                <img src="src/assets/1.png" alt="Galant Person" className="relative z-10 w-72 h-80 object-cover rounded-3xl shadow-xl bg-[#1a237e]/10" />
-              </div>
-            </div>
-            {/* Features */}
-            <div className="flex-1 w-full md:w-1/2 flex flex-col gap-5">
-              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
-                <span className="text-[#0090e7] text-2xl"><FaShieldAlt /></span>
-                <span className="font-bold text-[#1a237e] text-lg">ARV Bảo hiểm y tế</span>
-              </div>
-              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
-                <span className="text-[#0090e7] text-2xl"><FaPhone /></span>
-                <span className="font-bold text-[#1a237e] text-lg">PEP 72 giờ (Điều trị dự phòng HIV)</span>
-              </div>
-              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
-                <span className="text-[#0090e7] text-2xl"><FaSyringe /></span>
-                <span className="font-bold text-[#1a237e] text-lg">Tiêm chủng (Vaccine)</span>
-              </div>
-              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
-                <span className="text-[#0090e7] text-2xl"><FaMicroscope /></span>
-                <span className="font-bold text-[#1a237e] text-lg">Xét nghiệm   </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Hero Section */}
         <section className="mb-16 relative overflow-hidden rounded-3xl shadow-2xl">
           {/* Background with gradient overlay */}
@@ -113,7 +94,38 @@ export default function Home() {
             </div>
           </div>
         </section>
-
+{/* Top Feature Section */}
+        <section className="w-full bg-gradient-to-r from-[#3B9AB8] via-[#2D7A94] to-[#3B9AB8] py-12 px-2 md:px-0 mb-12">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10">
+            {/* Image with decoration */}
+            <div className="flex-1 w-full md:w-1/2 flex justify-center relative">
+              <div className="relative w-80 h-80 flex items-center justify-center">
+                <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#0090e7]/40 rounded-full z-0"></div>
+                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#1cb5fc]/30 rounded-full z-0"></div>
+                <img src="src/assets/1.png" alt="Galant Person" className="relative z-10 w-72 h-80 object-cover rounded-3xl shadow-xl bg-[#1a237e]/10" />
+              </div>
+            </div>
+            {/* Features */}
+            <div className="flex-1 w-full md:w-1/2 flex flex-col gap-5">
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaShieldAlt /></span>
+                <span className="font-bold text-[#1a237e] text-lg">ARV Bảo hiểm y tế</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaPhone /></span>
+                <span className="font-bold text-[#1a237e] text-lg">PEP 72 giờ (Điều trị dự phòng HIV)</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaSyringe /></span>
+                <span className="font-bold text-[#1a237e] text-lg">Tiêm chủng (Vaccine)</span>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg px-8 py-5 flex items-center gap-4">
+                <span className="text-[#0090e7] text-2xl"><FaMicroscope /></span>
+                <span className="font-bold text-[#1a237e] text-lg">Xét nghiệm   </span>
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Stats Section */}
         <section className="max-w-6xl mx-auto mb-16 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -278,7 +290,7 @@ export default function Home() {
         </section>
 
         {/* Doctors Section */}
-        <section className="py-16 bg-gradient-to-br from-white to-[#3B9AB8]/5 text-center mb-20 max-w-6xl mx-auto rounded-3xl shadow-xl border border-[#3B9AB8]/20">
+        <section className="doctors-section mt-8 py-16 bg-gradient-to-br from-white to-[#3B9AB8]/5 text-center mb-20 max-w-6xl mx-auto rounded-3xl shadow-xl border border-[#3B9AB8]/20">
           <div className="mb-12">
             <div className="inline-flex items-center bg-[#d1e9f3] text-[#3B9AB8] px-6 py-2 rounded-full mb-4">
               <FaUserMd className="mr-2" />
@@ -347,7 +359,45 @@ export default function Home() {
           </div>
         </section>
 
- 
+        {/* Partners Section - Seamless Infinite Scroll */}
+        <section className="w-full py-12 bg-white border-t border-[#E63946]/20">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-[#1a237e] mb-8 tracking-wide">
+            ĐỐI TÁC CỦA 3AE
+          </h2>
+          <div className="overflow-hidden relative">
+            <div
+              className="flex items-center whitespace-nowrap"
+              style={{
+                width: 'max-content',
+                animation: `scrollX 30s linear infinite`,
+                animationPlayState: isPartnersPaused ? 'paused' : 'running',
+              }}
+              onMouseDown={() => setIsPartnersPaused(true)}
+              onMouseUp={() => setIsPartnersPaused(false)}
+              onMouseLeave={() => setIsPartnersPaused(false)}
+              onTouchStart={() => setIsPartnersPaused(true)}
+              onTouchEnd={() => setIsPartnersPaused(false)}
+            >
+              {/* Render two sets of logos for seamless looping */}
+              {[...partnerLogos, ...partnerLogos].map((src, idx) => (
+                <img
+                  key={idx}
+                  src={src}
+                  alt={`Partner ${idx % partnerLogos.length + 1}`}
+                  className="h-20 w-auto object-contain inline-block mx-6"
+                  draggable="false"
+                />
+              ))}
+            </div>
+          </div>
+          <style>{`
+            @keyframes scrollX {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+          `}</style>
+        </section>
+
       </main>
 
       {/* Floating Widgets */}
