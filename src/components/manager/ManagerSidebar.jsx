@@ -58,6 +58,15 @@ const ManagerSidebar = ({ activeTab, setActiveTab }) => {
       </Button>
 
       <Button
+        type={activeTab === 'arvProtocols' ? 'primary' : 'text'}
+        icon={<ProfileOutlined />}
+        className="w-full text-left flex items-center h-10 px-4 border-0"
+        onClick={() => setActiveTab('arvProtocols')}
+      >
+        Phác đồ ARV
+      </Button>
+
+      <Button
         type="text"
         icon={<LogoutOutlined />}
         className="w-full text-left flex items-center h-10 px-4 border-0"

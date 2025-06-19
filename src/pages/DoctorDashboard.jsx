@@ -17,7 +17,6 @@ import DoctorAppointments from '../components/doctor/Appointments/DoctorAppointm
 import PatientProfiles from '../components/doctor/Patient/PatientProfiles';
 import LabResults from '../components/doctor/Lab/LabResults';
 import MedicalHistory from '../components/doctor/History/MedicalHistory';
-import ARVProtocols from '../components/doctor/ARV/ARVProtocols';
 import TreatmentProtocol from '../components/doctor/Treatment/TreatmentProtocol';
 import OnlineConsultation from '../components/doctor/Consultation/OnlineConsultation';
 import DoctorProfile from '../components/doctor/Profile/DoctorProfile';
@@ -54,7 +53,6 @@ const DoctorDashboard = () => {
       case 'patients': return 'Hồ sơ Bệnh nhân';
       case 'lab': return 'Xét nghiệm';
       case 'history': return 'Lịch sử khám';
-      case 'arv': return 'Phác đồ ARV';
       case 'treatment': return 'Quy trình điều trị';
       case 'consultation': return 'Tư vấn trực tuyến';
       case 'profile': return 'Hồ sơ cá nhân';
@@ -70,7 +68,6 @@ const DoctorDashboard = () => {
       case 'patients': return 'Xem thông tin chi tiết về bệnh nhân';
       case 'lab': return 'Xem kết quả xét nghiệm của bệnh nhân';
       case 'history': return 'Xem lại lịch sử điều trị của bệnh nhân';
-      case 'arv': return 'Chọn hoặc tùy chỉnh phác đồ ARV cho bệnh nhân';
       case 'treatment': return 'Tạo quy trình khám bệnh cho bệnh nhân';
       case 'consultation': return 'Thực hiện tư vấn trực tuyến';
       case 'profile': return 'Thông tin cá nhân của bác sĩ';
@@ -266,7 +263,6 @@ const DoctorDashboard = () => {
             {activeTab === 'patients' && <PatientProfiles />}
             {activeTab === 'lab' && <LabResults />}
             {activeTab === 'history' && <MedicalHistory />}
-            {activeTab === 'arv' && <ARVProtocols />}
             {activeTab === 'treatment' && <TreatmentProtocol />}
             {activeTab === 'consultation' && <OnlineConsultation />}
             {activeTab === 'profile' && <DoctorProfile />}

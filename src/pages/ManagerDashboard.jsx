@@ -18,6 +18,7 @@ import DoctorList from '../components/manager/DoctorManagement/DoctorList';
 import DoctorScheduleList from '../components/manager/DoctorManagement/DoctorScheduleList';
 import ManagerProfile from '../components/manager/ManagerProfile';
 import StatsCards from '../components/manager/DashboardStatus/StatsCards';
+import ARVProtocols from '../components/manager/ARVProtocols';
 
 import { userService } from "../services/userService";
 import { doctorService } from "../services/doctorService";
@@ -180,6 +181,8 @@ const ManagerDashboard = () => {
         return 'Quản lý Lịch làm việc';
       case 'profile':
         return 'Hồ sơ cá nhân';
+      case 'arvProtocols':
+        return 'Quản lý phác đồ ARV';
       default:
         return 'Dashboard';
     }
@@ -195,6 +198,8 @@ const ManagerDashboard = () => {
         return <CalendarOutlined className="text-2xl text-orange-600" />;
       case 'profile':
         return <ProfileOutlined className="text-2xl text-purple-600" />;
+      case 'arvProtocols':
+        return <ProfileOutlined className="text-2xl text-pink-600" />;
       default:
         return <DashboardOutlined className="text-2xl text-blue-600" />;
     }
@@ -210,6 +215,8 @@ const ManagerDashboard = () => {
         return <DoctorScheduleList />;
       case 'profile':
         return <ManagerProfile manager={manager} />;
+      case 'arvProtocols':
+        return <ARVProtocols />;
       default:
         return <StatsCards stats={stats} />;
     }
