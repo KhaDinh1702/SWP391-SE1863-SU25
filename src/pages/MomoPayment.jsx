@@ -39,6 +39,12 @@ export default function MomoPayment() {
           </a>{" "}
           nếu không được chuyển tự động.
         </p>
+        <button
+          onClick={() => window.location.href = "/"}
+          className="mt-4 px-6 py-2 bg-[#3B9AB8] text-white rounded-lg font-semibold shadow hover:bg-[#2D7A94] transition-all"
+        >
+          Về trang chủ
+        </button>
       </div>
     </div>
   );

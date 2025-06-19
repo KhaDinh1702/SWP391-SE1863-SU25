@@ -151,6 +151,18 @@ const PatientAppointmentForm = ({ patientId }) => {
                     <p className="text-sm text-gray-500">Thông tin của bạn sẽ được bảo mật</p>
                   </div>
                 </div>
+                <input
+                  type="checkbox"
+                  name="isAnonymousAppointment"
+                  checked={formData.isAnonymousAppointment}
+                  onChange={e =>
+                    setFormData(prev => ({
+                      ...prev,
+                      isAnonymousAppointment: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 accent-[#3B9AB8]"
+                />
               </div>
 
               {/* Doctor Selection */}
