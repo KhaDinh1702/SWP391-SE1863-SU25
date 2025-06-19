@@ -36,4 +36,21 @@ export const appointmentService = {
     }
     return response.json();
   },
-}; 
+
+  // Create appointment and initiate MoMo payment
+  createAppointmentWithMomo: async (appointmentData) => {
+    const response = await fetch(`${API_BASE_URL}/Appointment/create-and-initiate-payment`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(appointmentData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Không thể tạo lịch hẹn và thanh toán MoMo');
+    }
+    return response.json();
+  },
+};

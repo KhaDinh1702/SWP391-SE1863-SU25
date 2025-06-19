@@ -7,7 +7,7 @@ import { FaArrowLeft } from "react-icons/fa";
 const locations = [
   {
     name: 'Quận 5',
-    clinic: 'PHÒNG KHÁM ĐA KHOA GALANT',
+    clinic: 'PHÒNG KHÁM ĐA KHOA 3AE',
     address: 'Số 104 Trần Bình Trọng, P.1, Quận 5',
     hotline: '0943 108 138',
     tel: '028. 7303 1869',
@@ -19,7 +19,7 @@ const locations = [
   },
   {
     name: 'Tân Bình',
-    clinic: 'PHÒNG KHÁM ĐA KHOA GALANT',
+    clinic: 'PHÒNG KHÁM ĐA KHOA 3AE',
     address: '96 Ngô Thị Thu Minh, P.2, Q.Tân Bình',
     hotline: '0901 386 618',
     tel: '028. 7304 1869',
@@ -31,7 +31,7 @@ const locations = [
   },
   {
     name: 'Hà Nội',
-    clinic: 'PHÒNG KHÁM ĐA KHOA GALANT',
+    clinic: 'PHÒNG KHÁM ĐA KHOA 3AE',
     address: '15 ngõ 143 Trung Kính, Cầu Giấy, Hà Nội',
     hotline: '0964 269 100',
     tel: '028. 7300 5222',

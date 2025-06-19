@@ -12,7 +12,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import DoctorDashboard from './pages/DoctorDashboard';
 import PatientProfile from './pages/patient/PatientProfile';
-import PatientAppointments from './pages/patient/PatientAppointments';
 import Medical from './pages/Medicine';
 import Pricing from './pages/Pricing';
 import Services from './pages/Services';
@@ -28,6 +27,7 @@ import MedicalTeam from "./pages/MedicalTeam";
 import Licenses from "./pages/Licenses";
 import TermsOfUse from "./pages/TermsOfUse";
 import AdvisoryContact from './pages/AdvisoryContact';
+import MomoPayment from "./pages/MomoPayment";
 // Import các component quản lý từ thư mục con
 
 
@@ -56,6 +56,7 @@ function App() {
         <Route path="/medical-team" element={<MedicalTeam />} />
         <Route path="/licenses" element={<Licenses />} />
         <Route path="/advisory-contact" element={<AdvisoryContact />} />
+        <Route path="/momo-payment" element={<MomoPayment />} />
 
 
         {/* Admin routes */}
@@ -100,6 +101,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Đã loại bỏ route xem lịch hẹn */}
+        {/*
         <Route
           path="/appointments"
           element={
@@ -110,6 +113,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        */}
 
         {/* Staff routes */}
         <Route

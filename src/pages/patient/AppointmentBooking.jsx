@@ -102,6 +102,7 @@ export default function AppointmentBooking() {
       <Navbar />
       <main className="flex-grow flex items-center justify-center">
         <div className="w-full max-w-2xl mx-auto p-6 sm:p-10 bg-white/20 rounded-2xl shadow-2xl border border-white/30 backdrop-blur-md">
+          {/* Chỉ truyền patientId, không render hoặc import PatientAppointments */}
           <PatientAppointmentForm patientId={patientId} />
         </div>
       </main>

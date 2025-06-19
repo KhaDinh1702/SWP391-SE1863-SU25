@@ -33,24 +33,24 @@ const Contact24h = () => {
       title: "Hỗ trợ trực tuyến 24/7",
       number: "0943 108 138",
       description: "Đội ngũ y tế sẵn sàng hỗ trợ 24/7",
-      icon: <FcVideoCall className="text-3xl" />,
-      color: "from-gray-300 to-gray-200",
+      icon: <FcVideoCall className="text-3xl text-white" />,
+      color: "from-[#3B9AB8] to-[#3B9AB8]",
       features: ["Phản hồi nhanh chóng", "Đội ngũ chuyên môn cao", "Đảm bảo an toàn thông tin cá nhân"]
     },
     {
       title: "Tư vấn khẩn cấp",
       number: "0901 386 618",
       description: "Tư vấn y tế khẩn cấp",
-      icon: <FaUserMd className="text-3xl" />,
-      color: "from-blue-600 to-blue-700",
+      icon: <FaUserMd className="text-3xl text-white" />,
+      color: "from-[#3B9AB8] to-[#3B9AB8]",
       features: ["Tư vấn 24/7", "Hỗ trợ trực tuyến", "Hướng dẫn sơ cứu"]
     },
     {
       title: "Phòng khám gần nhất",
       number: "028 7303 1869",
       description: "Liên hệ phòng khám gần nhất",
-      icon: <FaHospital className="text-3xl" />,
-      color: "from-green-600 to-green-700",
+      icon: <FaHospital className="text-3xl text-white" />,
+      color: "from-[#3B9AB8] to-[#3B9AB8]",
       features: ["Cơ sở vật chất hiện đại", "Đội ngũ bác sĩ chuyên môn", "Dịch vụ toàn diện"]
     }
   ];
@@ -114,7 +114,7 @@ const Contact24h = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/10">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
@@ -123,7 +123,7 @@ const Contact24h = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl shadow-xl p-8 mb-8 text-white relative overflow-hidden"
+          className="bg-gradient-to-r from-[#3B9AB8] to-[#3B9AB8] rounded-3xl shadow-xl p-8 mb-8 text-white relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10"></div>
           <div className="relative flex items-center justify-between">
@@ -132,7 +132,7 @@ const Contact24h = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-4xl font-bold"
+                className="text-4xl font-bold text-white"
               >
                 Liên hệ 24/7
               </motion.h1>
@@ -140,7 +140,7 @@ const Contact24h = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-xl"
+                className="text-xl text-white"
               >
                 Đội ngũ y tế của chúng tôi luôn sẵn sàng hỗ trợ bạn
               </motion.p>
@@ -151,7 +151,7 @@ const Contact24h = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleContactCall("0943108138")}
-                className="bg-white text-blue-600 px-8 py-3 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                className="bg-white text-[#3B9AB8] hover:bg-[#3B9AB8] hover:text-white px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
               >
                 <FaPhone className="text-xl" />
                 Gọi ngay: 0943 108 138
@@ -163,15 +163,15 @@ const Contact24h = () => {
               transition={{ delay: 0.5 }}
               className="relative"
             >
-              <FaPhone className="text-8xl opacity-50" />
+              <FaPhone className="text-8xl text-white opacity-50" />
               <div className="absolute inset-0 animate-ping">
-                <FaPhone className="text-8xl opacity-20" />
+                <FaPhone className="text-8xl text-white opacity-20" />
               </div>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Contact Info */}
+        {/* Contact Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {contactInfo.map((contact, index) => (
             <motion.div 
@@ -185,19 +185,19 @@ const Contact24h = () => {
               <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${contact.color} text-white flex items-center justify-center mb-4 shadow-lg`}>
                 {contact.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{contact.title}</h3>
+              <h3 className="text-xl font-bold text-[#3B9AB8] mb-2">{contact.title}</h3>
               <p className="text-gray-600 mb-4">{contact.description}</p>
               <ul className="space-y-2 mb-4">
                 {contact.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                    <FaCheckCircle className="text-green-500" />
+                    <FaCheckCircle className="text-[#3B9AB8]" />
                     {feature}
                   </li>
                 ))}
               </ul>
               <button
                 onClick={() => handleContactCall(contact.number.replace(/\s/g, ''))}
-                className="text-blue-600 font-medium hover:text-blue-800 transition-colors duration-300 flex items-center gap-2 group"
+                className="text-[#3B9AB8] font-medium hover:text-white hover:bg-[#3B9AB8] px-4 py-2 rounded-lg transition-colors duration-300 flex items-center gap-2 group"
               >
                 {contact.number}
                 <FaArrowRight className="text-sm transform group-hover:translate-x-1 transition-transform" />
@@ -213,7 +213,7 @@ const Contact24h = () => {
           transition={{ delay: 0.3 }}
           className="bg-white rounded-3xl shadow-xl p-8 mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Quy trình hỗ trợ</h2>
+          <h2 className="text-3xl font-bold text-[#3B9AB8] mb-8 text-center">Quy trình hỗ trợ</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {contactSteps.map((step, index) => (
               <motion.div 
@@ -222,19 +222,19 @@ const Contact24h = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer"
+                className="bg-gradient-to-br from-[#3B9AB8]/10 to-[#3B9AB8]/10 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300 cursor-pointer"
                 onClick={() => setActiveStep(activeStep === index ? null : index)}
               >
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-12 h-12 bg-[#3B9AB8] text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   {step.icon}
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-2">{step.title}</h3>
+                <h3 className="text-lg font-bold text-[#3B9AB8] mb-2">{step.title}</h3>
                 <p className="text-gray-600 mb-4">{step.description}</p>
                 <div className="flex justify-center">
                   {activeStep === index ? (
-                    <FaChevronDown className="text-blue-600 transform transition-transform duration-300" />
+                    <FaChevronDown className="text-[#3B9AB8]" />
                   ) : (
-                    <FaChevronRight className="text-blue-600 transform transition-transform duration-300" />
+                    <FaChevronRight className="text-[#3B9AB8]" />
                   )}
                 </div>
                 {activeStep === index && (
@@ -259,7 +259,7 @@ const Contact24h = () => {
           transition={{ delay: 0.5 }}
           className="bg-white rounded-3xl shadow-xl p-8"
         >
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Địa điểm liên hệ gần nhất</h2>
+          <h2 className="text-3xl font-bold text-[#3B9AB8] mb-8 text-center">Địa điểm liên hệ gần nhất</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {locations.map((location, index) => (
               <motion.div 
@@ -268,34 +268,34 @@ const Contact24h = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300"
+                className="bg-gradient-to-br from-[#3B9AB8]/10 to-[#3B9AB8]/10 rounded-xl p-6 hover:shadow-lg transition-all duration-300"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[#3B9AB8] text-white rounded-full flex items-center justify-center">
                     <FaHospital />
                   </div>
-                  <h3 className="text-xl font-bold text-blue-900">{location.name}</h3>
+                  <h3 className="text-xl font-bold text-[#3B9AB8]">{location.name}</h3>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-start gap-2">
-                    <FaMapMarkerAlt className="text-blue-600 mt-1" />
+                    <FaMapMarkerAlt className="text-[#3B9AB8] mt-1" />
                     <p className="text-gray-700">{location.address}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaClock className="text-blue-600" />
+                    <FaClock className="text-[#3B9AB8]" />
                     <p className="text-gray-700">Giờ làm việc: {location.hours}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaPhone className="text-blue-600" />
+                    <FaPhone className="text-[#3B9AB8]" />
                     <p className="text-gray-700">{location.phone}</p>
                   </div>
                   <div className="mt-4">
-                    <h4 className="font-semibold text-gray-800 mb-2">Dịch vụ:</h4>
+                    <h4 className="font-semibold text-[#3B9AB8] mb-2">Dịch vụ:</h4>
                     <div className="flex flex-wrap gap-2">
                       {location.services.map((service, idx) => (
                         <span 
                           key={idx}
-                          className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full"
+                          className="bg-[#3B9AB8] text-white text-xs px-3 py-1 rounded-full"
                         >
                           {service}
                         </span>
@@ -306,7 +306,7 @@ const Contact24h = () => {
                     href={location.map}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors duration-300 mt-4"
+                    className="inline-flex items-center gap-2 text-[#3B9AB8] hover:text-white hover:bg-[#3B9AB8] px-4 py-2 rounded-lg transition-colors duration-300 mt-4"
                   >
                     <FaMapMarkerAlt />
                     Xem bản đồ
@@ -323,4 +323,4 @@ const Contact24h = () => {
   );
 };
 
-export default Contact24h; 
+export default Contact24h;

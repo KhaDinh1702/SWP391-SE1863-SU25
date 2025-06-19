@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { doctorService } from "../../services/doctorService";
+import { appointmentService } from "../../services/appointmentService";
 import { CalendarOutlined, UserOutlined, VideoCameraOutlined, EnvironmentOutlined, FileTextOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { FaClock } from 'react-icons/fa';
-import { Link } from "react-router-dom";
-
-const API_BASE_URL = 'http://localhost:5275/api';
+import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL, getAuthHeaders } from "../../services/config";
 
 const PatientAppointmentForm = ({ patientId }) => {
   // Add debug log
@@ -16,13 +16,15 @@ const PatientAppointmentForm = ({ patientId }) => {
     appointmentDate: "",
     appointmentTime: "",
     reason: "",
-    appointmentType: 0, // 0 for Online, 1 for Offline
+    appointmentType: 0,
     isAnonymousAppointment: false,
   });
 
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [payUrl, setPayUrl] = useState(null);
+  const navigate = useNavigate();
 
   // Add validation for patientId
   useEffect(() => {
@@ -72,14 +74,11 @@ const PatientAppointmentForm = ({ patientId }) => {
     const appointmentDateTime = new Date(
       `${formData.appointmentDate}T${formData.appointmentTime}`
     );
-
-    // Kiểm tra xem thời gian đặt lịch có trong quá khứ không
     if (appointmentDateTime < new Date()) {
       alert("Không thể đặt lịch hẹn trong quá khứ");
       setLoading(false);
       return;
     }
-
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
@@ -89,47 +88,21 @@ const PatientAppointmentForm = ({ patientId }) => {
       isAnonymousAppointment: formData.isAnonymousAppointment,
       apointmentTitle: "Khám bệnh",
       status: 0,
-      onlineLink: null
+      onlineLink: null,
+      paymentMethod: 'momo',
     };
-
-    console.log('Sending request payload:', requestPayload);
-    console.log('Request URL:', `${API_BASE_URL}/Appointment/patient-create-appointment?patientId=${patientId}`);
-
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/Appointment/patient-create-appointment?patientId=${patientId}`,
-        requestPayload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      console.log('Response:', res.data);
-      setSuccess(true);
-      // Reset form
-      setFormData({
-        doctorId: "",
-        appointmentDate: "",
-        appointmentTime: "",
-        reason: "",
-        appointmentType: 0,
-        isAnonymousAppointment: false,
-      });
+      const res = await appointmentService.createAppointmentWithMomo(requestPayload);
+      console.log("MoMo response:", res); // Debug log
+      // Lấy link từ cả PaymentRedirectUrl (chữ hoa) và paymentRedirectUrl (chữ thường)
+      const momoUrl = res?.PaymentRedirectUrl || res?.paymentRedirectUrl;
+      if (momoUrl && typeof momoUrl === "string" && momoUrl.startsWith("http")) {
+        window.location.href = `/momo-payment?payUrl=${encodeURIComponent(momoUrl)}`;
+        return;
+      }
+      alert("Không thể tạo liên kết thanh toán MoMo. Vui lòng kiểm tra lại thông tin đặt lịch hoặc thử lại sau. Nếu sự cố tiếp tục, hãy liên hệ bộ phận hỗ trợ.");
     } catch (err) {
-      console.error('Error details:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-        request: {
-          url: err.config?.url,
-          method: err.config?.method,
-          headers: err.config?.headers,
-          data: err.config?.data
-        }
-      });
-      alert("Lỗi: " + (err.response?.data?.message || "Không thể đặt lịch"));
+      alert("Lỗi: " + (err.response?.data?.message || err.message || "Không thể đặt lịch"));
     } finally {
       setLoading(false);
     }
@@ -153,13 +126,19 @@ const PatientAppointmentForm = ({ patientId }) => {
           {success ? (
             <div className="p-10 flex flex-col items-center justify-center text-center">
               <div className="text-3xl text-[#3B9AB8] font-bold mb-4">Đặt lịch thành công!</div>
-              <div className="text-lg text-gray-700 mb-6">Cảm ơn bạn đã đặt lịch hẹn. Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</div>
-              <Link
-                to="/appointments"
-                className="inline-block px-8 py-4 bg-[#3B9AB8] text-white rounded-full font-semibold shadow-lg hover:bg-[#2d7a94] transition-all text-lg"
-              >
-                Nhấp vào đây để xem lịch hẹn của bạn
-              </Link>
+              <div className="text-lg text-gray-700 mb-6">Cảm ơn bạn đã đặt lịch hẹn. Chuyển đến trang thanh toán MoMo:</div>
+              {payUrl ? (
+                <a
+                  href={payUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-8 py-4 bg-[#A50064] text-white rounded-full font-semibold shadow-lg hover:bg-[#82004b] transition-all text-lg"
+                >
+                  Thanh toán MoMo
+                </a>
+              ) : (
+                <span className="text-red-500">Không tìm thấy link thanh toán MoMo. Vui lòng thử lại hoặc liên hệ hỗ trợ.</span>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -172,18 +151,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                     <p className="text-sm text-gray-500">Thông tin của bạn sẽ được bảo mật</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isAnonymousAppointment}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      isAnonymousAppointment: e.target.checked
-                    }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#3B9AB8] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3B9AB8]"></div>
-                </label>
               </div>
 
               {/* Doctor Selection */}
@@ -289,6 +256,26 @@ const PatientAppointmentForm = ({ patientId }) => {
                   placeholder="Mô tả triệu chứng hoặc lý do khám của bạn..."
                   required
                 />
+              </div>
+
+              {/* Payment Method - MoMo only */}
+              <div className="space-y-2">
+                <label className="flex items-center text-gray-700 font-medium">
+                  Phương thức thanh toán
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="momo"
+                      checked={true}
+                      readOnly
+                      className="mr-2"
+                    />
+                    MoMo
+                  </label>
+                </div>
               </div>
 
               {/* Submit Button */}
