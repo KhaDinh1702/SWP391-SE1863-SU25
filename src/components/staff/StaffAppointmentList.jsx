@@ -1,165 +1,325 @@
-import { useEffect, useState } from 'react';
-import { Table, Button, Tag, Space, Modal, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Table, Tag, message, Card, Row, Col, Select, DatePicker, Button, Space, Modal, Descriptions, Tooltip } from 'antd';
+import { EyeOutlined, ReloadOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../services/appointmentService';
+import { doctorService } from '../../services/doctorService';
+import dayjs from 'dayjs';
+
+const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 const StaffAppointmentList = () => {
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  const [dateRange, setDateRange] = useState(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
+    fetchDoctors();
   }, []);
+  useEffect(() => {
+    applyFilters();
+  }, [appointments, selectedDoctor, dateRange]);
 
   const fetchAppointments = async () => {
     setLoading(true);
     try {
       const data = await appointmentService.getAllAppointments();
       setAppointments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      message.error(err.message || 'Lỗi khi tải lịch hẹn');
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      message.error('Không thể tải danh sách lịch hẹn');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleConfirm = (record) => {
-    Modal.confirm({
-      title: 'Xác nhận lịch hẹn',
-      content: 'Bạn có chắc chắn muốn xác nhận lịch hẹn này?',
-      onOk: async () => {
-        try {
-          // Ensure we have all required fields
-          if (!record.appointmentStartDate && !record.AppointmentStartDate) {
-            throw new Error('Thời gian bắt đầu cuộc hẹn là bắt buộc');
-          }
+  const fetchDoctors = async () => {
+    try {
+      const data = await doctorService.getAllDoctors();
+      setDoctors(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      message.error('Không thể tải danh sách bác sĩ');
+    }
+  };
+  const applyFilters = () => {
+    let filtered = [...appointments];
 
-          const requestData = {
-            appointmentId: record.id || record.Id,
-            newStatus: 1, // 1 = Confirmed
-            appointmentType: record.appointmentType || record.AppointmentType || 0, // 0 = Offline, 1 = Online
-            appointmentStartDate: record.appointmentStartDate || record.AppointmentStartDate,
-            appointmentEndDate: record.appointmentEndDate || record.AppointmentEndDate || 
-              new Date(new Date(record.appointmentStartDate || record.AppointmentStartDate).getTime() + 60*60*1000).toISOString(), // Add 1 hour if not set
-            doctorId: record.doctorId || record.DoctorId,
-            notes: record.notes || record.Notes || '',
-            onlineLink: record.onlineLink || record.OnlineLink || '',
-            appointmentTitle: record.appointmentTitle || record.AppointmentTitle || 'Cuộc hẹn khám bệnh'
-          };
+    // Filter by doctor
+    if (selectedDoctor) {
+      filtered = filtered.filter(appointment => 
+        appointment.doctorId === selectedDoctor || 
+        appointment.DoctorId === selectedDoctor
+      );
+    }
 
-          console.log('Sending request data:', requestData);
-          const response = await appointmentService.staffManageAppointment(requestData);
-          console.log('Response:', response);
-          message.success('Đã xác nhận lịch hẹn');
-          fetchAppointments();
-        } catch (err) {
-          console.error('Error details:', err);
-          message.error(err.message || 'Lỗi khi xác nhận');
-        }
-      },
-    });
+    // Filter by date range
+    if (dateRange && dateRange.length === 2) {
+      const [startDate, endDate] = dateRange;
+      filtered = filtered.filter(appointment => {
+        const appointmentDate = dayjs(appointment.appointmentStartDate || appointment.AppointmentStartDate);
+        return appointmentDate.isAfter(startDate.startOf('day')) && 
+               appointmentDate.isBefore(endDate.endOf('day'));
+      });
+    }
+
+    setFilteredAppointments(filtered);
   };
 
-  const handleCancel = (record) => {
-    Modal.confirm({
-      title: 'Hủy lịch hẹn',
-      content: 'Bạn có chắc chắn muốn hủy lịch hẹn này?',
-      onOk: async () => {
-        try {
-          // Ensure we have all required fields
-          if (!record.appointmentStartDate && !record.AppointmentStartDate) {
-            throw new Error('Thời gian bắt đầu cuộc hẹn là bắt buộc');
-          }
-
-          const requestData = {
-            appointmentId: record.id || record.Id,
-            newStatus: 3, // 3 = Cancelled
-            appointmentType: record.appointmentType || record.AppointmentType || 0, // 0 = Offline, 1 = Online
-            appointmentStartDate: record.appointmentStartDate || record.AppointmentStartDate,
-            appointmentEndDate: record.appointmentEndDate || record.AppointmentEndDate || 
-              new Date(new Date(record.appointmentStartDate || record.AppointmentStartDate).getTime() + 60*60*1000).toISOString(), // Add 1 hour if not set
-            doctorId: record.doctorId || record.DoctorId,
-            notes: record.notes || record.Notes || 'Lịch hẹn đã bị hủy',
-            onlineLink: record.onlineLink || record.OnlineLink || '',
-            appointmentTitle: record.appointmentTitle || record.AppointmentTitle || 'Cuộc hẹn khám bệnh'
-          };
-
-          console.log('Sending request data:', requestData);
-          const response = await appointmentService.staffManageAppointment(requestData);
-          console.log('Response:', response);
-          message.success('Đã hủy lịch hẹn');
-          fetchAppointments();
-        } catch (err) {
-          console.error('Error details:', err);
-          message.error(err.message || 'Lỗi khi hủy');
-        }
-      },
-    });
+  const handleRefresh = () => {
+    fetchAppointments();
+    message.success('Đã làm mới dữ liệu');
+  };
+  const clearFilters = () => {
+    setSelectedDoctor(null);
+    setDateRange(null);
+    message.info('Đã xóa tất cả bộ lọc');
   };
 
-  const handleReschedule = (record) => {
-    message.info('Chức năng sắp xếp lại lịch hẹn đang phát triển');
+  const handleViewDetails = (appointment) => {
+    setSelectedAppointment(appointment);
+    setDetailModalVisible(true);
   };
 
+  const getDoctorName = (appointment) => {
+    const doctorId = appointment.doctorId || appointment.DoctorId;
+    const doctor = doctors.find(d => d.doctorId === doctorId || d.id === doctorId);
+    return doctor?.fullName || appointment.doctorFullName || appointment.DoctorFullName || 'N/A';
+  };
+
+  const formatDateTime = (dateTime) => {
+    if (!dateTime) return 'N/A';
+    return dayjs(dateTime).format('DD/MM/YYYY HH:mm');
+  };
+  const getAppointmentTypeLabel = (type) => {
+    switch (type) {
+      case 0: return 'Trực tiếp';
+      case 1: return 'Trực tuyến';
+      default: return 'N/A';
+    }
+  };
   const columns = [
     {
-      title: 'Bệnh nhân',
+      title: (
+        <span>
+          <UserOutlined style={{ marginRight: 8 }} />
+          Bệnh nhân
+        </span>
+      ),
       dataIndex: 'patientFullName',
       key: 'patientFullName',
-      render: (text, record) => text || record.PatientFullName || 'N/A',
+      render: (text, record) => (
+        <span style={{ fontWeight: 500 }}>
+          {text || record.PatientFullName || 'N/A'}
+        </span>
+      ),
+      width: 200,
     },
     {
-      title: 'Bác sĩ',
+      title: (
+        <span>
+          <UserOutlined style={{ marginRight: 8 }} />
+          Bác sĩ
+        </span>
+      ),
       dataIndex: 'doctorFullName',
       key: 'doctorFullName',
-      render: (text, record) => text || record.DoctorFullName || 'N/A',
+      render: (_, record) => (
+        <span style={{ fontWeight: 500 }}>
+          {getDoctorName(record)}
+        </span>
+      ),
+      width: 200,
     },
     {
-      title: 'Thời gian',
+      title: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 8 }} />
+          Thời gian bắt đầu
+        </span>
+      ),
       dataIndex: 'appointmentStartDate',
       key: 'appointmentStartDate',
-      render: (text, record) => new Date(text || record.AppointmentStartDate).toLocaleString('vi-VN'),
+      render: (_, record) => formatDateTime(record.appointmentStartDate || record.AppointmentStartDate),
+      sorter: (a, b) => {
+        const dateA = dayjs(a.appointmentStartDate || a.AppointmentStartDate);
+        const dateB = dayjs(b.appointmentStartDate || b.AppointmentStartDate);
+        return dateA.isBefore(dateB) ? -1 : 1;
+      },
+      width: 180,
+    },    {
+      title: 'Loại',
+      dataIndex: 'appointmentType',
+      key: 'appointmentType',
+      render: (type, record) => (
+        <Tag color={type === 1 ? 'blue' : 'green'}>
+          {getAppointmentTypeLabel(type || record.AppointmentType)}
+        </Tag>
+      ),
+      width: 120,
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        let color = 'default', label = 'Không rõ';
-        switch (status) {
-          case 0:
-          case 'Pending': color = 'orange'; label = 'Chờ xác nhận'; break;
-          case 1:
-          case 'Confirmed': color = 'green'; label = 'Đã xác nhận'; break;
-          case 2:
-          case 'Completed': color = 'blue'; label = 'Đã hoàn thành'; break;
-          case 3:
-          case 'Cancelled': color = 'red'; label = 'Đã hủy'; break;
-          default: break;
-        }
-        return <Tag color={color}>{label}</Tag>;
-      },
+      title: 'Ghi chú',
+      dataIndex: 'notes',
+      key: 'notes',
+      render: (text, record) => (
+        <Tooltip title={text || record.Notes || 'Không có ghi chú'}>
+          <span style={{ 
+            display: 'block', 
+            maxWidth: 150, 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            whiteSpace: 'nowrap' 
+          }}>
+            {text || record.Notes || 'Không có ghi chú'}
+          </span>
+        </Tooltip>
+      ),
+      width: 180,
     },
     {
       title: 'Hành động',
       key: 'action',
       render: (_, record) => (
         <Space>
-          <Button type="primary" onClick={() => handleConfirm(record)} size="small">Xác nhận</Button>
-          <Button danger onClick={() => handleCancel(record)} size="small">Hủy</Button>
-          <Button onClick={() => handleReschedule(record)} size="small">Sắp xếp lại</Button>
+          <Button 
+            type="primary" 
+            icon={<EyeOutlined />} 
+            onClick={() => handleViewDetails(record)} 
+            size="small"
+          >
+            Xem chi tiết
+          </Button>
         </Space>
       ),
+      width: 150,
     },
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={appointments}
-      rowKey={record => record.id || record.Id}
-      loading={loading}
-      pagination={{ pageSize: 10 }}
-    />
+    <div style={{ padding: '24px' }}>      <Card 
+        title="Xem lịch hẹn" 
+        style={{ marginBottom: 24 }}
+        extra={
+          <Button 
+            type="primary" 
+            icon={<ReloadOutlined />} 
+            onClick={handleRefresh}
+            loading={loading}
+          >
+            Làm mới
+          </Button>
+        }
+      >
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>          <Col xs={24} sm={12} md={6}>
+            <Select
+              placeholder="Chọn bác sĩ"
+              style={{ width: '100%' }}
+              value={selectedDoctor}
+              onChange={setSelectedDoctor}
+              allowClear
+              showSearch
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {doctors.map(doctor => (
+                <Option key={doctor.doctorId || doctor.id} value={doctor.doctorId || doctor.id}>
+                  {doctor.fullName}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <RangePicker
+              style={{ width: '100%' }}
+              value={dateRange}
+              onChange={setDateRange}
+              placeholder={['Từ ngày', 'Đến ngày']}
+              format="DD/MM/YYYY"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Space>
+              <Button onClick={clearFilters}>
+                Xóa bộ lọc
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+
+        <Table
+          columns={columns}
+          dataSource={filteredAppointments}
+          rowKey={record => record.id || record.Id || record.appointmentId}
+          loading={loading}
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => 
+              `${range[0]}-${range[1]} của ${total} lịch hẹn`,
+          }}
+          scroll={{ x: 1200 }}
+          size="middle"
+        />
+      </Card>
+
+      <Modal
+        title="Chi tiết lịch hẹn"
+        open={detailModalVisible}
+        onCancel={() => setDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setDetailModalVisible(false)}>
+            Đóng
+          </Button>
+        ]}
+        width={700}
+      >
+        {selectedAppointment && (
+          <Descriptions column={2} bordered>
+            <Descriptions.Item label="Bệnh nhân">
+              {selectedAppointment.patientFullName || selectedAppointment.PatientFullName || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Bác sĩ">
+              {getDoctorName(selectedAppointment)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian bắt đầu">
+              {formatDateTime(selectedAppointment.appointmentStartDate || selectedAppointment.AppointmentStartDate)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian kết thúc">
+              {formatDateTime(selectedAppointment.appointmentEndDate || selectedAppointment.AppointmentEndDate)}
+            </Descriptions.Item>            <Descriptions.Item label="Loại hẹn">
+              {getAppointmentTypeLabel(selectedAppointment.appointmentType || selectedAppointment.AppointmentType)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Tiêu đề" span={2}>
+              {selectedAppointment.appointmentTitle || selectedAppointment.AppointmentTitle || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ghi chú" span={2}>
+              {selectedAppointment.notes || selectedAppointment.Notes || 'Không có ghi chú'}
+            </Descriptions.Item>
+            {(selectedAppointment.onlineLink || selectedAppointment.OnlineLink) && (
+              <Descriptions.Item label="Link trực tuyến" span={2}>
+                <a 
+                  href={selectedAppointment.onlineLink || selectedAppointment.OnlineLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  {selectedAppointment.onlineLink || selectedAppointment.OnlineLink}
+                </a>
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        )}
+      </Modal>
+    </div>
   );
 };
 

@@ -25,7 +25,7 @@ const StaffDashboard = () => {
       case 'dashboard':
         return 'Dashboard Tổng quan';
       case 'appointments':
-        return 'Quản lý Lịch hẹn';
+        return 'Xem lịch hẹn';
       case 'doctor-schedule':
         return 'Lịch làm việc Bác sĩ';
       case 'profile':

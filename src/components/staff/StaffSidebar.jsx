@@ -26,14 +26,13 @@ const StaffSidebar = ({ activeTab, setActiveTab }) => {
         onClick={() => setActiveTab('dashboard')}
       >
         Dashboard
-      </Button>
-      <Button
+      </Button>      <Button
         type={activeTab === 'appointments' ? 'primary' : 'text'}
         icon={<CalendarOutlined />}
         className="w-full text-left flex items-center h-7 px-4 border-0"
         onClick={() => setActiveTab('appointments')}
       >
-        Quản lý Lịch hẹn
+        Xem lịch hẹn
       </Button>
       <Button
         type={activeTab === 'doctor-schedule' ? 'primary' : 'text'}
