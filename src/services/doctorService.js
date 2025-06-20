@@ -164,25 +164,21 @@ export const doctorService = {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
       }
 
-      // Format the data according to the backend model
+      // Format the data according to the backend UpdateDoctorRequest model
       const formattedData = {
-        id: doctorData.id,
-        userId: doctorData.userId, // Keep the existing userId
+        doctorId: doctorData.id,
         fullName: doctorData.fullName.trim(),
         specialization: doctorData.specialty?.trim() || null,
         qualifications: doctorData.qualification?.trim() || null,
         experience: doctorData.experience?.trim() || null,
         bio: doctorData.description?.trim() || null,
         profilePictureURL: null,
-        isActive: doctorData.status === 'active',
-        doctorSchedules: null,
-        medicalRecords: null,
-        patientTreatmentProtocols: null
+        isActive: doctorData.status === 'active'
       };
 
       console.log('Updating doctor with data:', formattedData);
 
-      const response = await fetch(`${API_BASE_URL}/Doctor/update`, {
+      const response = await fetch(`${API_BASE_URL}/Doctor/update-doctor`, {
         method: 'PUT',
         headers: {
           ...getAuthHeaders(),
@@ -196,17 +192,9 @@ export const doctorService = {
         throw new Error(errorData.message || 'Cập nhật bác sĩ thất bại');
       }
 
-      const text = await response.text();
-      if (!text) {
-        return formattedData;
-      }
-
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.warn('Server response was not JSON, returning updated data');
-        return formattedData;
-      }
+      const result = await response.json();
+      console.log('Update doctor response:', result);
+      return result;
     } catch (error) {
       console.error('Update doctor failed:', error);
       throw error;

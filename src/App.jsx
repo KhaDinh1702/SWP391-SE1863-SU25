@@ -18,6 +18,7 @@ import Services from './pages/Services';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermOfServices";
 import AppointmentBooking from './pages/patient/AppointmentBooking';
+import PatientAppointments from './pages/patient/PatientAppointments';
 import FAQ from './pages/FAQ';
 import AppointmentGuide from './pages/AppointmentGuide';
 import Contact24h from './pages/Contact24h';
@@ -102,7 +103,7 @@ function App() {
           }
         />
         {/* Đã loại bỏ route xem lịch hẹn */}
-        {/*
+     
         <Route
           path="/appointments"
           element={
@@ -113,7 +114,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        */}
+       
 
         {/* Staff routes */}
         <Route

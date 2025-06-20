@@ -63,7 +63,14 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
       };
 
       if (editingDoctor) {
-        await onEdit({ ...editingDoctor, ...doctorData });
+        // For update, we need to include the doctor ID and preserve existing data
+        const updateData = {
+          ...editingDoctor,
+          ...doctorData,
+          id: editingDoctor.id // Ensure the ID is preserved
+        };
+        console.log('Sending update data:', updateData); // Debug log
+        await onEdit(updateData);
         message.success('Cập nhật thông tin bác sĩ thành công');
       } else {
         await doctorService.createDoctor(doctorData);
