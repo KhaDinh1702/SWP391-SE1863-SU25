@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Select, DatePicker, TimePicker, Button, message, Modal } from 'antd';
 import { doctorService } from '../../../services/doctorService';
+import { appointmentService } from '../../../services/appointmentService';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import PropTypes from 'prop-types';
 
 const { TextArea } = Input;
 
 const DoctorScheduleForm = ({ onSuccess }) => {
   const [form] = Form.useForm();
   const [doctors, setDoctors] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
+    fetchAppointments();
   }, []);
-
   const fetchDoctors = async () => {
     try {
       const doctorsList = await doctorService.getAllDoctors();
@@ -24,6 +27,17 @@ const DoctorScheduleForm = ({ onSuccess }) => {
     } catch (error) {
       console.error('Error fetching doctors:', error);
       message.error('Không thể lấy danh sách bác sĩ');
+    }
+  };
+  const fetchAppointments = async () => {
+    try {
+      const appointmentsList = await appointmentService.getAllAppointments();
+      console.log('Fetched appointments:', appointmentsList);
+      console.log('Sample appointment structure:', appointmentsList[0]);
+      setAppointments(appointmentsList);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      message.error('Không thể lấy danh sách cuộc hẹn');
     }
   };
 
@@ -41,11 +55,9 @@ const DoctorScheduleForm = ({ onSuccess }) => {
         .hour(dayjs(values.endTime).hour())
         .minute(dayjs(values.endTime).minute())
         .second(0)
-        .millisecond(0);
-
-      const scheduleData = {
+        .millisecond(0);      const scheduleData = {
         doctorId: values.doctorId,
-        appointmentId: "",
+        appointmentId: values.appointmentId || null,
         startTime: startDateTime.format('YYYY-MM-DDTHH:mm:ss'),
         endTime: endDateTime.format('YYYY-MM-DDTHH:mm:ss'),
         notes: values.notes || "",
@@ -104,8 +116,7 @@ const DoctorScheduleForm = ({ onSuccess }) => {
             startTime: dayjs().hour(8).minute(0),
             endTime: dayjs().hour(17).minute(0),
           }}
-        >
-          <Form.Item
+        >          <Form.Item
             name="doctorId"
             label="Chọn bác sĩ"
             rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
@@ -116,6 +127,55 @@ const DoctorScheduleForm = ({ onSuccess }) => {
                 return (
                   <Select.Option key={doctor.id} value={doctor.id}>
                     {doctor.fullName || doctor.FullName || doctor.fullname || doctor.name || 'Không có tên'} - {doctor.specialization || doctor.Specialization || 'Chưa cập nhật chuyên khoa'}
+                  </Select.Option>
+                );
+              })}
+            </Select>
+          </Form.Item>          <Form.Item
+            name="appointmentId"
+            label="Chọn cuộc hẹn (tùy chọn)"
+          >
+            <Select 
+              placeholder="Chọn cuộc hẹn để gắn với lịch làm việc"
+              allowClear
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+            >              {appointments.map(appointment => {
+                const appointmentDate = appointment.appointmentStartDate || 
+                                      appointment.AppointmentStartDate ||
+                                      appointment.appointmentDate ? 
+                  new Date(appointment.appointmentStartDate || 
+                          appointment.AppointmentStartDate || 
+                          appointment.appointmentDate).toLocaleDateString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : 'Chưa có ngày';
+                
+                const patientName = appointment.patientName || 
+                                  appointment.PatientName ||
+                                  appointment.patient?.fullName || 
+                                  appointment.patient?.name || 
+                                  'Chưa có tên';
+                
+                return (
+                  <Select.Option key={appointment.id} value={appointment.id}>
+                    <div>
+                      <div style={{ fontWeight: 'bold' }}>
+                        {patientName}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        📅 {appointmentDate}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#999' }}>
+                        ID: {appointment.id.substring(0, 8)}...
+                      </div>
+                    </div>
                   </Select.Option>
                 );
               })}
@@ -201,4 +261,8 @@ const DoctorScheduleForm = ({ onSuccess }) => {
   );
 };
 
-export default DoctorScheduleForm; 
+DoctorScheduleForm.propTypes = {
+  onSuccess: PropTypes.func.isRequired,
+};
+
+export default DoctorScheduleForm;
