@@ -2,25 +2,42 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from '
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
-const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
+// Helper function to map backend doctor fields to frontend fields
+function mapDoctorFromBackend(doctor) {
+  return {
+    id: doctor.id,
+    doctorId: doctor.id,
+    fullName: doctor.fullName,
+    specialization: doctor.specialization,
+    qualifications: doctor.qualifications,
+    experience: doctor.experience,
+    bio: doctor.bio,
+    profilePictureURL: doctor.profilePictureURL,
+    isActive: doctor.isActive,
+  };
+}
+
+const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Map doctors from backend before using in Table
+  const mappedDoctors = Array.isArray(doctors) ? doctors.map(mapDoctorFromBackend) : [];
+
   const handleEdit = (record) => {
     setEditingDoctor(record);
     form.setFieldsValue({
       ...record,
-      // Ensure all fields are properly set
       fullName: record.fullName || '',
-      email: record.email || '',
-      phone: record.phone || '',
-      specialty: record.specialty || '',
-      status: record.status || 'active',
-      qualification: record.qualification || '',
+      specialization: record.specialization || '',
+      qualifications: record.qualifications || '',
       experience: record.experience || '',
-      description: record.description || ''
+      bio: record.bio || '',
+      profilePictureURL: record.profilePictureURL || '',
+      isActive: record.isActive,
+      doctorId: record.doctorId
     });
     setIsModalVisible(true);
   };
@@ -44,26 +61,28 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
 
       const doctorData = {
         ...values,
-        // Ensure all required fields are present
+        doctorId: editingDoctor?.doctorId,
         fullName: values.fullName?.trim(),
-        email: values.email?.trim(),
-        phone: values.phone?.trim(),
-        specialty: values.specialty,
-        status: values.status,
-        qualification: values.qualification?.trim(),
+        specialization: values.specialization,
+        qualifications: values.qualifications?.trim(),
         experience: values.experience?.trim(),
-        description: values.description?.trim()
+        bio: values.bio?.trim(),
+        profilePictureURL: values.profilePictureURL?.trim(),
+        isActive: values.isActive,
       };
 
       if (editingDoctor) {
-        // For update, we need to include the doctor ID and preserve existing data
         const updateData = {
           ...editingDoctor,
           ...doctorData,
-          id: editingDoctor.id // Ensure the ID is preserved
+          doctorId: editingDoctor.doctorId
         };
         console.log('Sending update data:', updateData); // Debug log
-        await onEdit(updateData);
+        if (onSave) {
+          await onSave(updateData);
+        } else if (onEdit) {
+          await onEdit(updateData);
+        }
         message.success('Cập nhật thông tin bác sĩ thành công');
       }
       setIsModalVisible(false);
@@ -88,30 +107,38 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
       key: 'fullName',
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: 'Số điện thoại',
-      dataIndex: 'phone',
-      key: 'phone',
-    },
-    {
       title: 'Chuyên khoa',
-      dataIndex: 'specialty',
-      key: 'specialty',
-      render: (specialty) => (
-        <Tag color="blue">{specialty}</Tag>
-      ),
+      dataIndex: 'specialization',
+      key: 'specialization',
+    },
+    {
+      title: 'Bằng cấp',
+      dataIndex: 'qualifications',
+      key: 'qualifications',
+    },
+    {
+      title: 'Kinh nghiệm',
+      dataIndex: 'experience',
+      key: 'experience',
+    },
+    {
+      title: 'Mô tả',
+      dataIndex: 'bio',
+      key: 'bio',
+    },
+    {
+      title: 'Ảnh đại diện',
+      dataIndex: 'profilePictureURL',
+      key: 'profilePictureURL',
+      render: (url) => url ? <img src={url} alt="avatar" style={{width: 40, height: 40, objectFit: 'cover', borderRadius: '50%'}} /> : 'Không có',
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? 'Đang làm việc' : 'Nghỉ phép'}
+      dataIndex: 'isActive',
+      key: 'isActive',
+      render: (isActive) => (
+        <Tag color={isActive ? 'green' : 'red'}>
+          {isActive ? 'Đang làm việc' : 'Nghỉ phép'}
         </Tag>
       ),
     },
@@ -143,7 +170,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
     <div>
       <Table
         columns={columns}
-        dataSource={doctors}
+        dataSource={mappedDoctors}
         rowKey="id"
         loading={isLoading}
       />
@@ -163,8 +190,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
           form={form}
           layout="vertical"
           initialValues={{
-            status: 'active',
-            specialty: 'HIV/AIDS'
+            isActive: true,
           }}
         >
           <Form.Item
@@ -177,89 +203,54 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
           >
             <Input placeholder="Nhập họ và tên bác sĩ" />
           </Form.Item>
-
           <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' }
-            ]}
-          >
-            <Input placeholder="example@email.com" />
-          </Form.Item>
-
-          <Form.Item
-            name="phone"
-            label="Số điện thoại"
-            rules={[
-              { required: true, message: 'Vui lòng nhập số điện thoại' },
-              { pattern: /^[0-9]{10}$/, message: 'Số điện thoại phải có 10 chữ số' }
-            ]}
-          >
-            <Input placeholder="0123456789" />
-          </Form.Item>
-
-          <Form.Item
-            name="specialty"
+            name="specialization"
             label="Chuyên khoa"
-            rules={[{ required: true, message: 'Vui lòng chọn chuyên khoa' }]}
+            rules={[{ required: true, message: 'Vui lòng nhập chuyên khoa' }]}
           >
-            <Select placeholder="Chọn chuyên khoa">
-              <Select.Option value="HIV/AIDS">HIV/AIDS</Select.Option>
-              <Select.Option value="Nội tổng quát">Nội tổng quát</Select.Option>
-              <Select.Option value="Da liễu">Da liễu</Select.Option>
-              <Select.Option value="Tâm lý">Tâm lý</Select.Option>
-            </Select>
+            <Input placeholder="Nhập chuyên khoa" />
           </Form.Item>
-
           <Form.Item
-            name="status"
-            label="Trạng thái"
-            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-          >
-            <Select placeholder="Chọn trạng thái">
-              <Select.Option value="active">Đang làm việc</Select.Option>
-              <Select.Option value="inactive">Nghỉ phép</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="qualification"
+            name="qualifications"
             label="Bằng cấp"
             rules={[
               { required: true, message: 'Vui lòng nhập bằng cấp' },
               { min: 10, message: 'Bằng cấp phải có ít nhất 10 ký tự' }
             ]}
           >
-            <Input.TextArea 
-              rows={3} 
-              placeholder="Nhập thông tin bằng cấp của bác sĩ"
-            />
+            <Input.TextArea rows={2} placeholder="Nhập thông tin bằng cấp của bác sĩ" />
           </Form.Item>
-
           <Form.Item
             name="experience"
             label="Kinh nghiệm"
             rules={[
               { required: true, message: 'Vui lòng nhập kinh nghiệm' },
-              { min: 10, message: 'Kinh nghiệm phải có ít nhất 10 ký tự' }
+              { min: 5, message: 'Kinh nghiệm phải có ít nhất 5 ký tự' }
             ]}
           >
-            <Input.TextArea 
-              rows={3} 
-              placeholder="Nhập kinh nghiệm làm việc của bác sĩ"
-            />
+            <Input.TextArea rows={2} placeholder="Nhập kinh nghiệm làm việc của bác sĩ" />
           </Form.Item>
-
           <Form.Item
-            name="description"
+            name="bio"
             label="Mô tả"
           >
-            <Input.TextArea 
-              rows={3} 
-              placeholder="Nhập mô tả thêm về bác sĩ (không bắt buộc)"
-            />
+            <Input.TextArea rows={2} placeholder="Nhập mô tả thêm về bác sĩ (không bắt buộc)" />
+          </Form.Item>
+          <Form.Item
+            name="profilePictureURL"
+            label="Ảnh đại diện (URL)"
+          >
+            <Input placeholder="Nhập URL ảnh đại diện (nếu có)" />
+          </Form.Item>
+          <Form.Item
+            name="isActive"
+            label="Trạng thái"
+            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+          >
+            <Select>
+              <Select.Option value={true}>Đang làm việc</Select.Option>
+              <Select.Option value={false}>Nghỉ phép</Select.Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>

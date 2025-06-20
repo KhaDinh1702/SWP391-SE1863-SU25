@@ -12,7 +12,6 @@ const PROTOCOL_TYPE_OPTIONS = [
   { value: 5, label: 'F' },
   { value: 6, label: 'G' },
   { value: 7, label: 'H' },
-  { value: 8, label: 'I' },
 ];
 
 const CreateARVProtocolForm = ({ onSuccess, form }) => {

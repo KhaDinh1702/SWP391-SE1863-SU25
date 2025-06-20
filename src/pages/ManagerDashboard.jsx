@@ -131,14 +131,21 @@ const ManagerDashboard = () => {
   const handleSaveDoctor = async (updatedDoctor) => {
     try {
       setLoading(true);
-      console.log('ManagerDashboard: Updating doctor with data:', updatedDoctor);
-      
-      const result = await doctorService.updateDoctorForManager(updatedDoctor);
-      console.log('ManagerDashboard: Update result:', result);
-      
-      setDoctors(prev => prev.map(doc => 
-        doc.id === updatedDoctor.id ? { ...doc, ...result } : doc
-      ));
+      const mappedDoctor = {
+        doctorId: updatedDoctor.doctorId,
+        fullName: updatedDoctor.fullName ?? null,
+        specialization: updatedDoctor.specialization ?? null,
+        qualifications: updatedDoctor.qualifications ?? null,
+        experience: updatedDoctor.experience ?? null,
+        bio: updatedDoctor.bio ?? null,
+        profilePictureURL: updatedDoctor.profilePictureURL ?? null,
+        isActive: typeof updatedDoctor.isActive === 'boolean' ? updatedDoctor.isActive : null,
+      };
+      console.log('Mapped doctor for update:', mappedDoctor);
+      await doctorService.updateDoctor(mappedDoctor);
+      // Refetch lại danh sách bác sĩ từ backend
+      const doctorData = await doctorService.getAllDoctors();
+      setDoctors(doctorData);
       message.success('Cập nhật bác sĩ thành công');
       setIsEditModalVisible(false);
     } catch (error) {
@@ -215,7 +222,7 @@ const ManagerDashboard = () => {
       case 'dashboard':
         return <StatsCards stats={stats} />;
       case 'doctors':
-        return <DoctorList doctors={doctors} onEdit={handleEditDoctor} onDelete={handleDeleteDoctor} isLoading={loading} />;
+        return <DoctorList doctors={doctors} onEdit={handleEditDoctor} onDelete={handleDeleteDoctor} onSave={handleSaveDoctor} isLoading={loading} />;
       case 'schedules':
         return <DoctorScheduleList />;
       case 'profile':

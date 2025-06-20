@@ -4,7 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { arvProtocolService } from '../../services/arvProtocolService';
 import CreateARVProtocolForm from './CreateARVProtocolForm';
 
-const PROTOCOL_TYPE_LABELS = ['A','B','C','D','E','F','G','H','I'];
+const PROTOCOL_TYPE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
 const ARVProtocols = () => {
   const [protocols, setProtocols] = useState([]);
@@ -23,7 +23,6 @@ const ARVProtocols = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchProtocols();
   }, []);

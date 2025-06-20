@@ -159,25 +159,20 @@ export const doctorService = {
 
   updateDoctor: async (doctorData) => {
     try {
-      // Validate required fields
-      if (!doctorData.id || !doctorData.fullName) {
-        throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      if (!doctorData.doctorId) {
+        throw new Error('Thiếu doctorId');
       }
-
-      // Format the data according to the backend UpdateDoctorRequest model
       const formattedData = {
-        doctorId: doctorData.id,
-        fullName: doctorData.fullName.trim(),
-        specialization: doctorData.specialty?.trim() || null,
-        qualifications: doctorData.qualification?.trim() || null,
-        experience: doctorData.experience?.trim() || null,
-        bio: doctorData.description?.trim() || null,
-        profilePictureURL: null,
-        isActive: doctorData.status === 'active'
+        doctorId: doctorData.doctorId,
+        fullName: doctorData.fullName ?? null,
+        specialization: doctorData.specialization ?? null,
+        qualifications: doctorData.qualifications ?? null,
+        experience: doctorData.experience ?? null,
+        bio: doctorData.bio ?? null,
+        profilePictureURL: doctorData.profilePictureURL ?? null,
+        isActive: typeof doctorData.isActive === 'boolean' ? doctorData.isActive : null,
       };
-
       console.log('Updating doctor with data:', formattedData);
-
       const response = await fetch(`${API_BASE_URL}/Doctor/update-doctor`, {
         method: 'PUT',
         headers: {
@@ -186,12 +181,10 @@ export const doctorService = {
         },
         body: JSON.stringify(formattedData)
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Cập nhật bác sĩ thất bại' }));
         throw new Error(errorData.message || 'Cập nhật bác sĩ thất bại');
       }
-
       const result = await response.json();
       console.log('Update doctor response:', result);
       return result;
