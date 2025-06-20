@@ -209,13 +209,12 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
             rules={[{ required: true, message: 'Vui lòng nhập chuyên khoa' }]}
           >
             <Input placeholder="Nhập chuyên khoa" />
-          </Form.Item>
-          <Form.Item
+          </Form.Item>          <Form.Item
             name="qualifications"
             label="Bằng cấp"
             rules={[
               { required: true, message: 'Vui lòng nhập bằng cấp' },
-              { min: 10, message: 'Bằng cấp phải có ít nhất 10 ký tự' }
+              { min: 5, message: 'Bằng cấp phải có ít nhất 5 ký tự' }
             ]}
           >
             <Input.TextArea rows={2} placeholder="Nhập thông tin bằng cấp của bác sĩ" />
