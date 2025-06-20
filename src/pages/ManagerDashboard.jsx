@@ -131,14 +131,19 @@ const ManagerDashboard = () => {
   const handleSaveDoctor = async (updatedDoctor) => {
     try {
       setLoading(true);
-      await doctorService.updateDoctor(updatedDoctor);
+      console.log('ManagerDashboard: Updating doctor with data:', updatedDoctor);
+      
+      const result = await doctorService.updateDoctorForManager(updatedDoctor);
+      console.log('ManagerDashboard: Update result:', result);
+      
       setDoctors(prev => prev.map(doc => 
-        doc.id === updatedDoctor.id ? updatedDoctor : doc
+        doc.id === updatedDoctor.id ? { ...doc, ...result } : doc
       ));
       message.success('Cập nhật bác sĩ thành công');
       setIsEditModalVisible(false);
     } catch (error) {
-      message.error('Cập nhật bác sĩ thất bại');
+      console.error('ManagerDashboard: Update doctor error:', error);
+      message.error(`Cập nhật bác sĩ thất bại: ${error.message}`);
     } finally {
       setLoading(false);
     }

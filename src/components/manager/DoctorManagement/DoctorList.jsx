@@ -1,19 +1,12 @@
 import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
-import { EditOutlined, DeleteOutlined, UserAddOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { doctorService } from '../../../services/doctorService';
 
 const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const handleAddDoctor = () => {
-    setEditingDoctor(null);
-    form.resetFields();
-    setIsModalVisible(true);
-  };
 
   const handleEdit = (record) => {
     setEditingDoctor(record);
@@ -72,9 +65,6 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
         console.log('Sending update data:', updateData); // Debug log
         await onEdit(updateData);
         message.success('Cập nhật thông tin bác sĩ thành công');
-      } else {
-        await doctorService.createDoctor(doctorData);
-        message.success('Thêm bác sĩ mới thành công');
       }
       setIsModalVisible(false);
       form.resetFields();
@@ -151,16 +141,6 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
 
   return (
     <div>
-      <div className="mb-4">
-        <Button
-          type="primary"
-          icon={<UserAddOutlined />}
-          onClick={handleAddDoctor}
-        >
-          Thêm bác sĩ
-        </Button>
-      </div>
-
       <Table
         columns={columns}
         dataSource={doctors}
@@ -169,7 +149,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
       />
 
       <Modal
-        title={editingDoctor ? 'Sửa thông tin bác sĩ' : 'Thêm bác sĩ mới'}
+        title="Sửa thông tin bác sĩ"
         open={isModalVisible}
         onOk={handleSubmit}
         onCancel={() => {
@@ -287,4 +267,4 @@ const DoctorList = ({ doctors, onEdit, onDelete, isLoading }) => {
   );
 };
 
-export default DoctorList; 
+export default DoctorList;
