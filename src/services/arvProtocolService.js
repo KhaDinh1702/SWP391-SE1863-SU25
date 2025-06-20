@@ -80,5 +80,29 @@ export const arvProtocolService = {
       console.error('Error creating ARV protocol:', error);
       throw error;
     }
+  },  // Cập nhật ARV protocol
+  updateARVProtocol: async (protocolId, protocolData) => {
+    try {
+      const requestBody = {
+        ...protocolData,
+        protocolId: protocolId
+      };
+      
+      const response = await fetch(`${API_BASE_URL}/ARVProtocol/update-arv-protocol`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating ARV protocol:', error);
+      throw error;
+    }
   }
-}; 
+};
