@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col } from 'antd';
 import { PlusOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
-import { patientTreatmentProtocolService, treatmentStageService } from '../../../services';
+import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
+import { treatmentStageService } from '../../../services/treatmentStageService';
+import { appointmentService } from '../../../services/appointmentService';
+import { arvProtocolService } from '../../../services/arvProtocolService';
+import { doctorService } from '../../../services/doctorService';
 
 const { Option } = Select;
 const { TextArea } = Input;
+const { RangePicker } = DatePicker;
 
 const TreatmentProtocol = () => {
   const [patientProtocols, setPatientProtocols] = useState([]);
   const [treatmentStages, setTreatmentStages] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [arvProtocols, setArvProtocols] = useState([]);
+  const [currentDoctor, setCurrentDoctor] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
@@ -24,12 +33,37 @@ const TreatmentProtocol = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [protocolsData, stagesData] = await Promise.all([
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+          message.error('Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.');
+          setLoading(false);
+          return;
+      }
+
+      const [protocolsData, stagesData, appointmentsData, arvData, allDoctors] = await Promise.all([
         patientTreatmentProtocolService.getAllPatientTreatmentProtocols(),
-        treatmentStageService.getAllTreatmentStages()
+        treatmentStageService.getAllTreatmentStages(),
+        appointmentService.getAllAppointments(),
+        arvProtocolService.getAllARVProtocols(),
+        doctorService.getAllDoctors()
       ]);
+
+      const doctor = allDoctors.find(d => d.userId === userId);
+      setCurrentDoctor(doctor);
+
       setPatientProtocols(protocolsData);
       setTreatmentStages(stagesData);
+      
+      // Derive unique patients from the appointments list
+      const patientMap = new Map();
+      appointmentsData.forEach(app => {
+        if (app.patient && !patientMap.has(app.patient.id)) {
+          patientMap.set(app.patient.id, app.patient);
+        }
+      });
+      setPatients(Array.from(patientMap.values()));
+
+      setArvProtocols(arvData);
     } catch (error) {
       message.error('Không thể tải dữ liệu');
       console.error('Error fetching data:', error);
@@ -42,12 +76,12 @@ const TreatmentProtocol = () => {
     try {
       const requestData = {
         PatientId: values.patientId,
-        DoctorId: values.doctorId,
-        ProtocolId: values.arvProtocolId || null,
+        DoctorId: currentDoctor?.id,
+        ProtocolId: values.arvProtocolId,
         AppointmentId: values.appointmentId || null,
-        StartDate: values.startDate ? values.startDate.toISOString() : null,
-        EndDate: values.endDate ? values.endDate.toISOString() : null,
-        Status: values.status || 'Active'
+        StartDate: values.dateRange ? values.dateRange[0].toISOString() : null,
+        EndDate: values.dateRange ? values.dateRange[1].toISOString() : null,
+        Status: values.status || 'Pending'
       };
 
       console.log('Creating patient treatment protocol with data:', requestData);
@@ -360,68 +394,57 @@ const TreatmentProtocol = () => {
             layout="vertical"
             onFinish={handleCreateProtocol}
             initialValues={{
-              status: 'Active'
+              status: 'Pending'
             }}
           >
             <Form.Item
               name="patientId"
-              label="ID Bệnh nhân"
-              rules={[{ required: true, message: 'Vui lòng nhập ID bệnh nhân' }]}
+              label="Bệnh nhân"
+              rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân' }]}
             >
-              <Input placeholder="Nhập ID bệnh nhân" />
-            </Form.Item>
-
-            <Form.Item
-              name="doctorId"
-              label="ID Bác sĩ"
-              rules={[{ required: true, message: 'Vui lòng nhập ID bác sĩ' }]}
-            >
-              <Input placeholder="Nhập ID bác sĩ" />
+              <Select placeholder="Chọn bệnh nhân" showSearch filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }>
+                {patients.map(p => <Option key={p.id} value={p.id}>{p.fullName}</Option>)}
+              </Select>
             </Form.Item>
 
             <Form.Item
               name="arvProtocolId"
-              label="ID Phác đồ ARV"
+              label="Phác đồ ARV"
+              rules={[{ required: true, message: 'Vui lòng chọn phác đồ ARV' }]}
             >
-              <Input placeholder="Nhập ID phác đồ ARV (tùy chọn)" />
+              <Select placeholder="Chọn phác đồ ARV">
+                {arvProtocols.map(p => <Option key={p.id} value={p.id}>{p.protocolName}</Option>)}
+              </Select>
             </Form.Item>
 
             <Form.Item
-              name="appointmentId"
-              label="ID Lịch hẹn"
+              name="dateRange"
+              label="Thời gian điều trị"
+              rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
             >
-              <Input placeholder="Nhập ID lịch hẹn (tùy chọn)" />
+              <RangePicker style={{ width: '100%' }} />
             </Form.Item>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="startDate"
-                  label="Ngày bắt đầu"
-                >
-                  <DatePicker style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="endDate"
-                  label="Ngày kết thúc"
-                >
-                  <DatePicker style={{ width: '100%' }} />
-                </Form.Item>
-              </Col>
-            </Row>
 
             <Form.Item
               name="status"
               label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+              initialValue="Pending"
             >
-              <Select placeholder="Chọn trạng thái">
+              <Select>
+                <Option value="Pending">Chờ bắt đầu</Option>
                 <Option value="Active">Đang điều trị</Option>
                 <Option value="Completed">Hoàn thành</Option>
-                <Option value="Discontinued">Dừng điều trị</Option>
+                <Option value="Inactive">Dừng điều trị</Option>
               </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="notes"
+              label="Ghi chú"
+            >
+              <TextArea rows={3} />
             </Form.Item>
           </Form>
         )}

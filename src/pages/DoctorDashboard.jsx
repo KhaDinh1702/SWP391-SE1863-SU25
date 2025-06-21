@@ -11,7 +11,6 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import DoctorSidebar from '../components/doctor/DoctorSidebar';
-import DoctorHeader from '../components/doctor/DoctorHeader';
 import DoctorSchedule from '../components/doctor/Schedule/DoctorSchedule';
 import DoctorAppointments from '../components/doctor/Appointments/DoctorAppointments';
 import PatientProfiles from '../components/doctor/Patient/PatientProfiles';
@@ -246,7 +245,6 @@ const DoctorDashboard = () => {
         <DoctorSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       </Sider>
       <Layout className="ml-[10px]">
-        <DoctorHeader />
         <Content className="bg-gray-50 p-6">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">

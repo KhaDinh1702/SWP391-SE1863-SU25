@@ -84,7 +84,7 @@ export const appointmentService = {
   // Get appointments by doctor for filtering
   getAppointmentsByDoctor: async (doctorId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Appointment/get-by-doctor?doctorId=${doctorId}`, {
+      const response = await fetch(`${API_BASE_URL}/Appointment/doctor-get-appointments?doctorId=${doctorId}`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
