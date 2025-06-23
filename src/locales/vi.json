@@ -1,0 +1,174 @@
+{
+  "languages": {
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "nav": {
+    "companyName": "Trung Tâm Y Tế Tổng Hợp",
+    "about": "Giới thiệu",
+    "appointment": "Đặt lịch hẹn",
+    "pricing": "Bảng giá",
+    "services": "Dịch vụ",
+    "medical": "Y tế",
+    "blog": "Tin tức",
+    "bookAppointment": "Đặt lịch hẹn",
+    "contact24h": "Liên hệ 24/7",
+    "hello": "Xin chào",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "logoutSuccess": "Đăng xuất thành công!"
+  },
+  "home": {
+    "hero": {
+      "title1": "Chăm sóc sức khỏe toàn diện",
+      "title2": "Dịch vụ y tế 3AE",
+      "subtitle1": "Đồng hành cùng bạn trên hành trình chăm sóc sức khỏe",
+      "subtitle2": "Đăng nhập để trải nghiệm dịch vụ y tế chất lượng cao",
+      "bookNow": "Đặt lịch khám ngay",
+      "viewServices": "Xem dịch vụ"
+    },
+    "features": {
+      "arv": "ARV Bảo hiểm y tế",
+      "pep": "PEP 72 giờ (Điều trị dự phòng HIV)",
+      "vaccine": "Tiêm chủng (Vaccine)",
+      "testing": "Xét nghiệm"
+    },
+    "stats": {
+      "experience": "Năm kinh nghiệm",
+      "patients": "Bệnh nhân",
+      "doctors": "Bác sĩ",
+      "support": "Hỗ trợ"
+    },
+    "services": {
+      "title": "Dịch vụ nổi bật"
+    },
+    "cta": {
+      "title": "Bạn cần tư vấn y tế?",
+      "subtitle": "Đội ngũ chuyên gia của chúng tôi luôn sẵn sàng hỗ trợ bạn",
+      "callNow": "Gọi ngay: 0943 108 138",
+      "contact": "Liên hệ tư vấn"
+    },
+    "arv": {
+      "badge": "DỊCH VỤ ARV",
+      "title": "Điều trị HIV với Bảo hiểm Y tế",
+      "subtitle": "Thủ tục nhanh chóng - Nhận thuốc ngay trong ngày",
+      "features": {
+        "simple": {
+          "title": "Thủ tục đơn giản",
+          "desc": "Chỉ cần thẻ BHYT và đơn thuốc, nhận thuốc ngay"
+        },
+        "free": {
+          "title": "Miễn phí xét nghiệm",
+          "desc": "12 chỉ số quan trọng hoàn toàn miễn phí"
+        },
+        "specialist": {
+          "title": "Bác sĩ chuyên khoa",
+          "desc": "Tư vấn và theo dõi điều trị tận tình"
+        },
+        "quality": {
+          "title": "Thuốc chất lượng",
+          "desc": "Đảm bảo nguồn gốc và chất lượng thuốc ARV"
+        },
+        "support": {
+          "title": "Hỗ trợ 24/7",
+          "desc": "Đội ngũ tư vấn luôn sẵn sàng giúp đỡ"
+        },
+        "trusted": {
+          "title": "Uy tín hàng đầu",
+          "desc": "Được Bộ Y tế công nhận chất lượng"
+        }
+      },
+      "needHelp": {
+        "title": "Bạn đang cần điều trị ARV?",
+        "desc": "Đội ngũ chuyên gia của chúng tôi sẽ tư vấn và hướng dẫn bạn quy trình đăng ký BHYT và nhận thuốc ARV miễn phí."
+      }
+    },
+    "whyChoose": {
+      "title": "VÌ SAO NÊN CHỌN 3AE",
+      "features": {
+        "hours": "Mở cửa xuyên suốt: 8h - 20h (T2 - CN)",
+        "testing": "Xét nghiệm 30 phút, nhận kết quả Online",
+        "insurance": "Thanh toán bằng bảo hiểm y tế",
+        "care": "Chăm sóc, hỗ trợ tâm lý xã hội, tâm thần",
+        "delivery": "Tư vấn ONLINE & Giao thuốc tại nhà",
+        "expertise": "Bác sĩ, nhân viên có chuyên môn cao",
+        "technology": "Công nghệ thiết bị y tế hiện đại",
+        "community": "Đồng cảm và thấu hiểu cộng đồng LGBT+"
+      }
+    },
+    "doctors": {
+      "badge": "ĐỘI NGŨ CHUYÊN GIA",
+      "title": "Bác sĩ đầu ngành tại 3AE",
+      "subtitle": "Chuyên môn cao - Tận tâm - Trách nhiệm"
+    },
+    "news": {
+      "badge": "KIẾN THỨC Y TẾ",
+      "title": "Tin tức & Sự kiện",
+      "subtitle": "Cập nhật thông tin y tế mới nhất về điều trị HIV",
+      "readMore": "Đọc thêm"
+    },
+    "partners": {
+      "title": "ĐỐI TÁC CỦA 3AE"    },
+    "backToTop": "Quay lại đầu trang"
+  },
+  "footer": {
+    "systemTitle": "HỆ THỐNG PHÒNG KHÁM 3AE",
+    "locations": {
+      "quan5": {
+        "title": "3AE QUẬN 5",
+        "address": "Số 104 Trần Bình Trọng, P.1, Quận 5",
+        "hours": "8:00 – 20:00 (Thứ 2 – CN)"
+      },
+      "tanBinh": {
+        "title": "3AE TÂN BÌNH",
+        "address": "96 Ngô Thị Thu Minh, P.2, Q.Tân Bình",
+        "hours": "11:00 – 20:00 (Thứ 2 – Thứ 7)"
+      },
+      "haNoi": {
+        "title": "3AE HÀ NỘI",
+        "address": "15 ngõ 143 Trung Kính, Cầu Giấy, Hà Nội",
+        "hours": "09:00 – 20:00 (Thứ 2 – Chủ nhật)"
+      }
+    },
+    "viewMap": "Xem bản đồ",
+    "menu": {
+      "medicalCenter": "Trung tâm y tế",
+      "help": "Trợ giúp",
+      "legal": "Pháp lý",
+      "items": {
+        "about": "Giới thiệu",
+        "services": "Dịch vụ",
+        "medicalTeam": "Đội ngũ y tế",
+        "faq": "Câu hỏi thường gặp",
+        "appointmentGuide": "Hướng dẫn đặt lịch",
+        "termsOfUse": "Chính sách sử dụng",
+        "privacy": "Chính sách bảo mật",
+        "terms": "Điều khoản dịch vụ",
+        "licenses": "Giấy phép hoạt động"
+      }
+    },
+    "contact": {
+      "title": "Liên hệ & Hỗ trợ",
+      "hotline": "Hotline tư vấn",
+      "email": "Email",
+      "connect": "Kết nối với chúng tôi"
+    },
+    "certifications": {
+      "iso": {
+        "title": "ISO 9001:2015",
+        "description": "Chứng nhận hệ thống quản lý chất lượng"
+      },
+      "privacy": {
+        "title": "Bảo mật thông tin",
+        "description": "Tuân thủ quy định bảo vệ dữ liệu"
+      },  
+      "license": {
+        "title": "Giấy phép hoạt động",
+        "description": "Được cấp bởi Sở Y tế TP.HCM"
+      }
+    },
+    "copyright": "Trung tâm y tế 3AE. All rights reserved.",
+    "businessInfo": "MST: 0312345678 | GPKD số: 41A123456 do Sở KHĐT TP.HCM cấp ngày 01/01/2020"
+  }
+}

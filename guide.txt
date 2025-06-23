@@ -8,3 +8,4 @@ npm i antd
 npm i framer-motion
 npm i recharts   
 npm i moment
+npm install react-i18next i18next i18next-browser-languagedetector
