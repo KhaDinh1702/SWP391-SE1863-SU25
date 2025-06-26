@@ -51,26 +51,38 @@ export const userService = {
 
   updateUser: async (userData) => {
     try {
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      
+      // Add required fields
+      formData.append('UserId', userData.id);
+      
+      // Add optional fields only if they have values
+      if (userData.username) formData.append('Username', userData.username);
+      if (userData.email) formData.append('Email', userData.email);
+      if (userData.phoneNumber) formData.append('PhoneNumber', userData.phoneNumber);
+      if (userData.role) formData.append('Role', userData.role);
+      if (userData.fullName) formData.append('FullName', userData.fullName);
+      if (userData.specialization) formData.append('Specialization', userData.specialization);
+      if (userData.qualifications) formData.append('Qualifications', userData.qualifications);
+      if (userData.experience) formData.append('Experience', userData.experience);
+      if (userData.bio) formData.append('Bio', userData.bio);
+      if (userData.address) formData.append('Address', userData.address);
+      if (userData.gender) formData.append('Gender', userData.gender);
+      
+      // Add avatar file if provided
+      if (userData.avatarPicture && userData.avatarPicture instanceof File) {
+        formData.append('AvatarPicture', userData.avatarPicture);
+      }
+
       const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
         method: 'PUT',
         headers: {
           ...getAuthHeaders(),
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Accept': 'application/json'
+          // Don't set Content-Type for FormData
         },
-        body: JSON.stringify({
-          UserId: userData.id,
-          Username: userData.username,
-          Email: userData.email,
-          PhoneNumber: userData.phoneNumber,
-          Role: userData.role,
-          FullName: userData.fullName,
-          Specialization: userData.specialization,
-          Qualifications: userData.qualifications,
-          Experience: userData.experience,
-          Bio: userData.bio,
-          ProfilePictureURL: userData.profilePictureURL
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -155,6 +167,11 @@ export const userService = {
       if (userData.bio && userData.bio.trim()) {
         formData.append('Bio', userData.bio.trim());
       }
+      
+      // Add avatar file if provided
+      if (userData.avatarPicture && userData.avatarPicture instanceof File) {
+        formData.append('AvatarPicture', userData.avatarPicture);
+      }
 
       // Log all form data entries
       console.log('FormData contents:');
@@ -231,4 +248,4 @@ export const userService = {
       throw error;
     }
   },
-}; 
+};

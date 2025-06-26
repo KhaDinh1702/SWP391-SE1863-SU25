@@ -1,5 +1,5 @@
-import { Table, Button, Tag, Space, Popconfirm, Modal, Descriptions } from 'antd';
-import { EditOutlined, StopOutlined, CheckOutlined, UserAddOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Space, Popconfirm, Modal, Descriptions, Avatar } from 'antd';
+import { EditOutlined, StopOutlined, CheckOutlined, UserAddOutlined, InfoCircleOutlined, UserOutlined } from '@ant-design/icons';
 import EditUserForm from './EditUserForm';
 import CreateUserForm from './CreateUserForm';
 import { useState } from 'react';
@@ -82,6 +82,20 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
       dataIndex: 'phoneNumber',
       key: 'phoneNumber',
       width: 120,
+    },
+    {
+      title: 'Ảnh đại diện',
+      dataIndex: 'profilePictureURL',
+      key: 'avatar',
+      width: 100,
+      render: (url, record) => (
+        <Avatar 
+          size={40} 
+          src={url || record.avatarUrl} 
+          icon={<UserOutlined />}
+          style={{ objectFit: 'cover' }}
+        />
+      ),
     },
     {
       title: 'Vai trò',
@@ -237,29 +251,39 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
         width={700}
       >
         {viewingUser && (
-          <Descriptions bordered column={2}>
-            <Descriptions.Item label="ID" span={2}>{viewingUser.id}</Descriptions.Item>
-            <Descriptions.Item label="Tên đăng nhập">{viewingUser.username}</Descriptions.Item>
-            <Descriptions.Item label="Họ tên">{viewingUser.fullName}</Descriptions.Item>
-            <Descriptions.Item label="Email">{viewingUser.email}</Descriptions.Item>
-            <Descriptions.Item label="Số điện thoại">{viewingUser.phoneNumber}</Descriptions.Item>
-            <Descriptions.Item label="Địa chỉ" span={2}>{viewingUser.address || 'Chưa cập nhật'}</Descriptions.Item>
-            <Descriptions.Item label="Giới tính">
-              {viewingUser.gender === 'Male' ? 'Nam' : 
-               viewingUser.gender === 'Female' ? 'Nữ' : 
-               viewingUser.gender === 'Other' ? 'Khác' : 'Chưa cập nhật'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Vai trò">{getRoleText(viewingUser.role)}</Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              {viewingUser.isActive ? (
-                <Tag color="green">Hoạt động</Tag>
-              ) : (
-                <Tag color="red">Vô hiệu</Tag>
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày tạo">{formatDate(viewingUser.createdDate)}</Descriptions.Item>
-            <Descriptions.Item label="Ngày cập nhật">{formatDate(viewingUser.updatedDate)}</Descriptions.Item>
-          </Descriptions>
+          <>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <Avatar 
+                size={80} 
+                src={viewingUser.profilePictureURL || viewingUser.avatarUrl} 
+                icon={<UserOutlined />}
+                style={{ objectFit: 'cover' }}
+              />
+            </div>
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="ID" span={2}>{viewingUser.id}</Descriptions.Item>
+              <Descriptions.Item label="Tên đăng nhập">{viewingUser.username}</Descriptions.Item>
+              <Descriptions.Item label="Họ tên">{viewingUser.fullName}</Descriptions.Item>
+              <Descriptions.Item label="Email">{viewingUser.email}</Descriptions.Item>
+              <Descriptions.Item label="Số điện thoại">{viewingUser.phoneNumber}</Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ" span={2}>{viewingUser.address || 'Chưa cập nhật'}</Descriptions.Item>
+              <Descriptions.Item label="Giới tính">
+                {viewingUser.gender === 'Male' ? 'Nam' : 
+                 viewingUser.gender === 'Female' ? 'Nữ' : 
+                 viewingUser.gender === 'Other' ? 'Khác' : 'Chưa cập nhật'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vai trò">{getRoleText(viewingUser.role)}</Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                {viewingUser.isActive ? (
+                  <Tag color="green">Hoạt động</Tag>
+                ) : (
+                  <Tag color="red">Vô hiệu</Tag>
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày tạo">{formatDate(viewingUser.createdDate)}</Descriptions.Item>
+              <Descriptions.Item label="Ngày cập nhật">{formatDate(viewingUser.updatedDate)}</Descriptions.Item>
+            </Descriptions>
+          </>
         )}
       </Modal>
     </>

@@ -1,21 +1,46 @@
-import React from 'react';
-import { Form, Input, Select, Button, message } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Select, Button, message, Upload, Avatar } from 'antd';
+import { UploadOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const EditUserForm = ({ user, onSave, onCancel, loading }) => {
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
 
   const handleSubmit = async (values) => {
     try {
-      await onSave({
-        ...values,
-        id: user.id,
-      });
+      const formData = { ...values, id: user.id };
+      
+      // Add avatar file if selected
+      if (fileList.length > 0) {
+        formData.avatarPicture = fileList[0].originFileObj;
+      }
+      
+      await onSave(formData);
       form.resetFields();
+      setFileList([]);
     } catch (error) {
       message.error('Cập nhật thất bại: ' + error.message);
     }
+  };
+
+  const handleUploadChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
+
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('Chỉ có thể upload file ảnh!');
+      return false;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('Kích thước ảnh phải nhỏ hơn 5MB!');
+      return false;
+    }
+    return false; // Prevent auto upload
   };
 
   return (
@@ -100,6 +125,30 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
       </Form.Item>
 
       <Form.Item
+        label="Ảnh đại diện"
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Avatar 
+            size={64} 
+            src={user.profilePictureURL || user.avatarUrl} 
+            icon={<UserOutlined />}
+            style={{ objectFit: 'cover' }}
+          />
+          <span style={{ marginLeft: 12, color: '#666' }}>Ảnh hiện tại</span>
+        </div>
+        <Upload
+          fileList={fileList}
+          onChange={handleUploadChange}
+          beforeUpload={beforeUpload}
+          accept="image/*"
+          maxCount={1}
+          listType="picture"
+        >
+          <Button icon={<UploadOutlined />}>Thay đổi ảnh đại diện</Button>
+        </Upload>
+      </Form.Item>
+
+      <Form.Item
         name="password"
         label="Mật khẩu mới"
         rules={[
@@ -121,4 +170,11 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
   );
 };
 
-export default EditUserForm; 
+const normFile = (e) => {
+  if (Array.isArray(e)) {
+    return e;
+  }
+  return e && e.fileList;
+};
+
+export default EditUserForm;

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Select, message } from 'antd';
+import { Form, Input, Button, Select, message, Upload } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { userService } from '../../../services/userService';
 
 const { Option } = Select;
 
 const CreateUserForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
   const onFinish = async (values) => {
     setLoading(true);
@@ -36,10 +38,17 @@ const CreateUserForm = ({ onSuccess }) => {
         return;
       }
 
-      console.log('Form values before sending:', values);
+      // Add avatar file if selected
+      const formData = { ...values };
+      if (fileList.length > 0) {
+        formData.avatarPicture = fileList[0].originFileObj;
+      }
+
+      console.log('Form values before sending:', formData);
       
-      await userService.createUserByAdmin(values);
+      await userService.createUserByAdmin(formData);
       message.success('Tạo tài khoản thành công!');
+      setFileList([]); // Reset file list
       onSuccess?.(); // callback để reload list
     } catch (error) {
       console.error('Create user error:', error);
@@ -47,6 +56,24 @@ const CreateUserForm = ({ onSuccess }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUploadChange = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
+
+  const beforeUpload = (file) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('Chỉ có thể upload file ảnh!');
+      return false;
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('Kích thước ảnh phải nhỏ hơn 5MB!');
+      return false;
+    }
+    return false; // Prevent auto upload
   };
 
   return (
@@ -101,6 +128,21 @@ const CreateUserForm = ({ onSuccess }) => {
         label="Địa chỉ"
       >
         <Input.TextArea rows={3} />
+      </Form.Item>
+
+      <Form.Item 
+        label="Ảnh đại diện"
+      >
+        <Upload
+          fileList={fileList}
+          onChange={handleUploadChange}
+          beforeUpload={beforeUpload}
+          accept="image/*"
+          maxCount={1}
+          listType="picture"
+        >
+          <Button icon={<UploadOutlined />}>Chọn ảnh từ thiết bị</Button>
+        </Upload>
       </Form.Item>
 
       <Form.Item 
