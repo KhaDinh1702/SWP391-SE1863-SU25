@@ -1,5 +1,7 @@
 import { API_BASE_URL, getAuthHeaders } from './config';
 
+console.log('🔄 UserService module loaded with debug version');
+
 export const userService = {
   getAllUsers: async () => {
     try {
@@ -111,7 +113,11 @@ export const userService = {
   },
 
   createUserByAdmin: async (userData) => {
+    console.log('🚀 NEW VERSION OF CREATE USER FUNCTION CALLED 🚀');
     try {
+      console.log('=== CREATE USER DEBUG START ===');
+      console.log('Input userData:', userData);
+
       // Map role names to enum values that match backend
       const roleMap = {
         'Patient': 0,
@@ -121,55 +127,107 @@ export const userService = {
         'Admin': 4
       };
 
-      // Map gender names to enum values that match backend  
-      const genderMap = {
-        'Male': 0,
-        'Female': 1,
-        'Other': 2
-      };
+      // Create FormData since backend expects [FromForm]
+      const formData = new FormData();
+      
+      // Add required fields
+      formData.append('Username', userData.username || '');
+      formData.append('Password', userData.password || '');
+      formData.append('Email', userData.email || '');
+      formData.append('Role', roleMap[userData.role] ?? 1); // Default to Staff
+      
+      // Add optional fields only if they have values
+      if (userData.phoneNumber && userData.phoneNumber.trim()) {
+        formData.append('PhoneNumber', userData.phoneNumber.trim());
+      }
+      if (userData.fullName && userData.fullName.trim()) {
+        formData.append('FullName', userData.fullName.trim());
+      }
+      if (userData.specialization && userData.specialization.trim()) {
+        formData.append('Specialization', userData.specialization.trim());
+      }
+      if (userData.qualifications && userData.qualifications.trim()) {
+        formData.append('Qualifications', userData.qualifications.trim());
+      }
+      if (userData.experience && userData.experience.trim()) {
+        formData.append('Experience', userData.experience.trim());
+      }
+      if (userData.bio && userData.bio.trim()) {
+        formData.append('Bio', userData.bio.trim());
+      }
 
-      const formattedData = {
-        Username: userData.username,
-        Password: userData.password,
-        Email: userData.email,
-        PhoneNumber: userData.phoneNumber,
-        Role: roleMap[userData.role] ?? parseInt(userData.role), // Convert string to enum number
-        FullName: userData.fullName,
-        Gender: userData.gender ? (genderMap[userData.gender] ?? parseInt(userData.gender)) : null,
-        Address: userData.address,
-        Specialization: userData.specialization || null,
-        Qualifications: userData.qualifications || null,
-        Experience: userData.experience || null,
-        Bio: userData.bio || null
-      };
+      // Log all form data entries
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: "${value}"`);
+      }
 
-      console.log('Sending user creation data:', formattedData);
+      // Get auth token
+      const token = localStorage.getItem('token');
+      console.log('Auth token exists:', !!token);
+      console.log('Auth token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'null');
 
       const response = await fetch(`${API_BASE_URL}/User/admin/create-account`, {
         method: 'POST',
         headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'application/json'
+          // Don't set Content-Type - let browser handle it for FormData
         },
-        body: JSON.stringify(formattedData),
+        body: formData,
       });
 
-      const responseData = await response.json().catch(() => null);
-      console.log('User creation response:', responseData);
+      console.log('Response received:');
+      console.log('  Status:', response.status);
+      console.log('  Status Text:', response.statusText);
+      console.log('  Headers:', Object.fromEntries(response.headers.entries()));
 
-      if (!response.ok) {
-        if (response.status === 400 && responseData?.errors) {
-          // Handle validation errors
-          const errorMessages = Object.values(responseData.errors).flat();
-          throw new Error(errorMessages.join(', '));
-        }
-        throw new Error(responseData?.message || 'Tạo tài khoản thất bại');
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText);
+      
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('Parsed response data:', responseData);
+      } catch (e) {
+        console.log('Failed to parse JSON, treating as plain text');
+        responseData = { message: responseText };
       }
 
+      if (!response.ok) {
+        console.log('Request failed with status:', response.status);
+        
+        if (response.status === 401) {
+          throw new Error('Không có quyền truy cập. Vui lòng đăng nhập lại.');
+        }
+        
+        if (response.status === 403) {
+          throw new Error('Bạn không có quyền thực hiện thao tác này.');
+        }
+        
+        if (response.status === 400) {
+          if (responseData?.errors) {
+            const errorMessages = Object.entries(responseData.errors)
+              .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+              .join('\n');
+            throw new Error(`Lỗi validation:\n${errorMessages}`);
+          }
+          if (responseData?.message) {
+            throw new Error(responseData.message);
+          }
+          throw new Error(`Dữ liệu không hợp lệ: ${responseText}`);
+        }
+        
+        throw new Error(responseData?.message || responseText || 'Tạo tài khoản thất bại');
+      }
+
+      console.log('=== CREATE USER DEBUG END ===');
       return responseData;
     } catch (error) {
-      console.error('Create user failed:', error);
+      console.error('=== CREATE USER ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       throw error;
     }
   },

@@ -10,10 +10,39 @@ const CreateUserForm = ({ onSuccess }) => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
+      // Check authentication
+      const currentUser = localStorage.getItem('username');
+      const currentRole = localStorage.getItem('role');
+      const token = localStorage.getItem('token');
+      
+      console.log('Current user info:');
+      console.log('  Username:', currentUser);
+      console.log('  Role:', currentRole);
+      console.log('  Has token:', !!token);
+      
+      if (!token) {
+        message.error('Vui lòng đăng nhập lại');
+        return;
+      }
+      
+      if (currentRole !== 'Admin') {
+        message.error('Bạn không có quyền thực hiện thao tác này');
+        return;
+      }
+
+      // Validate required fields
+      if (!values.username || !values.password || !values.email || !values.role) {
+        message.error('Vui lòng điền đầy đủ các trường bắt buộc');
+        return;
+      }
+
+      console.log('Form values before sending:', values);
+      
       await userService.createUserByAdmin(values);
       message.success('Tạo tài khoản thành công!');
       onSuccess?.(); // callback để reload list
     } catch (error) {
+      console.error('Create user error:', error);
       message.error(error.message || 'Tạo tài khoản thất bại.');
     } finally {
       setLoading(false);
