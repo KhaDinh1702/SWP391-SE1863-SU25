@@ -27,7 +27,7 @@ const CreateUserForm = ({ onSuccess }) => {
         label="Tên đăng nhập" 
         rules={[
           { required: true, message: 'Vui lòng nhập tên đăng nhập' },
-          { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
+          { min: 3, max: 50, message: 'Tên đăng nhập phải có từ 3-50 ký tự' }
         ]}
       >
         <Input />
@@ -36,7 +36,10 @@ const CreateUserForm = ({ onSuccess }) => {
       <Form.Item 
         name="fullName" 
         label="Họ tên" 
-        rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+        rules={[
+          { required: false, message: 'Vui lòng nhập họ tên' },
+          { max: 100, message: 'Họ tên không được vượt quá 100 ký tự' }
+        ]}
       >
         <Input />
       </Form.Item>
@@ -46,7 +49,8 @@ const CreateUserForm = ({ onSuccess }) => {
         label="Email" 
         rules={[
           { required: true, message: 'Vui lòng nhập email' },
-          { type: 'email', message: 'Email không hợp lệ' }
+          { type: 'email', message: 'Email không hợp lệ' },
+          { max: 100, message: 'Email không được vượt quá 100 ký tự' }
         ]}
       >
         <Input />
@@ -56,8 +60,8 @@ const CreateUserForm = ({ onSuccess }) => {
         name="phoneNumber" 
         label="Số điện thoại"
         rules={[
-          { required: true, message: 'Vui lòng nhập số điện thoại' },
-          { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' }
+          { max: 20, message: 'Số điện thoại không được vượt quá 20 ký tự' },
+          { pattern: /^[0-9+\-\s()]+$/, message: 'Số điện thoại chỉ được chứa số, +, -, khoảng trắng và dấu ngoặc' }
         ]}
       >
         <Input />
@@ -86,7 +90,7 @@ const CreateUserForm = ({ onSuccess }) => {
         label="Mật khẩu" 
         rules={[
           { required: true, message: 'Vui lòng nhập mật khẩu' },
-          { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+          { min: 6, max: 255, message: 'Mật khẩu phải có từ 6-255 ký tự' }
         ]}
       >
         <Input.Password />
@@ -99,9 +103,9 @@ const CreateUserForm = ({ onSuccess }) => {
       >
         <Select>
           <Option value="Admin">Admin</Option>
+          <Option value="Manager">Quản lý</Option>
           <Option value="Doctor">Bác sĩ</Option>
           <Option value="Staff">Nhân viên</Option>
-          <Option value="Manager">Quản lý</Option>
           <Option value="Patient">Bệnh nhân</Option>
         </Select>
       </Form.Item>

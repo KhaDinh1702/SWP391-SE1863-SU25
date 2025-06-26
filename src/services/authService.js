@@ -65,18 +65,45 @@ export const authService = {
 
   registerPatient: async (patientData) => {
     try {
+      // Format the data to match backend DTO expectations
+      const formattedData = {
+        Username: patientData.username,
+        Password: patientData.password,
+        Email: patientData.email,
+        PhoneNumber: patientData.phoneNumber,
+        FullName: patientData.fullName,
+        DateOfBirth: patientData.dateOfBirth,
+        Gender: parseInt(patientData.gender), // Ensure gender is sent as number (enum)
+        Address: patientData.address,
+        ContactPersonName: patientData.contactPersonName || null,
+        ContactPersonPhone: patientData.contactPersonPhone || null,
+        IsAnonymous: patientData.isAnonymous || false
+      };
+
+      console.log('Sending patient registration data:', formattedData);
+
       const response = await fetch(`${API_BASE_URL}/auth/register-patient`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patientData),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formattedData),
       });
 
+      const responseData = await response.json().catch(() => null);
+      console.log('Registration response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng ký thất bại');
+        if (response.status === 400 && responseData?.errors) {
+          // Handle validation errors
+          const errorMessages = Object.values(responseData.errors).flat();
+          throw new Error(errorMessages.join(', '));
+        }
+        throw new Error(responseData?.message || 'Đăng ký thất bại');
       }
 
-      return await response.json();
+      return responseData;
     } catch (error) {
       console.error('Register error:', error);
       throw error;

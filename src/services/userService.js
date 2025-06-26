@@ -112,27 +112,62 @@ export const userService = {
 
   createUserByAdmin: async (userData) => {
     try {
+      // Map role names to enum values that match backend
+      const roleMap = {
+        'Patient': 0,
+        'Staff': 1,
+        'Doctor': 2,
+        'Manager': 3,
+        'Admin': 4
+      };
+
+      // Map gender names to enum values that match backend  
+      const genderMap = {
+        'Male': 0,
+        'Female': 1,
+        'Other': 2
+      };
+
+      const formattedData = {
+        Username: userData.username,
+        Password: userData.password,
+        Email: userData.email,
+        PhoneNumber: userData.phoneNumber,
+        Role: roleMap[userData.role] ?? parseInt(userData.role), // Convert string to enum number
+        FullName: userData.fullName,
+        Gender: userData.gender ? (genderMap[userData.gender] ?? parseInt(userData.gender)) : null,
+        Address: userData.address,
+        Specialization: userData.specialization || null,
+        Qualifications: userData.qualifications || null,
+        Experience: userData.experience || null,
+        Bio: userData.bio || null
+      };
+
+      console.log('Sending user creation data:', formattedData);
+
       const response = await fetch(`${API_BASE_URL}/User/admin/create-account`, {
         method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          username: userData.username,
-          email: userData.email,
-          phoneNumber: userData.phoneNumber,
-          password: userData.password,
-          role: userData.role,
-          fullName: userData.fullName,
-          address: userData.address,
-          gender: userData.gender
-        }),
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formattedData),
       });
 
+      const responseData = await response.json().catch(() => null);
+      console.log('User creation response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Tạo tài khoản thất bại');
+        if (response.status === 400 && responseData?.errors) {
+          // Handle validation errors
+          const errorMessages = Object.values(responseData.errors).flat();
+          throw new Error(errorMessages.join(', '));
+        }
+        throw new Error(responseData?.message || 'Tạo tài khoản thất bại');
       }
 
-      return await response.json();
+      return responseData;
     } catch (error) {
       console.error('Create user failed:', error);
       throw error;

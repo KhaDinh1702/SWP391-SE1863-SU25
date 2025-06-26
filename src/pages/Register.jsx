@@ -47,27 +47,84 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
+    // Frontend validation
+    if (!formData.username || formData.username.trim().length < 3) {
+      message.error("Tên đăng nhập phải có ít nhất 3 ký tự");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      message.error("Mật khẩu phải có ít nhất 6 ký tự");
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       message.error("Mật khẩu xác nhận không khớp");
       setLoading(false);
       return;
     }
 
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      message.error("Email không hợp lệ");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.fullName || formData.fullName.trim().length === 0) {
+      message.error("Họ tên không được để trống");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.fullName.length > 100) {
+      message.error("Họ tên không được vượt quá 100 ký tự");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.dateOfBirth) {
+      message.error("Vui lòng chọn ngày sinh");
+      setLoading(false);
+      return;
+    }
+
+    // Check if user is at least 1 year old
+    const birthDate = new Date(formData.dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    if (age < 1 || birthDate > today) {
+      message.error("Ngày sinh không hợp lệ");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.phoneNumber && (formData.phoneNumber.length > 20 || !/^[0-9+\-\s()]+$/.test(formData.phoneNumber))) {
+      message.error("Số điện thoại không hợp lệ (tối đa 20 ký tự)");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await authService.registerPatient({
+      // Format the date to ISO string format
+      const formattedData = {
         username: formData.username,
         password: formData.password,
         fullName: formData.fullName,
         email: formData.email,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
-        dateOfBirth: formData.dateOfBirth,
+        dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
         gender: formData.gender,
-      });
+      };
+
+      await authService.registerPatient(formattedData);
 
       message.success("Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.");
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
+      console.error('Registration error:', error);
       message.error(error.message || "Có lỗi xảy ra khi đăng ký");
     } finally {
       setLoading(false);
