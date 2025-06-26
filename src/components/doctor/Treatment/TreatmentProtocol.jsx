@@ -448,7 +448,8 @@ const TreatmentProtocol = () => {
               <Select placeholder="Chọn lịch hẹn">
                 {appointmentsData && appointmentsData.map(app => (
                   <Option key={app.id} value={app.id}>
-                    {app.id} - {app.date ? new Date(app.date).toLocaleString('vi-VN') : ''}
+                    {app.id}
+                    {app.appointmentStartDate ? ` (${new Date(app.appointmentStartDate).toLocaleString('vi-VN')})` : ''}
                   </Option>
                 ))}
               </Select>
