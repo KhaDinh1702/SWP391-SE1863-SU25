@@ -6,6 +6,7 @@ import { treatmentStageService } from '../../../services/treatmentStageService';
 import { appointmentService } from '../../../services/appointmentService';
 import { arvProtocolService } from '../../../services/arvProtocolService';
 import { doctorService } from '../../../services/doctorService';
+import { patientService } from '../../../services/patientService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -17,6 +18,7 @@ const TreatmentProtocol = () => {
   const [patients, setPatients] = useState([]);
   const [arvProtocols, setArvProtocols] = useState([]);
   const [currentDoctor, setCurrentDoctor] = useState(null);
+  const [appointmentsData, setAppointmentsData] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -40,12 +42,13 @@ const TreatmentProtocol = () => {
           return;
       }
 
-      const [protocolsData, stagesData, appointmentsData, arvData, allDoctors] = await Promise.all([
+      const [protocolsData, stagesData, appointmentsData, arvData, allDoctors, allPatients] = await Promise.all([
         patientTreatmentProtocolService.getAllPatientTreatmentProtocols(),
         treatmentStageService.getAllTreatmentStages(),
         appointmentService.getAllAppointments(),
         arvProtocolService.getAllARVProtocols(),
-        doctorService.getAllDoctors()
+        doctorService.getAllDoctors(),
+        patientService.getAllPatients()
       ]);
 
       const doctor = allDoctors.find(d => d.userId === userId);
@@ -61,9 +64,12 @@ const TreatmentProtocol = () => {
           patientMap.set(app.patient.id, app.patient);
         }
       });
-      setPatients(Array.from(patientMap.values()));
+      setPatients(allPatients);
 
-      setArvProtocols(arvData);
+      // Map protocolId to id for ARV protocols
+      const mappedArvData = arvData.map(p => ({ ...p, id: p.protocolId }));
+      setArvProtocols(mappedArvData);
+      setAppointmentsData(appointmentsData);
     } catch (error) {
       message.error('Không thể tải dữ liệu');
       console.error('Error fetching data:', error);
@@ -72,16 +78,23 @@ const TreatmentProtocol = () => {
     }
   };
 
+  const statusMap = {
+    'Pending': 0,
+    'Active': 1,
+    'Completed': 2,
+    'Inactive': 3
+  };
+
   const handleCreateProtocol = async (values) => {
     try {
       const requestData = {
-        PatientId: values.patientId,
-        DoctorId: currentDoctor?.id,
-        ProtocolId: values.arvProtocolId,
-        AppointmentId: values.appointmentId || null,
-        StartDate: values.dateRange ? values.dateRange[0].toISOString() : null,
-        EndDate: values.dateRange ? values.dateRange[1].toISOString() : null,
-        Status: values.status || 'Pending'
+        patientId: values.patientId,
+        doctorId: currentDoctor?.id,
+        arvProtocolId: values.arvProtocolId,
+        appointmentId: values.appointmentId,
+        startDate: values.dateRange ? values.dateRange[0].toISOString() : null,
+        endDate: values.dateRange ? values.dateRange[1].toISOString() : null,
+        status: statusMap[values.status] ?? 0
       };
 
       console.log('Creating patient treatment protocol with data:', requestData);
@@ -177,9 +190,10 @@ const TreatmentProtocol = () => {
       render: (text) => <strong>{text}</strong>,
     },
     {
-      title: 'Phác đồ ARV',
-      dataIndex: 'arvProtocolName',
-      key: 'arvProtocolName',
+      title: 'ARV Protocol ID',
+      dataIndex: 'arvProtocolId',
+      key: 'arvProtocolId',
+      render: (id) => id ? id : <span style={{color: 'gray'}}>Không có ARV</span>,
     },
     {
       title: 'Ngày bắt đầu',
@@ -415,7 +429,28 @@ const TreatmentProtocol = () => {
               rules={[{ required: true, message: 'Vui lòng chọn phác đồ ARV' }]}
             >
               <Select placeholder="Chọn phác đồ ARV">
-                {arvProtocols.map(p => <Option key={p.id} value={p.id}>{p.protocolName}</Option>)}
+                {arvProtocols.filter(p => p.id).map(p => (
+                  <Option key={p.id} value={p.id}>
+                    <div>
+                      <strong>{p.protocolName}</strong>
+                      {p.description && <span style={{ color: '#888', marginLeft: 8 }}>- {p.description}</span>}
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="appointmentId"
+              label="Lịch hẹn"
+              rules={[{ required: true, message: 'Vui lòng chọn lịch hẹn' }]}
+            >
+              <Select placeholder="Chọn lịch hẹn">
+                {appointmentsData && appointmentsData.map(app => (
+                  <Option key={app.id} value={app.id}>
+                    {app.id} - {app.date ? new Date(app.date).toLocaleString('vi-VN') : ''}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 
@@ -430,7 +465,6 @@ const TreatmentProtocol = () => {
             <Form.Item
               name="status"
               label="Trạng thái"
-              initialValue="Pending"
             >
               <Select>
                 <Option value="Pending">Chờ bắt đầu</Option>
@@ -657,4 +691,4 @@ const TreatmentProtocol = () => {
   );
 };
 
-export default TreatmentProtocol; 
+export default TreatmentProtocol;
