@@ -54,8 +54,25 @@ const TreatmentProtocol = () => {
       const doctor = allDoctors.find(d => d.userId === userId);
       setCurrentDoctor(doctor);
 
-      setPatientProtocols(protocolsData);
-      setTreatmentStages(stagesData);
+      // Map patientName and patientStatus (from backend status) to each protocol
+      const protocolsWithPatientInfo = protocolsData.map(protocol => {
+        const patient = allPatients.find(p => p.id === protocol.patientId);
+        return {
+          ...protocol,
+          patientName: patient ? patient.fullName : 'Không rõ',
+          patientStatus: protocol.status, // lấy đúng trạng thái từ backend
+        };
+      });
+      setPatientProtocols(protocolsWithPatientInfo);
+      // Map patientName to each treatment stage
+      const stagesWithPatientName = stagesData.map(stage => {
+        const patient = allPatients.find(p => p.id === stage.patientId);
+        return {
+          ...stage,
+          patientName: patient ? patient.fullName : 'Không rõ',
+        };
+      });
+      setTreatmentStages(stagesWithPatientName);
       
       // Derive unique patients from the appointments list
       const patientMap = new Map();
@@ -162,6 +179,12 @@ const TreatmentProtocol = () => {
     }
   };
 
+  // Chú thích các trạng thái phác đồ điều trị:
+  // Active: Đang điều trị
+  // Completed: Hoàn thành
+  // Discontinued: Dừng điều trị
+  // Pending: Chờ bắt đầu (nếu có)
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'green';
@@ -237,6 +260,12 @@ const TreatmentProtocol = () => {
 
   const stageColumns = [
     {
+      title: 'Tên bệnh nhân',
+      dataIndex: 'patientName',
+      key: 'patientName',
+      render: (text) => <strong>{text}</strong>,
+    },
+    {
       title: 'Tên giai đoạn',
       dataIndex: 'stageName',
       key: 'stageName',
@@ -310,6 +339,16 @@ const TreatmentProtocol = () => {
               </Space>
             }
           >
+            <div style={{ marginBottom: 16 }}>
+              <strong>Chú thích trạng thái:</strong>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                <li><Tag color="orange">Chờ bắt đầu</Tag>: 0</li>
+                <li><Tag color="green">Đang điều trị</Tag>: 1</li>
+                <li><Tag color="blue">Hoàn thành</Tag>: 2</li>
+                <li><Tag color="red">Dừng điều trị</Tag>: 3</li>
+                
+              </ul>
+            </div>
             <Table
               columns={protocolColumns}
               dataSource={patientProtocols}
