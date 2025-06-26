@@ -19,6 +19,7 @@ const TreatmentProtocol = () => {
   const [arvProtocols, setArvProtocols] = useState([]);
   const [currentDoctor, setCurrentDoctor] = useState(null);
   const [appointmentsData, setAppointmentsData] = useState([]);
+  const [allDoctors, setAllDoctors] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -87,6 +88,7 @@ const TreatmentProtocol = () => {
       const mappedArvData = arvData.map(p => ({ ...p, id: p.protocolId }));
       setArvProtocols(mappedArvData);
       setAppointmentsData(appointmentsData);
+      setAllDoctors(allDoctors);
     } catch (error) {
       message.error('Không thể tải dữ liệu');
       console.error('Error fetching data:', error);
@@ -603,10 +605,16 @@ const TreatmentProtocol = () => {
               <Col span={12}>
                 <Form.Item
                   name="patientTreatmentProtocolId"
-                  label="ID Phác đồ điều trị"
-                  rules={[{ required: true, message: 'Vui lòng nhập ID phác đồ điều trị' }]}
+                  label="Phác đồ điều trị"
+                  rules={[{ required: true, message: 'Vui lòng chọn phác đồ điều trị' }]}
                 >
-                  <Input placeholder="Nhập ID phác đồ điều trị" />
+                  <Select placeholder="Chọn phác đồ điều trị">
+                    {patientProtocols.map(protocol => (
+                      <Option key={protocol.id} value={protocol.id}>
+                        {protocol.id} - {protocol.patientName}
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -671,19 +679,31 @@ const TreatmentProtocol = () => {
                 <Col span={12}>
                   <Form.Item
                     name="patientId"
-                    label="ID Bệnh nhân"
-                    rules={[{ required: true, message: 'Vui lòng nhập ID bệnh nhân' }]}
+                    label="Bệnh nhân"
+                    rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân' }]}
                   >
-                    <Input placeholder="Nhập ID bệnh nhân" />
+                    <Select placeholder="Chọn bệnh nhân">
+                      {patients.map(p => (
+                        <Option key={p.id} value={p.id}>
+                          {p.fullName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={12}>
                   <Form.Item
                     name="doctorId"
-                    label="ID Bác sĩ"
-                    rules={[{ required: true, message: 'Vui lòng nhập ID bác sĩ' }]}
+                    label="Bác sĩ"
+                    rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
                   >
-                    <Input placeholder="Nhập ID bác sĩ" />
+                    <Select placeholder="Chọn bác sĩ">
+                      {allDoctors.map(d => (
+                        <Option key={d.id} value={d.id}>
+                          {d.fullName}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>

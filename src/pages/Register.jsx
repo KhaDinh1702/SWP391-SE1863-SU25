@@ -29,6 +29,8 @@ export default function Register() {
     address: "",
     dateOfBirth: "",
     gender: 0,
+    contactPersonName: "",
+    contactPersonPhone: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -106,6 +108,18 @@ export default function Register() {
       return;
     }
 
+    if (!formData.contactPersonName || formData.contactPersonName.trim().length === 0) {
+      message.error("Vui lòng nhập tên người liên hệ");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.contactPersonPhone || !/^[0-9+\-\s()]+$/.test(formData.contactPersonPhone)) {
+      message.error("Số điện thoại người liên hệ không hợp lệ");
+      setLoading(false);
+      return;
+    }
+
     try {
       // Format the date to ISO string format
       const formattedData = {
@@ -117,6 +131,8 @@ export default function Register() {
         address: formData.address,
         dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
         gender: formData.gender,
+        contactPersonName: formData.contactPersonName,
+        contactPersonPhone: formData.contactPersonPhone,
       };
 
       await authService.registerPatient(formattedData);
@@ -257,6 +273,38 @@ export default function Register() {
                       placeholder="Địa chỉ"
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                       value={formData.address}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Contact Person Name */}
+                  <div className="relative md:col-span-2">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="contactPersonName"
+                      placeholder="Người liên hệ"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
+                      value={formData.contactPersonName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  {/* Contact Person Phone */}
+                  <div className="relative md:col-span-2">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaPhone className="text-gray-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      name="contactPersonPhone"
+                      placeholder="Số điện thoại người liên hệ"
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
+                      value={formData.contactPersonPhone}
                       onChange={handleChange}
                       required
                     />
