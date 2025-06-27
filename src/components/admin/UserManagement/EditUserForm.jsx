@@ -4,13 +4,59 @@ import { UploadOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
+const roleMap = {
+  Patient: 0,
+  Staff: 1,
+  Doctor: 2,
+  Manager: 3,
+  Admin: 4,
+};
+
 const EditUserForm = ({ user, onSave, onCancel, loading }) => {
+  console.log('EditUserForm user:', user); // Debug log
+  console.log('EditUserForm user.fullName:', user.fullName);
+  console.log('EditUserForm user fields:', Object.keys(user)); // See all available fields
+  console.log('EditUserForm all user values:', user); // See all values
+  console.log('EditUserForm user.patient:', user.patient); // Check patient object
+  console.log('EditUserForm user.doctor:', user.doctor); // Check doctor object
+  
+  // Try to get fullName from nested objects
+  const getFullName = () => {
+    if (user.fullName) return user.fullName;
+    if (user.patient?.fullName) return user.patient.fullName;
+    if (user.doctor?.fullName) return user.doctor.fullName;
+    if (user.patient?.name) return user.patient.name;
+    if (user.doctor?.name) return user.doctor.name;
+    if (user.name) return user.name;
+    return '';
+  };
+  
+  console.log('EditUserForm calculated fullName:', getFullName());
+  
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
 
   const handleSubmit = async (values) => {
+    const userIdValue = user.userId || user.id;
+    console.log('EditUserForm - user object:', user);
+    console.log('EditUserForm - userIdValue:', userIdValue, typeof userIdValue);
+    console.log('EditUserForm - form values:', values);
+    
+    if (!userIdValue) {
+      message.error('Không tìm thấy UserId hợp lệ!');
+      return;
+    }
+    
     try {
-      const formData = { ...values, id: user.id };
+      // Create the data object with the correct field names
+      const formData = { 
+        ...values, 
+        UserId: userIdValue,
+        userId: userIdValue,  // Include both for compatibility
+        id: userIdValue
+      };
+      
+      console.log('EditUserForm - final formData:', formData);
       
       // Add avatar file if selected
       if (fileList.length > 0) {
@@ -51,9 +97,8 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
         username: user.username,
         email: user.email,
         phoneNumber: user.phoneNumber,
-        role: user.role,
-        address: user.address,
-        gender: user.gender,
+        role: typeof user.role === 'string' ? roleMap[user.role] : user.role,
+        fullName: getFullName(), // Use the helper function
       }}
       onFinish={handleSubmit}
     >
@@ -85,34 +130,16 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
       </Form.Item>
 
       <Form.Item
-        name="address"
-        label="Địa chỉ"
-      >
-        <Input.TextArea rows={3} />
-      </Form.Item>
-
-      <Form.Item
-        name="gender"
-        label="Giới tính"
-      >
-        <Select>
-          <Option value="Male">Nam</Option>
-          <Option value="Female">Nữ</Option>
-          <Option value="Other">Khác</Option>
-        </Select>
-      </Form.Item>
-
-      <Form.Item
         name="role"
         label="Vai trò"
         rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
       >
         <Select>
-          <Option value="Patient">Patient</Option>
-          <Option value="Staff">Staff</Option>
-          <Option value="Doctor">Doctor</Option>
-          <Option value="Manager">Manager</Option>
-          <Option value="Admin">Admin</Option>
+          <Option value={0}>Patient</Option>
+          <Option value={1}>Staff</Option>
+          <Option value={2}>Doctor</Option>
+          <Option value={3}>Manager</Option>
+          <Option value={4}>Admin</Option>
         </Select>
       </Form.Item>
 

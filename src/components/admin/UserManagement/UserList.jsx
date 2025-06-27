@@ -22,7 +22,7 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
   };
 
   const handleEdit = (user) => {
-    setEditingUser(user);
+    setEditingUser({ ...user, userId: user.userId || user.id });
   };
 
   const handleCancel = () => {
@@ -216,7 +216,7 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
         open={!!editingUser}
         onCancel={handleCancel}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         {editingUser && (
           <EditUserForm
@@ -233,7 +233,7 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
         open={isCreateModalVisible}
         onCancel={() => setIsCreateModalVisible(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={600}
       >
         <CreateUserForm onSuccess={handleCreateSuccess} />

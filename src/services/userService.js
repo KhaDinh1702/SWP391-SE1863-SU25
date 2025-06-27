@@ -21,11 +21,7 @@ export const userService = {
       const data = await response.json();
       console.log('Received user data:', data);
       
-      return data.map(user => ({
-        ...user,
-        key: user.id,
-        isActive: user.isActive ?? true,
-      }));
+      return data.map(u => ({ ...u, userId: u.userId || u.id }));
     } catch (error) {
       console.error('Fetch users failed:', error);
       throw error;
@@ -51,54 +47,133 @@ export const userService = {
 
   updateUser: async (userData) => {
     try {
-      // Create FormData to handle file uploads
-      const formData = new FormData();
+      const userId = userData.UserId || userData.userId || userData.id;
+      console.log('UserService - userId to append:', userId);
+      console.log('UserService - userData object:', userData);
       
-      // Add required fields
-      formData.append('UserId', userData.id);
-      
-      // Add optional fields only if they have values
-      if (userData.username) formData.append('Username', userData.username);
-      if (userData.email) formData.append('Email', userData.email);
-      if (userData.phoneNumber) formData.append('PhoneNumber', userData.phoneNumber);
-      if (userData.role) formData.append('Role', userData.role);
-      if (userData.fullName) formData.append('FullName', userData.fullName);
-      if (userData.specialization) formData.append('Specialization', userData.specialization);
-      if (userData.qualifications) formData.append('Qualifications', userData.qualifications);
-      if (userData.experience) formData.append('Experience', userData.experience);
-      if (userData.bio) formData.append('Bio', userData.bio);
-      if (userData.address) formData.append('Address', userData.address);
-      if (userData.gender) formData.append('Gender', userData.gender);
-      
-      // Add avatar file if provided
+      // If there's an avatar file, we need to use FormData
       if (userData.avatarPicture && userData.avatarPicture instanceof File) {
-        formData.append('AvatarPicture', userData.avatarPicture);
-      }
-
-      const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
-        method: 'PUT',
-        headers: {
-          ...getAuthHeaders(),
-          'Accept': 'application/json'
-          // Don't set Content-Type for FormData
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage;
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || 'Cập nhật người dùng thất bại';
-        } catch (e) {
-          errorMessage = errorText || 'Cập nhật người dùng thất bại';
+        const formData = new FormData();
+        
+        // Ensure UserId is properly formatted as string
+        if (!userId) {
+          throw new Error('UserId is required but not found in userData');
         }
-        throw new Error(errorMessage);
-      }
+        
+        const userIdString = String(userId).trim();
+        console.log('UserService - userIdString:', userIdString);
+        formData.append('UserId', userIdString);
+        
+        // Add other required fields
+        if (userData.username) formData.append('Username', String(userData.username));
+        if (userData.email) formData.append('Email', String(userData.email));
+        if (userData.phoneNumber) formData.append('PhoneNumber', String(userData.phoneNumber));
+        
+        // Handle Role - ensure it's an integer
+        if (userData.role !== undefined && userData.role !== null) {
+          const roleMap = { Patient: 0, Staff: 1, Doctor: 2, Manager: 3, Admin: 4 };
+          let roleValue;
+          if (typeof userData.role === 'string') {
+            roleValue = roleMap[userData.role];
+          } else {
+            roleValue = parseInt(userData.role);
+          }
+          console.log('UserService - role value:', roleValue);
+          formData.append('Role', String(roleValue));
+        }
+        
+        if (userData.fullName) formData.append('FullName', String(userData.fullName));
+        if (userData.password && userData.password.trim()) formData.append('Password', String(userData.password.trim()));
+        if (userData.specialization) formData.append('Specialization', String(userData.specialization));
+        if (userData.qualifications) formData.append('Qualifications', String(userData.qualifications));
+        if (userData.experience) formData.append('Experience', String(userData.experience));
+        if (userData.bio) formData.append('Bio', String(userData.bio));
+        
+        formData.append('AvatarPicture', userData.avatarPicture);
 
-      const responseData = await response.json();
-      return responseData;
+        // Debug: Log what's being sent
+        console.log('UserService - FormData contents:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}:`, value, typeof value);
+        }
+
+        const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
+          method: 'PUT',
+          headers: {
+            ...getAuthHeaders(),
+            'Accept': 'application/json'
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('UserService - Error response:', errorText);
+          let errorMessage;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || 'Cập nhật người dùng thất bại';
+          } catch (e) {
+            errorMessage = errorText || 'Cập nhật người dùng thất bại';
+          }
+          throw new Error(errorMessage);
+        }
+
+        return await response.json();
+      } else {
+        // No file upload - try using URL-encoded approach similar to inactiveUser
+        const params = new URLSearchParams();
+        params.append('UserId', String(userId));
+        if (userData.username) params.append('Username', String(userData.username));
+        if (userData.email) params.append('Email', String(userData.email));
+        if (userData.phoneNumber) params.append('PhoneNumber', String(userData.phoneNumber));
+        
+        // Handle Role
+        if (userData.role !== undefined && userData.role !== null) {
+          const roleMap = { Patient: 0, Staff: 1, Doctor: 2, Manager: 3, Admin: 4 };
+          let roleValue;
+          if (typeof userData.role === 'string') {
+            roleValue = roleMap[userData.role];
+          } else {
+            roleValue = parseInt(userData.role);
+          }
+          params.append('Role', String(roleValue));
+        }
+        
+        if (userData.fullName) params.append('FullName', String(userData.fullName));
+        if (userData.password && userData.password.trim()) params.append('Password', String(userData.password.trim()));
+        if (userData.specialization) params.append('Specialization', String(userData.specialization));
+        if (userData.qualifications) params.append('Qualifications', String(userData.qualifications));
+        if (userData.experience) params.append('Experience', String(userData.experience));
+        if (userData.bio) params.append('Bio', String(userData.bio));
+
+        console.log('UserService - URL params:', params.toString());
+
+        const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
+          method: 'PUT',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: params,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('UserService - Error response:', errorText);
+          let errorMessage;
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || 'Cập nhật người dùng thất bại';
+          } catch (e) {
+            errorMessage = errorText || 'Cập nhật người dùng thất bại';
+          }
+          throw new Error(errorMessage);
+        }
+
+        return await response.json();
+      }
     } catch (error) {
       console.error('Update user failed:', error);
       throw error;

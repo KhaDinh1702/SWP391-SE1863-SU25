@@ -3,6 +3,7 @@ import { Table, Tag, message, Card, Row, Col, Select, DatePicker, Button, Space,
 import { EyeOutlined, ReloadOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../services/appointmentService';
 import { doctorService } from '../../services/doctorService';
+import { patientService } from '../../services/patientService';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -13,6 +14,7 @@ const StaffAppointmentList = () => {
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   const [dateRange, setDateRange] = useState(null);
@@ -22,6 +24,7 @@ const StaffAppointmentList = () => {
   useEffect(() => {
     fetchAppointments();
     fetchDoctors();
+    fetchPatients();
   }, []);
   useEffect(() => {
     applyFilters();
@@ -31,6 +34,8 @@ const StaffAppointmentList = () => {
     setLoading(true);
     try {
       const data = await appointmentService.getAllAppointments();
+      console.log('Fetched appointments data:', data); // Debug log để xem cấu trúc dữ liệu
+      console.log('Sample appointment:', data[0]); // Debug log appointment đầu tiên
       setAppointments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -47,6 +52,17 @@ const StaffAppointmentList = () => {
     } catch (error) {
       console.error('Error fetching doctors:', error);
       message.error('Không thể tải danh sách bác sĩ');
+    }
+  };
+
+  const fetchPatients = async () => {
+    try {
+      const data = await patientService.getAllPatients();
+      console.log('Fetched patients data:', data); // Debug log để xem cấu trúc dữ liệu
+      setPatients(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      message.error('Không thể tải danh sách bệnh nhân');
     }
   };
   const applyFilters = () => {
@@ -75,6 +91,7 @@ const StaffAppointmentList = () => {
 
   const handleRefresh = () => {
     fetchAppointments();
+    fetchPatients();
     message.success('Đã làm mới dữ liệu');
   };
   const clearFilters = () => {
@@ -92,6 +109,12 @@ const StaffAppointmentList = () => {
     const doctorId = appointment.doctorId || appointment.DoctorId;
     const doctor = doctors.find(d => d.doctorId === doctorId || d.id === doctorId);
     return doctor?.fullName || appointment.doctorFullName || appointment.DoctorFullName || 'N/A';
+  };
+
+  const getPatientName = (appointment) => {
+    const patientId = appointment.patientId || appointment.PatientId;
+    const patient = patients.find(p => p.id === patientId);
+    return patient?.fullName || appointment.patientFullName || appointment.PatientFullName || 'N/A';
   };
 
   const formatDateTime = (dateTime) => {
@@ -117,7 +140,7 @@ const StaffAppointmentList = () => {
       key: 'patientFullName',
       render: (text, record) => (
         <span style={{ fontWeight: 500 }}>
-          {text || record.PatientFullName || 'N/A'}
+          {getPatientName(record)}
         </span>
       ),
       width: 200,
@@ -286,7 +309,7 @@ const StaffAppointmentList = () => {
         {selectedAppointment && (
           <Descriptions column={2} bordered>
             <Descriptions.Item label="Bệnh nhân">
-              {selectedAppointment.patientFullName || selectedAppointment.PatientFullName || 'N/A'}
+              {getPatientName(selectedAppointment)}
             </Descriptions.Item>
             <Descriptions.Item label="Bác sĩ">
               {getDoctorName(selectedAppointment)}
