@@ -52,41 +52,61 @@ const TreatmentProtocol = () => {
         patientService.getAllPatients()
       ]);
 
+      const mappedArvData = arvData.map(p => ({ ...p, id: p.protocolId }));
+      setArvProtocols(mappedArvData);
+
       const doctor = allDoctors.find(d => d.userId === userId);
       setCurrentDoctor(doctor);
 
-      // Map patientName and patientStatus (from backend status) to each protocol
+      // Map patientName, arvProtocolName, and patientStatus (from backend status) to each protocol
       const protocolsWithPatientInfo = protocolsData.map(protocol => {
-        const patient = allPatients.find(p => p.id === protocol.patientId);
+        let patientName = protocol.patientName;
+        if (!patientName && protocol.patientId) {
+          const patient = allPatients.find(p => p.id === protocol.patientId);
+          if (patient) patientName = patient.fullName;
+        }
+        // Map ARV protocol name
+        let arvProtocolName = '';
+        if (protocol.arvProtocolId) {
+          const arv = mappedArvData.find(a => a.id === protocol.arvProtocolId);
+          if (arv) arvProtocolName = arv.protocolName;
+        }
         return {
           ...protocol,
-          patientName: patient ? patient.fullName : 'Không rõ',
-          patientStatus: protocol.status, // lấy đúng trạng thái từ backend
+          patientName: patientName || 'Không rõ',
+          patientStatus: protocol.status,
+          arvProtocolName: arvProtocolName || 'Không rõ',
+        };
+      });
+      // Map patientName, startDate, endDate to each treatment stage (for display like above)
+      const stagesWithPatientName = stagesData.map(stage => {
+        let patientName = '';
+        let startDate = '';
+        let endDate = '';
+        // Try to get from protocol (by patientTreatmentProtocolId)
+        if (stage.patientTreatmentProtocolId) {
+          const protocol = protocolsWithPatientInfo.find(p => p.id === stage.patientTreatmentProtocolId);
+          if (protocol) {
+            if (protocol.patientName) patientName = protocol.patientName;
+            if (protocol.startDate) startDate = protocol.startDate;
+            if (protocol.endDate) endDate = protocol.endDate;
+          }
+        }
+        // Fallback to allPatients if not found
+        if (!patientName && stage.patientId) {
+          const patient = allPatients.find(p => p.id === stage.patientId);
+          if (patient) patientName = patient.fullName;
+        }
+        return {
+          ...stage,
+          patientName: patientName || 'Không rõ',
+          protocolStartDate: startDate || '',
+          protocolEndDate: endDate || '',
         };
       });
       setPatientProtocols(protocolsWithPatientInfo);
-      // Map patientName to each treatment stage
-      const stagesWithPatientName = stagesData.map(stage => {
-        const patient = allPatients.find(p => p.id === stage.patientId);
-        return {
-          ...stage,
-          patientName: patient ? patient.fullName : 'Không rõ',
-        };
-      });
       setTreatmentStages(stagesWithPatientName);
-      
-      // Derive unique patients from the appointments list
-      const patientMap = new Map();
-      appointmentsData.forEach(app => {
-        if (app.patient && !patientMap.has(app.patient.id)) {
-          patientMap.set(app.patient.id, app.patient);
-        }
-      });
       setPatients(allPatients);
-
-      // Map protocolId to id for ARV protocols
-      const mappedArvData = arvData.map(p => ({ ...p, id: p.protocolId }));
-      setArvProtocols(mappedArvData);
       setAppointmentsData(appointmentsData);
       setAllDoctors(allDoctors);
     } catch (error) {
@@ -164,6 +184,11 @@ const TreatmentProtocol = () => {
   const handleViewProtocol = async (protocolId) => {
     try {
       const protocol = await patientTreatmentProtocolService.getPatientTreatmentProtocolById(protocolId);
+      // Nếu không có patientName, tìm từ danh sách patients
+      if (!protocol.patientName && protocol.patientId && patients.length > 0) {
+        const patient = patients.find(p => p.id === protocol.patientId);
+        protocol.patientName = patient ? patient.fullName : 'Không rõ';
+      }
       setSelectedProtocol(protocol);
       setIsModalVisible(true);
     } catch (error) {
@@ -171,14 +196,10 @@ const TreatmentProtocol = () => {
     }
   };
 
-  const handleViewStage = async (stageId) => {
-    try {
-      const stage = await treatmentStageService.getTreatmentStageById(stageId);
-      setSelectedStage(stage);
-      setIsStageModalVisible(true);
-    } catch (error) {
-      message.error('Không thể xem chi tiết giai đoạn');
-    }
+  const handleViewStage = (stageId) => {
+    const stage = treatmentStages.find(s => s.treatmentStageId === stageId || s.id === stageId);
+    setSelectedStage(stage);
+    setIsStageModalVisible(true);
   };
 
   // Chú thích các trạng thái phác đồ điều trị:
@@ -243,7 +264,7 @@ const TreatmentProtocol = () => {
       ),
     },
     {
-      title: 'Thao tác',
+      title: 'Chi tiết',
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -262,7 +283,7 @@ const TreatmentProtocol = () => {
 
   const stageColumns = [
     {
-      title: 'Tên bệnh nhân',
+      title: 'Bệnh nhân',
       dataIndex: 'patientName',
       key: 'patientName',
       render: (text) => <strong>{text}</strong>,
@@ -275,8 +296,8 @@ const TreatmentProtocol = () => {
     },
     {
       title: 'Thứ tự',
-      dataIndex: 'orderNumber',
-      key: 'orderNumber',
+      key: 'index',
+      render: (_text, _record, index) => index + 1,
     },
     {
       title: 'Mô tả',
@@ -290,13 +311,20 @@ const TreatmentProtocol = () => {
       ),
     },
     {
-      title: 'Thời gian dự kiến',
-      dataIndex: 'estimatedDuration',
-      key: 'estimatedDuration',
-      render: (duration) => `${duration} ngày`,
+      title: 'Ngày bắt đầu phác đồ',
+      dataIndex: 'protocolStartDate',
+      key: 'protocolStartDate',
+      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
     },
     {
-      title: 'Thao tác',
+      title: 'Ngày kết thúc phác đồ',
+      dataIndex: 'protocolEndDate',
+      key: 'protocolEndDate',
+      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+    },
+   
+    {
+      title: 'Chi tiết',
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -305,7 +333,7 @@ const TreatmentProtocol = () => {
               type="primary"
               icon={<EyeOutlined />}
               size="small"
-              onClick={() => handleViewStage(record.treatmentStageId)}
+              onClick={() => handleViewStage(record.treatmentStageId || record.id)}
             />
           </Tooltip>
         </Space>
@@ -387,7 +415,7 @@ const TreatmentProtocol = () => {
             <Table
               columns={stageColumns}
               dataSource={treatmentStages}
-              rowKey="treatmentStageId"
+              rowKey={record => record.treatmentStageId || record.id || record.key || Math.random()}
               loading={loading}
               pagination={{
                 pageSize: 10,
@@ -433,8 +461,7 @@ const TreatmentProtocol = () => {
         {selectedProtocol ? (
           <div>
             <p><strong>Tên bệnh nhân:</strong> {selectedProtocol.patientName}</p>
-            <p><strong>Phác đồ ARV:</strong> {selectedProtocol.arvProtocolName}</p>
-            <p><strong>Ngày bắt đầu:</strong> {selectedProtocol.startDate ? new Date(selectedProtocol.startDate).toLocaleDateString('vi-VN') : '-'}</p>
+            <p><strong>ARV Protocol ID:</strong> {selectedProtocol.arvProtocolId || '-'}</p>
             <p><strong>Ngày kết thúc:</strong> {selectedProtocol.endDate ? new Date(selectedProtocol.endDate).toLocaleDateString('vi-VN') : '-'}</p>
             <p><strong>Trạng thái:</strong> 
               <Tag color={getStatusColor(selectedProtocol.status)} style={{ marginLeft: 8 }}>
@@ -557,12 +584,15 @@ const TreatmentProtocol = () => {
         width={600}
       >
         {selectedStage ? (
-          <div>
-            <p><strong>Tên giai đoạn:</strong> {selectedStage.stageName}</p>
-            <p><strong>Thứ tự:</strong> {selectedStage.orderNumber}</p>
-            <p><strong>Mô tả:</strong> {selectedStage.description}</p>
-            <p><strong>Thời gian dự kiến:</strong> {selectedStage.estimatedDuration} ngày</p>
-            <p><strong>Ngày tạo:</strong> {selectedStage.createdDate ? new Date(selectedStage.createdDate).toLocaleDateString('vi-VN') : '-'}</p>
+          <div> 
+            <p><strong>Tên giai đoạn:</strong> {selectedStage.stageName || selectedStage.StageName}</p>
+            <p><strong>Mô tả:</strong> {selectedStage.description || selectedStage.Description || '-'}</p>
+            <p><strong>Ngày bắt đầu:</strong> {selectedStage.startDate ? new Date(selectedStage.startDate).toLocaleDateString('vi-VN') : (selectedStage.StartDate ? new Date(selectedStage.StartDate).toLocaleDateString('vi-VN') : '-')}</p>
+            <p><strong>Ngày kết thúc:</strong> {selectedStage.endDate ? new Date(selectedStage.endDate).toLocaleDateString('vi-VN') : (selectedStage.EndDate ? new Date(selectedStage.EndDate).toLocaleDateString('vi-VN') : '-')}</p>
+            <p><strong>Thời gian nhắc nhở:</strong> {selectedStage.reminderTimes || selectedStage.ReminderTimes || '-'}</p>
+            <p><strong>Thuốc:</strong> {selectedStage.medicine || selectedStage.Medicine || '-'}</p>
+            <p><strong>Trạng thái:</strong> {selectedStage.status || selectedStage.Status || '-'}</p>
+            <p><strong>Bệnh nhân:</strong> {selectedStage.patientName || selectedStage.PatientName || selectedStage.patientId || selectedStage.PatientId || '-'}</p>
           </div>
         ) : (
           <Form
