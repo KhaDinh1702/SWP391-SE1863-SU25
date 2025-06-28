@@ -45,21 +45,33 @@ export const labResultService = {
   createLabResult: async (labResultData) => {
     try {
       console.log('Creating lab result with data:', labResultData);
-      
+      const formData = new FormData();
+      formData.append('PatientId', labResultData.PatientId);
+      if (labResultData.TreatmentStageId) formData.append('TreatmentStageId', labResultData.TreatmentStageId);
+      if (labResultData.DoctorId) formData.append('DoctorId', labResultData.DoctorId);
+      formData.append('TestName', labResultData.TestName);
+      if (labResultData.TestType) formData.append('TestType', labResultData.TestType);
+      formData.append('TestDate', labResultData.TestDate);
+      if (labResultData.ResultSummary) formData.append('ResultSummary', labResultData.ResultSummary);
+      if (labResultData.Conclusion) formData.append('Conclusion', labResultData.Conclusion);
+      if (labResultData.Notes) formData.append('Notes', labResultData.Notes);
+      // TODO: handle LabPictures if needed
+      if (labResultData.LabPictures && Array.isArray(labResultData.LabPictures)) {
+        labResultData.LabPictures.forEach((file) => {
+          if (file) formData.append('LabPictures', file);
+        });
+      }
       const response = await fetch(`${API_BASE_URL}/LabResult/create-lab-result`, {
         method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(labResultData)
+        headers: { Authorization: getAuthHeaders().Authorization }, // Let browser set Content-Type for FormData
+        body: formData
       });
-      
       console.log('Response status:', response.status);
-      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('Error response data:', errorData);
         throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
-      
       const result = await response.json();
       console.log('Success response:', result);
       return result;
@@ -68,4 +80,4 @@ export const labResultService = {
       throw error;
     }
   }
-}; 
+};

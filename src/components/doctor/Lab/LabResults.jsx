@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, Progress } from 'antd';
-import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col } from 'antd';
+import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { labResultService } from '../../../services';
+import { patientService } from '../../../services/patientService';
+import { treatmentStageService } from '../../../services/treatmentStageService';
+import { userService } from '../../../services/userService';
+import { doctorService } from '../../../services/doctorService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -9,22 +13,35 @@ const { Search } = Input;
 
 const LabResults = () => {
   const [labResults, setLabResults] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [treatmentStages, setTreatmentStages] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [currentDoctorId, setCurrentDoctorId] = useState(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchLabResults();
+    fetchPatients();
+    fetchTreatmentStages();
+    fetchCurrentDoctorId();
+    fetchDoctors();
   }, []);
 
   const fetchLabResults = async () => {
     setLoading(true);
     try {
       const data = await labResultService.getAllLabResults();
-      setLabResults(data);
+      // Map lại để luôn có labResultId
+      const mapped = (data || []).map(r => ({
+        ...r,
+        labResultId: r.labResultId || r.id || r._id || null
+      }));
+      setLabResults(mapped);
     } catch (error) {
       message.error('Không thể tải danh sách kết quả xét nghiệm');
       console.error('Error fetching lab results:', error);
@@ -33,8 +50,59 @@ const LabResults = () => {
     }
   };
 
+  const fetchPatients = async () => {
+    try {
+      const data = await patientService.getAllPatients();
+      setPatients(data);
+    } catch (error) {
+      message.error('Không thể tải danh sách bệnh nhân');
+    }
+  };
+
+  const fetchTreatmentStages = async () => {
+    try {
+      const data = await treatmentStageService.getAllTreatmentStages();
+      setTreatmentStages(data);
+    } catch (error) {
+      message.error('Không thể tải danh sách giai đoạn điều trị');
+    }
+  };
+
+  const fetchDoctors = async () => {
+    try {
+      const data = await doctorService.getAllDoctors();
+      setDoctors(data);
+    } catch (error) {
+      message.error('Không thể tải danh sách bác sĩ');
+    }
+  };
+
+  const fetchCurrentDoctorId = async () => {
+    try {
+      // Lấy userId từ token hoặc localStorage
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      // Gọi API lấy user, lấy doctorId từ user
+      const user = await userService.getUserById(userId);
+      if (user && user.doctorId) {
+        setCurrentDoctorId(user.doctorId);
+      }
+    } catch (error) {
+      // Không cần báo lỗi nếu không phải bác sĩ
+    }
+  };
+
   const handleCreateResult = async (values) => {
     try {
+      // Kiểm tra nếu chọn cả treatmentStageId thì doctorId phải khớp
+      if (values.treatmentStageId) {
+        const stage = treatmentStages.find(ts => ts.treatmentStageId === values.treatmentStageId);
+        if (stage && stage.doctorId && values.doctorId && stage.doctorId !== values.doctorId) {
+          message.error('Bác sĩ không phù hợp với giai đoạn điều trị đã chọn!');
+          return;
+        }
+      }
+
       // Chuyển đổi dữ liệu theo đúng format của CreateLabResultRequest (PascalCase)
       const requestData = {
         PatientId: values.patientId,
@@ -61,12 +129,21 @@ const LabResults = () => {
   };
 
   const handleViewResult = async (resultId) => {
+    if (!resultId) return;
     try {
+      setLoading(true);
+      // Lấy chi tiết bằng API getLabResultById thay vì getAllLabResults
       const result = await labResultService.getLabResultById(resultId);
-      setSelectedResult(result);
-      setIsModalVisible(true);
+      if (result) {
+        setSelectedResult(result);
+        setIsModalVisible(true);
+      } else {
+        message.error('Không tìm thấy kết quả xét nghiệm');
+      }
     } catch (error) {
-      message.error('Không thể xem chi tiết kết quả');
+      message.error('Không thể tải chi tiết kết quả');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,7 +189,11 @@ const LabResults = () => {
       title: 'Tên bệnh nhân',
       dataIndex: 'patientName',
       key: 'patientName',
-      render: (text) => <strong>{text}</strong>,
+      render: (_text, record) => {
+        // Luôn lấy tên từ danh sách bệnh nhân theo patientId
+        const patient = patients.find(p => p.id === record.patientId);
+        return <strong>{patient ? patient.fullName : ''}</strong>;
+      },
     },
     {
       title: 'Loại xét nghiệm',
@@ -136,21 +217,17 @@ const LabResults = () => {
       render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
     },
     {
-      title: 'Bác sĩ chỉ định',
-      dataIndex: 'doctorName',
-      key: 'doctorName',
-    },
-    {
-      title: 'Thao tác',
+      title: 'Chi tiết',
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title={record.labResultId ? 'Xem chi tiết' : 'Không có ID kết quả'}>
             <Button
               type="primary"
               icon={<EyeOutlined />}
               size="small"
-              onClick={() => handleViewResult(record.labResultId)}
+              disabled={!record.labResultId}
+              onClick={() => record.labResultId && handleViewResult(record.labResultId)}
             />
           </Tooltip>
         </Space>
@@ -213,7 +290,7 @@ const LabResults = () => {
         <Table
           columns={columns}
           dataSource={filteredResults}
-          rowKey="labResultId"
+          rowKey={record => record.labResultId || record.id || record._id || Math.random()}
           loading={loading}
           pagination={{
             pageSize: 10,
@@ -251,41 +328,34 @@ const LabResults = () => {
             Tạo kết quả
           </Button>
         ]}
-        width={700}
+        width={900}
       >
         {selectedResult ? (
-          <div>
-            <Row gutter={[16, 16]}>
+          <div style={{ fontSize: 18, padding: 12 }}>
+            <Row gutter={[32, 24]}>
               <Col span={12}>
-                <p><strong>Tên bệnh nhân:</strong> {selectedResult.patientName}</p>
-                <p><strong>Loại xét nghiệm:</strong> {selectedResult.testName}</p>
-                <p><strong>Ngày xét nghiệm:</strong> {selectedResult.testDate ? new Date(selectedResult.testDate).toLocaleDateString('vi-VN') : '-'}</p>
-                <p><strong>Bác sĩ chỉ định:</strong> {selectedResult.doctorName}</p>
+                <p><strong>Tên bệnh nhân:</strong> {(() => {
+                  const patient = patients.find(p => p.patientId === selectedResult.patientId || p.id === selectedResult.patientId);
+                  return patient ? patient.fullName : selectedResult.patientName || '-';
+                })()}</p>
+                <p><strong>Bác sĩ:</strong> {(() => {
+                  const doctor = doctors.find(d => d.doctorId === selectedResult.doctorId || d.id === selectedResult.doctorId);
+                  return doctor ? doctor.fullName : selectedResult.doctorName || '-';
+                })()}</p>
+                <p><strong>Giai đoạn điều trị:</strong> {(() => {
+                  const stage = treatmentStages.find(s => s.treatmentStageId === selectedResult.treatmentStageId || s.id === selectedResult.treatmentStageId);
+                  return stage ? `${stage.stageName} (${stage.treatmentStageId || stage.id})` : selectedResult.treatmentStageId || '-';
+                })()}</p>
+                <p><strong>Loại xét nghiệm:</strong> {selectedResult.testType || '-'}</p>
+                <p><strong>Tên xét nghiệm:</strong> {selectedResult.testName || '-'}</p>
               </Col>
               <Col span={12}>
-                <p><strong>Kết quả:</strong> 
-                  <Tag color={getResultColor(selectedResult.resultSummary, selectedResult.normalRange)} style={{ marginLeft: 8 }}>
-                    {selectedResult.resultSummary || 'Chưa có kết quả'}
-                  </Tag>
-                </p>
-                <p><strong>Loại xét nghiệm:</strong> {selectedResult.testType || '-'}</p>
-                <p><strong>Ngày tạo:</strong> {selectedResult.createdDate ? new Date(selectedResult.createdDate).toLocaleDateString('vi-VN') : '-'}</p>
+                <p><strong>Kết quả:</strong> <Tag color={getResultColor(selectedResult.resultSummary, selectedResult.normalRange)} style={{ fontSize: 18, padding: '4px 16px' }}>{selectedResult.resultSummary || 'Chưa có kết quả'}</Tag></p>
+                <p><strong>Kết luận:</strong> <span style={{ fontSize: 17 }}>{selectedResult.conclusion || '-'}</span></p>
+                <p><strong>Ghi chú:</strong> <span style={{ fontSize: 17 }}>{selectedResult.notes || '-'}</span></p>
+                <p><strong>Ngày xét nghiệm:</strong> <span style={{ fontSize: 17 }}>{selectedResult.testDate ? new Date(selectedResult.testDate).toLocaleDateString('vi-VN') : '-'}</span></p>
               </Col>
             </Row>
-            
-            <div style={{ marginTop: 16 }}>
-              <p><strong>Kết luận:</strong></p>
-              <p style={{ padding: 12, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
-                {selectedResult.conclusion || 'Không có kết luận'}
-              </p>
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <p><strong>Ghi chú:</strong></p>
-              <p style={{ padding: 12, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
-                {selectedResult.notes || 'Không có ghi chú'}
-              </p>
-            </div>
           </div>
         ) : (
           <Form
@@ -297,10 +367,28 @@ const LabResults = () => {
               <Col span={12}>
                 <Form.Item
                   name="patientId"
-                  label="ID Bệnh nhân"
-                  rules={[{ required: true, message: 'Vui lòng nhập ID bệnh nhân' }]}
+                  label="Bệnh nhân"
+                  rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân' }]}
                 >
-                  <Input placeholder="Nhập ID bệnh nhân" />
+                  <Select
+                    showSearch
+                    placeholder="Chọn bệnh nhân"
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                    onChange={fetchTreatmentStages}
+                  >
+                    {patients.map((p) => {
+                      // Sử dụng patientId hoặc id làm key, fallback random chỉ khi không có id (rất hiếm)
+                      const key = p.patientId || p.id || `patient-${p.fullName}`;
+                      return (
+                        <Option key={key} value={p.patientId || p.id}>
+                          {p.fullName} {p.patientId ? `(${p.patientId})` : ''}
+                        </Option>
+                      );
+                    })}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -338,17 +426,54 @@ const LabResults = () => {
               <Col span={12}>
                 <Form.Item
                   name="treatmentStageId"
-                  label="ID Giai đoạn điều trị"
+                  label="Giai đoạn điều trị"
+                  rules={[{ required: true, message: 'Vui lòng chọn giai đoạn điều trị' }]}
                 >
-                  <Input placeholder="Nhập ID giai đoạn điều trị (tùy chọn)" />
+                  <Select
+                    placeholder="Chọn giai đoạn điều trị"
+                    disabled={!form.getFieldValue('patientId')}
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                    notFoundContent={!form.getFieldValue('patientId') ? 'Vui lòng chọn bệnh nhân trước' : 'Không có giai đoạn phù hợp'}
+                  >
+                    {treatmentStages.map((stage) => {
+                      // Sử dụng treatmentStageId làm key
+                      const key = stage.treatmentStageId || stage.id || `stage-${stage.stageName}`;
+                      return (
+                        <Option key={key} value={stage.treatmentStageId}>
+                          {stage.stageName} {stage.treatmentStageId ? `(${stage.treatmentStageId})` : ''} - {patients.find(p => p.patientId === stage.patientId)?.fullName || 'Không rõ bệnh nhân'}
+                        </Option>
+                      );
+                    })}
+                  </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="doctorId"
-                  label="ID Bác sĩ"
+                  label="Bác sĩ"
+                  rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
+                  initialValue={currentDoctorId || undefined}
                 >
-                  <Input placeholder="Nhập ID bác sĩ (tùy chọn)" />
+                  <Select
+                    showSearch
+                    placeholder="Chọn bác sĩ"
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                  >
+                    {doctors.map((d) => {
+                      // Sử dụng doctorId hoặc id làm key
+                      const key = d.doctorId || d.id || `doctor-${d.fullName}`;
+                      return (
+                        <Option key={key} value={d.doctorId}>
+                          {d.fullName} {d.doctorId ? `(${d.doctorId})` : ''}
+                        </Option>
+                      );
+                    })}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -380,4 +505,4 @@ const LabResults = () => {
   );
 };
 
-export default LabResults; 
+export default LabResults;

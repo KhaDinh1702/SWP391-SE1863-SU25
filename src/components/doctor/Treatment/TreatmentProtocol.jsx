@@ -197,7 +197,9 @@ const TreatmentProtocol = () => {
   };
 
   const handleViewStage = (stageId) => {
-    const stage = treatmentStages.find(s => s.treatmentStageId === stageId || s.id === stageId);
+    const stage = treatmentStages.find(
+      s => s.treatmentStageId === stageId || s.id === stageId
+    );
     setSelectedStage(stage);
     setIsStageModalVisible(true);
   };
