@@ -11,6 +11,25 @@ const PatientAppointmentForm = ({ patientId }) => {
   // Add debug log
   console.log('PatientAppointmentForm - patientId:', patientId);
 
+  // Helper function để tạo datetime với timezone Việt Nam
+  const createAppointmentDateTime = (dateStr, timeStr) => {
+    const [year, month, day] = dateStr.split('-');
+    const [hours, minutes] = timeStr.split(':');
+    
+    // Tạo datetime object với local timezone (Việt Nam)
+    const localDateTime = new Date(
+      parseInt(year),
+      parseInt(month) - 1, // JavaScript months are 0-indexed
+      parseInt(day),
+      parseInt(hours),
+      parseInt(minutes),
+      0, // seconds
+      0  // milliseconds
+    );
+    
+    return localDateTime;
+  };
+
   // Helper function để lấy ngày hiện tại theo định dạng YYYY-MM-DD
   const getTodayDate = () => {
     const today = new Date();
@@ -126,15 +145,13 @@ const PatientAppointmentForm = ({ patientId }) => {
       return;
     }
 
-    // Kết hợp ngày và giờ thành chuỗi ISO
-    const appointmentDateTime = new Date(
-      `${formData.appointmentDate}T${formData.appointmentTime}`
-    );
+    // Tạo datetime sử dụng helper function
+    const appointmentDateTime = createAppointmentDateTime(formData.appointmentDate, formData.appointmentTime);
     
     // Kiểm tra ngày không được trong quá khứ (so sánh từ đầu ngày)
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset giờ về 00:00:00
-    const selectedDate = new Date(formData.appointmentDate);
+    const selectedDate = new Date(appointmentDateTime);
     selectedDate.setHours(0, 0, 0, 0);
     
     if (selectedDate < today) {
@@ -149,10 +166,25 @@ const PatientAppointmentForm = ({ patientId }) => {
       setLoading(false);
       return;
     }
+    
+    console.log('Selected date and time:', formData.appointmentDate, formData.appointmentTime);
+    console.log('Appointment DateTime (local):', appointmentDateTime);
+    console.log('Local time string:', appointmentDateTime.toString());
+    console.log('Appointment DateTime (ISO):', appointmentDateTime.toISOString());
+    console.log('Local offset minutes:', appointmentDateTime.getTimezoneOffset());
+    
+    // Hiển thị thông tin debug cho user
+    const debugInfo = `
+Thời gian bạn chọn: ${formData.appointmentTime} ngày ${formData.appointmentDate}
+Thời gian local: ${appointmentDateTime.toString()}
+Thời gian sẽ gửi lên server (ISO): ${appointmentDateTime.toISOString()}
+Múi giờ offset: ${appointmentDateTime.getTimezoneOffset()} phút
+    `;
+    console.log('Debug info:', debugInfo);
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
-      appointmentStartDate: appointmentDateTime.toISOString(),
+      appointmentStartDate: `${formData.appointmentDate}T${formData.appointmentTime}:00`, // Gửi format YYYY-MM-DDTHH:MM:SS without timezone
       appointmentType: parseInt(formData.appointmentType),
       notes: formData.reason,
       isAnonymousAppointment: formData.isAnonymousAppointment,
@@ -161,6 +193,8 @@ const PatientAppointmentForm = ({ patientId }) => {
       onlineLink: null,
       paymentMethod: 'momo',
     };
+    
+    console.log('Request payload with local datetime:', requestPayload);
     try {
       const res = await appointmentService.createAppointmentWithMomo(requestPayload);
       console.log("MoMo response:", res); // Debug log

@@ -44,6 +44,24 @@ export default function PatientAppointments() {
         console.log('Raw appointment data:', data); // Debug log
         console.log('Current user:', currentUser); // Debug current user
         
+        // Test hiển thị thời gian của một appointment để debug
+        if (data && data.length > 0) {
+          const sampleAppointment = data[0];
+          console.log('=== DATETIME DEBUG ===');
+          console.log('Sample appointment:', sampleAppointment);
+          console.log('AppointmentStartDate raw:', sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate);
+          if (sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate) {
+            const dateStr = sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate;
+            const parsedDate = new Date(dateStr);
+            console.log('Parsed Date object:', parsedDate);
+            console.log('Local time string:', parsedDate.toString());
+            console.log('UTC time string:', parsedDate.toUTCString());
+            console.log('ISO string:', parsedDate.toISOString());
+            console.log('Vietnam locale string:', parsedDate.toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'}));
+          }
+          console.log('=== END DATETIME DEBUG ===');
+        }
+        
         // Get patient ID from different possible sources
         const patientId = currentUser.patientId || currentUser.userId || currentUser.id;
         console.log('Looking for patient appointments with ID:', patientId);
@@ -223,14 +241,58 @@ export default function PatientAppointments() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'Không có thông tin';
+    
+    try {
+      // Parse the date string
+      const date = new Date(dateString);
+      
+      // Kiểm tra nếu date không hợp lệ
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date string:', dateString);
+        return 'Ngày không hợp lệ';
+      }
+      
+      console.log('Original date string:', dateString);
+      console.log('Parsed date object:', date);
+      console.log('UTC time:', date.toUTCString());
+      console.log('Local time string:', date.toString());
+      
+      // Nếu đây là UTC time (có 'Z' hoặc timezone), chuyển đổi về local time
+      let displayDate = date;
+      
+      // Kiểm tra nếu dateString có 'Z' (UTC) hoặc có timezone offset
+      if (dateString.includes('Z') || dateString.match(/[+-]\d{2}:\d{2}$/)) {
+        // Đây là UTC time, cần chuyển về local time
+        console.log('Detected UTC time, converting to local time');
+        
+        // Tạo local datetime từ UTC, bù trừ timezone offset
+        const utcTime = date.getTime();
+        const localOffset = date.getTimezoneOffset() * 60000; // Convert to milliseconds
+        const vietnamOffset = 7 * 60 * 60000; // Vietnam is UTC+7
+        
+        displayDate = new Date(utcTime + localOffset + vietnamOffset);
+        console.log('Converted to Vietnam time:', displayDate);
+      } else {
+        // Đây có thể là local time rồi
+        console.log('Treating as local time');
+      }
+      
+      const formatted = displayDate.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      console.log('Formatted result:', formatted);
+      return formatted;
+      
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Original dateString:', dateString);
+      return 'Lỗi định dạng ngày';
+    }
   };
 
   const filteredAppointments = appointments.filter(apt => {
@@ -349,7 +411,10 @@ export default function PatientAppointments() {
                         {appointment.apointmentTitle || 'Khám bệnh'}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {formatDate(appointment.appointmentStartDate || appointment.AppointmentStartDate)}
+                        <div>
+                          <div>Gốc: {appointment.appointmentStartDate || appointment.AppointmentStartDate}</div>
+                          <div>Hiển thị: {formatDate(appointment.appointmentStartDate || appointment.AppointmentStartDate)}</div>
+                        </div>
                       </p>
                     </div>
                   </div>

@@ -7,6 +7,7 @@ import { appointmentService } from '../../../services/appointmentService';
 import { arvProtocolService } from '../../../services/arvProtocolService';
 import { doctorService } from '../../../services/doctorService';
 import { patientService } from '../../../services/patientService';
+import { doctorScheduleService } from '../../../services/doctorScheduleService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -19,6 +20,7 @@ const TreatmentProtocol = () => {
   const [arvProtocols, setArvProtocols] = useState([]);
   const [currentDoctor, setCurrentDoctor] = useState(null);
   const [appointmentsData, setAppointmentsData] = useState([]);
+  const [validAppointments, setValidAppointments] = useState([]);
   const [allDoctors, setAllDoctors] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -109,11 +111,86 @@ const TreatmentProtocol = () => {
       setPatients(allPatients);
       setAppointmentsData(appointmentsData);
       setAllDoctors(allDoctors);
+
+      // Filter appointments that have valid doctor schedules
+      if (doctor?.id) {
+        await filterValidAppointments(doctor.id, appointmentsData);
+      }
     } catch (error) {
       message.error('Không thể tải dữ liệu');
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // New function to filter appointments with valid doctor schedules
+  const filterValidAppointments = async (doctorId, appointments) => {
+    try {
+      console.log('=== FILTERING VALID APPOINTMENTS ===');
+      console.log('Doctor ID:', doctorId);
+      console.log('All appointments to filter:', appointments);
+
+      // Get doctor schedules for this doctor
+      const doctorScheduleResponse = await doctorScheduleService.getDoctorSchedulesByDoctorId(doctorId);
+      
+      console.log('Doctor schedule response:', doctorScheduleResponse);
+      
+      // Extract the schedules array from response - handle different response formats
+      let doctorSchedules = [];
+      if (Array.isArray(doctorScheduleResponse)) {
+        doctorSchedules = doctorScheduleResponse;
+      } else if (doctorScheduleResponse?.Schedules) {
+        doctorSchedules = doctorScheduleResponse.Schedules;
+      } else if (doctorScheduleResponse?.schedules) {
+        doctorSchedules = doctorScheduleResponse.schedules;
+      } else if (doctorScheduleResponse?.data) {
+        doctorSchedules = Array.isArray(doctorScheduleResponse.data) ? doctorScheduleResponse.data : [];
+      }
+      
+      console.log('Extracted doctor schedules:', doctorSchedules);
+      
+      // Get appointment IDs that have corresponding doctor schedules
+      const appointmentIdsWithSchedule = new Set();
+      
+      doctorSchedules.forEach(schedule => {
+        const appointmentId = schedule.appointmentId || schedule.AppointmentId;
+        if (appointmentId) {
+          appointmentIdsWithSchedule.add(appointmentId);
+          console.log('Found schedule for appointment ID:', appointmentId);
+        }
+      });
+
+      console.log('Appointment IDs with schedule:', Array.from(appointmentIdsWithSchedule));
+
+      // Filter appointments belonging to this doctor
+      const doctorAppointments = appointments.filter(app => {
+        const appDoctorId = app.doctorId || app.DoctorId;
+        return appDoctorId === doctorId;
+      });
+
+      console.log('All doctor appointments:', doctorAppointments);
+
+      // Filter for appointments that have valid doctor schedules
+      const validApps = doctorAppointments.filter(app => {
+        const hasSchedule = appointmentIdsWithSchedule.has(app.id);
+        console.log(`Appointment ${app.id} has schedule: ${hasSchedule}`);
+        return hasSchedule;
+      });
+
+      console.log('Valid appointments with schedule:', validApps);
+      console.log('=== END FILTERING ===');
+
+      setValidAppointments(validApps);
+    } catch (error) {
+      console.error('Error filtering valid appointments:', error);
+      // Fallback: show all doctor appointments but warn user
+      const doctorAppointments = appointments.filter(app => {
+        const appDoctorId = app.doctorId || app.DoctorId;
+        return appDoctorId === doctorId;
+      });
+      setValidAppointments(doctorAppointments);
+      message.warning('Không thể xác minh lịch làm việc. Một số lịch hẹn có thể không hợp lệ để tạo phác đồ.');
     }
   };
 
@@ -130,13 +207,36 @@ const TreatmentProtocol = () => {
         patientId: values.patientId,
         doctorId: currentDoctor?.id,
         arvProtocolId: values.arvProtocolId,
-        appointmentId: values.appointmentId,
+        appointmentId: values.appointmentId || null, // Make it optional
         startDate: values.dateRange ? values.dateRange[0].toISOString() : null,
         endDate: values.dateRange ? values.dateRange[1].toISOString() : null,
         status: statusMap[values.status] ?? 0
       };
 
       console.log('Creating patient treatment protocol with data:', requestData);
+      console.log('Current doctor:', currentDoctor);
+      console.log('All appointments for this doctor:', appointmentsData?.filter(app => {
+        const appDoctorId = app.doctorId || app.DoctorId;
+        return appDoctorId === currentDoctor?.id;
+      }));
+      console.log('Valid appointments with doctor schedule:', validAppointments);
+
+      // Nếu có appointmentId, cảnh báo user về rủi ro
+      if (values.appointmentId) {
+        const selectedAppointment = validAppointments.find(app => app.id === values.appointmentId);
+        if (!selectedAppointment) {
+          const confirmCreate = window.confirm(
+            'Lịch hẹn được chọn có thể không có lịch làm việc hợp lệ. ' +
+            'Điều này có thể gây lỗi khi tạo phác đồ. ' +
+            'Bạn có muốn tiếp tục không?\n\n' +
+            'Khuyến nghị: Chọn "Hủy" và tạo phác đồ không liên kết lịch hẹn.'
+          );
+          if (!confirmCreate) {
+            return;
+          }
+        }
+      }
+      
       await patientTreatmentProtocolService.createPatientTreatmentProtocol(requestData);
       message.success('Tạo phác đồ điều trị thành công');
       setIsModalVisible(false);
@@ -144,7 +244,29 @@ const TreatmentProtocol = () => {
       fetchData();
     } catch (error) {
       console.error('Create protocol error:', error);
-      message.error(error.message || 'Không thể tạo phác đồ điều trị');
+      console.error('Error details:', {
+        message: error.message,
+        requestData: {
+          patientId: values.patientId,
+          doctorId: currentDoctor?.id,
+          arvProtocolId: values.arvProtocolId,
+          appointmentId: values.appointmentId || null,
+          startDate: values.dateRange ? values.dateRange[0].toISOString() : null,
+          endDate: values.dateRange ? values.dateRange[1].toISOString() : null,
+          status: statusMap[values.status] ?? 0
+        }
+      });
+
+      // Cung cấp thông báo lỗi rõ ràng hơn
+      if (error.message.includes('Doctor schedule not found')) {
+        message.error(
+          'Không thể tạo phác đồ: Lịch hẹn được chọn không có lịch làm việc hợp lệ. ' +
+          'Vui lòng thử lại mà không chọn lịch hẹn hoặc chọn lịch hẹn khác.',
+          10 // Hiển thị lâu hơn
+        );
+      } else {
+        message.error(error.message || 'Không thể tạo phác đồ điều trị');
+      }
     }
   };
 
@@ -212,10 +334,14 @@ const TreatmentProtocol = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'green';
-      case 'Inactive': return 'red';
-      case 'Pending': return 'orange';
-      case 'Completed': return 'blue';
+      case 'Active': 
+      case 1: return 'green';
+      case 'Inactive': 
+      case 3: return 'red';
+      case 'Pending': 
+      case 0: return 'orange';
+      case 'Completed': 
+      case 2: return 'blue';
       default: return 'default';
     }
   };
@@ -226,7 +352,11 @@ const TreatmentProtocol = () => {
       case 'Inactive': return 'Dừng điều trị';
       case 'Pending': return 'Chờ bắt đầu';
       case 'Completed': return 'Hoàn thành';
-      default: return status;
+      case 0: return 'Chờ bắt đầu';
+      case 1: return 'Đang điều trị';
+      case 2: return 'Hoàn thành';
+      case 3: return 'Dừng điều trị';
+      default: return status || 'Không rõ';
     }
   };
 
@@ -463,8 +593,10 @@ const TreatmentProtocol = () => {
         {selectedProtocol ? (
           <div>
             <p><strong>Tên bệnh nhân:</strong> {selectedProtocol.patientName}</p>
-            <p><strong>ARV Protocol ID:</strong> {selectedProtocol.arvProtocolId || '-'}</p>
+            <p><strong>ARV Protocol:</strong> {selectedProtocol.arvProtocolName || selectedProtocol.arvProtocolId || '-'}</p>
+            <p><strong>Ngày bắt đầu:</strong> {selectedProtocol.startDate ? new Date(selectedProtocol.startDate).toLocaleDateString('vi-VN') : '-'}</p>
             <p><strong>Ngày kết thúc:</strong> {selectedProtocol.endDate ? new Date(selectedProtocol.endDate).toLocaleDateString('vi-VN') : '-'}</p>
+            <p><strong>Lịch hẹn:</strong> {selectedProtocol.appointmentId || 'Không liên kết'}</p>
             <p><strong>Trạng thái:</strong> 
               <Tag color={getStatusColor(selectedProtocol.status)} style={{ marginLeft: 8 }}>
                 {getStatusText(selectedProtocol.status)}
@@ -481,6 +613,16 @@ const TreatmentProtocol = () => {
               status: 'Pending'
             }}
           >
+            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#e6f7ff', borderRadius: 6, border: '1px solid #91d5ff' }}>
+              <div style={{ fontSize: '14px', color: '#0958d9', marginBottom: 8 }}>
+                <strong>📋 Hướng dẫn tạo phác đồ điều trị:</strong>
+              </div>
+              <ul style={{ fontSize: '13px', color: '#1890ff', margin: 0, paddingLeft: 20 }}>
+                <li><strong>Khuyến nghị:</strong> Tạo phác đồ độc lập (không liên kết lịch hẹn) để tránh lỗi.</li>
+                <li>Chỉ chọn lịch hẹn có dấu ✓ (đã xác minh có lịch làm việc hợp lệ).</li>
+                <li>Nếu không có lịch hẹn hợp lệ, hãy bỏ trống trường "Lịch hẹn".</li>
+              </ul>
+            </div>
             <Form.Item
               name="patientId"
               label="Bệnh nhân"
@@ -512,16 +654,63 @@ const TreatmentProtocol = () => {
 
             <Form.Item
               name="appointmentId"
-              label="Lịch hẹn"
-              rules={[{ required: true, message: 'Vui lòng chọn lịch hẹn' }]}
+              label="Lịch hẹn (tùy chọn)"
+              help={
+                <div>
+                  {validAppointments.length === 0 ? (
+                    <div className="text-orange-600">
+                      ⚠️ Không có lịch hẹn hợp lệ (cần có lịch làm việc bác sĩ). 
+                      <strong> Khuyến nghị: Bỏ trống để tạo phác đồ độc lập.</strong>
+                    </div>
+                  ) : (
+                    <div className="text-green-600">
+                      ✓ Có {validAppointments.length} lịch hẹn hợp lệ. Chọn một lịch hẹn hoặc bỏ trống để tạo phác đồ độc lập.
+                    </div>
+                  )}
+                </div>
+              }
             >
-              <Select placeholder="Chọn lịch hẹn">
-                {appointmentsData && appointmentsData.map(app => (
-                  <Option key={app.id} value={app.id}>
-                    {app.id}
-                    {app.appointmentStartDate ? ` (${new Date(app.appointmentStartDate).toLocaleString('vi-VN')})` : ''}
-                  </Option>
-                ))}
+              <Select 
+                placeholder={validAppointments.length === 0 ? 
+                  "Không có lịch hẹn hợp lệ - khuyến nghị bỏ trống" : 
+                  "Chọn lịch hẹn hoặc bỏ trống..."
+                }
+                allowClear
+                showSearch
+                optionFilterProp="children"
+                filterOption={(input, option) => {
+                  const children = option?.children;
+                  if (typeof children === 'string') {
+                    return children.toLowerCase().includes(input.toLowerCase());
+                  }
+                  return false;
+                }}
+                notFoundContent={
+                  <div className="p-2 text-center text-gray-500">
+                    <div>Không có lịch hẹn hợp lệ</div>
+                    <div className="text-xs mt-1">Có thể tạo phác đồ không liên kết lịch hẹn</div>
+                  </div>
+                }
+              >
+                {validAppointments.map(app => {
+                    const appointmentDate = app.appointmentStartDate ? 
+                      new Date(app.appointmentStartDate).toLocaleDateString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Chưa có thời gian';
+                    
+                    const patientName = app.patientName || app.PatientName || 'Không rõ';
+                    const displayText = `${appointmentDate} - ${patientName} ✓`;
+                    
+                    return (
+                      <Option key={app.id} value={app.id} title={displayText}>
+                        {displayText}
+                      </Option>
+                    );
+                  })}
               </Select>
             </Form.Item>
 

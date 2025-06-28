@@ -37,5 +37,67 @@ export const medicalRecordService = {
       console.error('Error fetching medical record:', error);
       throw error;
     }
+  },
+
+  // Tạo medical record mới
+  createMedicalRecord: async (recordData) => {
+    try {
+      const formData = new FormData();
+      
+      // Thêm các fields vào FormData
+      Object.keys(recordData).forEach(key => {
+        if (recordData[key] !== null && recordData[key] !== undefined) {
+          formData.append(key, recordData[key]);
+        }
+      });
+
+      const response = await fetch(`${API_BASE_URL}/MedicalRecord/create-medical-record`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create medical record');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating medical record:', error);
+      throw error;
+    }
+  },
+
+  // Cập nhật medical record
+  updateMedicalRecord: async (recordData) => {
+    try {
+      const formData = new FormData();
+      
+      // Thêm các fields vào FormData
+      Object.keys(recordData).forEach(key => {
+        if (recordData[key] !== null && recordData[key] !== undefined) {
+          formData.append(key, recordData[key]);
+        }
+      });
+
+      const response = await fetch(`${API_BASE_URL}/MedicalRecord/update-medical-record`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update medical record');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating medical record:', error);
+      throw error;
+    }
   }
 }; 
