@@ -20,7 +20,10 @@ export default function PatientAppointments() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5275/api/Appointment/get-list-appointment`, {
+        console.log('Attempting to fetch appointments from:', `http://localhost:5275/api/Appointment/get-list-appointments`);
+        console.log('With token:', currentUser.token ? 'Present' : 'Missing');
+        
+        const response = await fetch(`http://localhost:5275/api/Appointment/get-list-appointments`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'
@@ -39,12 +42,33 @@ export default function PatientAppointments() {
 
         const data = await response.json();
         console.log('Raw appointment data:', data); // Debug log
+        console.log('Current user:', currentUser); // Debug current user
         
-        // Filter appointments for the current patient
-        const patientAppointments = data.filter(apt => 
-          apt.patientId === currentUser.patientId || 
-          apt.PatientId === currentUser.patientId
-        );
+        // Get patient ID from different possible sources
+        const patientId = currentUser.patientId || currentUser.userId || currentUser.id;
+        console.log('Looking for patient appointments with ID:', patientId);
+        
+        // Filter appointments for the current patient and only show paid appointments
+        const patientAppointments = data.filter(apt => {
+          const aptPatientId = apt.patientId || apt.PatientId;
+          const paymentStatus = apt.paymentStatus || apt.PaymentStatus;
+          const isPatientMatch = aptPatientId === patientId;
+          const isPaid = paymentStatus === 1; // PaymentStatus.Paid = 1
+          
+          console.log('Checking appointment:', {
+            appointmentId: apt.id,
+            aptPatientId,
+            currentPatientId: patientId,
+            paymentStatus,
+            isPatientMatch,
+            isPaid,
+            finalMatch: isPatientMatch && isPaid
+          });
+          
+          return isPatientMatch && isPaid;
+        });
+
+        console.log('Filtered patient appointments:', patientAppointments);
 
         // Fetch doctor information for each appointment
         const appointmentsWithDoctorInfo = await Promise.all(
@@ -99,10 +123,15 @@ export default function PatientAppointments() {
 
         console.log('Processed appointments:', appointmentsWithDoctorInfo);
         setAppointments(appointmentsWithDoctorInfo);
+        
+        if (appointmentsWithDoctorInfo.length === 0) {
+          console.log('No appointments found for patient ID:', patientId);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching appointments:', err);
-        setError(err.message);
+        setError(`Lỗi khi tải danh sách lịch hẹn: ${err.message}`);
         setLoading(false);
       }
     };
@@ -249,8 +278,8 @@ export default function PatientAppointments() {
         <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Lịch hẹn của tôi</h1>
-              <p className="text-[#BEE6F5] mt-1">Quản lý và theo dõi các cuộc hẹn khám bệnh</p>
+              <h1 className="text-2xl font-bold text-white">Lịch hẹn đã thanh toán</h1>
+              <p className="text-[#BEE6F5] mt-1">Quản lý và theo dõi các cuộc hẹn khám bệnh đã thanh toán</p>
             </div>
             <button
               onClick={() => navigate('/appointment-booking')}
@@ -291,11 +320,11 @@ export default function PatientAppointments() {
           {filteredAppointments.length === 0 ? (
             <div className="text-center py-12">
               <FaCalendarAlt className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn đã thanh toán</h3>
               <p className="mt-1 text-sm text-gray-500">
                 {filter === 'all' 
-                  ? 'Bạn chưa có lịch hẹn nào.'
-                  : `Không có lịch hẹn ${filter === 'upcoming' ? 'sắp tới' : filter === 'completed' ? 'đã hoàn thành' : 'đã hủy'}.`}
+                  ? 'Bạn chưa có lịch hẹn đã thanh toán nào. Chỉ những lịch hẹn đã thanh toán mới được hiển thị.'
+                  : `Không có lịch hẹn đã thanh toán ${filter === 'upcoming' ? 'sắp tới' : filter === 'completed' ? 'đã hoàn thành' : 'đã hủy'}.`}
               </p>
               <div className="mt-6">
                 <button
@@ -330,7 +359,7 @@ export default function PatientAppointments() {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="flex items-center text-sm text-gray-500">
                     <FaUserMd className="mr-2" />
                     <span>
@@ -349,6 +378,10 @@ export default function PatientAppointments() {
                         ? 'Khám trực tuyến'
                         : 'Khám tại phòng khám'}
                     </span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    <FaCheck className="mr-2 text-green-500" />
+                    <span className="text-green-600 font-medium">Đã thanh toán</span>
                   </div>
                 </div>
                 {appointment.doctorSpecialization && (

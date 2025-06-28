@@ -11,6 +11,39 @@ const PatientAppointmentForm = ({ patientId }) => {
   // Add debug log
   console.log('PatientAppointmentForm - patientId:', patientId);
 
+  // Helper function để lấy ngày hiện tại theo định dạng YYYY-MM-DD
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Tạo danh sách time slots từ 8:00 đến 16:30, mỗi slot cách nhau 30 phút
+  const generateTimeSlots = () => {
+    const slots = [];
+    const startHour = 8;
+    const endHour = 16;
+    const endMinute = 30;
+    
+    for (let hour = startHour; hour <= endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        // Dừng lại ở 16:30
+        if (hour === endHour && minute > endMinute) break;
+        
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        
+        slots.push({
+          value: timeString,
+          label: displayTime,
+          display: hour < 12 ? `${displayTime} SA` : `${displayTime} CH`
+        });
+      }
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
+
   const [formData, setFormData] = useState({
     doctorId: "",
     appointmentDate: "",
@@ -49,9 +82,32 @@ const PatientAppointmentForm = ({ patientId }) => {
   }, []);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Kiểm tra nếu đang chọn ngày
+    if (name === 'appointmentDate') {
+      const selectedDate = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset giờ về 00:00:00
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        alert("Không thể chọn ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi.");
+        return; // Không cập nhật state nếu ngày không hợp lệ
+      }
+    }
+    
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    }));
+  };
+
+  // Hàm riêng để xử lý chọn time slot
+  const handleTimeSlotSelect = (timeValue) => {
+    setFormData((prev) => ({
+      ...prev,
+      appointmentTime: timeValue,
     }));
   };
 
@@ -74,6 +130,20 @@ const PatientAppointmentForm = ({ patientId }) => {
     const appointmentDateTime = new Date(
       `${formData.appointmentDate}T${formData.appointmentTime}`
     );
+    
+    // Kiểm tra ngày không được trong quá khứ (so sánh từ đầu ngày)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset giờ về 00:00:00
+    const selectedDate = new Date(formData.appointmentDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      alert("Không thể đặt lịch hẹn cho ngày trong quá khứ");
+      setLoading(false);
+      return;
+    }
+    
+    // Kiểm tra thời gian không được trong quá khứ (cho ngày hôm nay)
     if (appointmentDateTime < new Date()) {
       alert("Không thể đặt lịch hẹn trong quá khứ");
       setLoading(false);
@@ -234,24 +304,53 @@ const PatientAppointmentForm = ({ patientId }) => {
                   name="appointmentDate"
                   value={formData.appointmentDate}
                   onChange={handleChange}
+                  min={getTodayDate()}
+                  max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} // Giới hạn 1 năm trong tương lai
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
                   required
                 />
+                <p className="text-sm text-gray-500">
+                  ⚠️ Chỉ có thể đặt lịch từ ngày hôm nay ({new Date().toLocaleDateString('vi-VN')}) trở đi
+                </p>
               </div>
               {/* Appointment Time */}
               <div className="space-y-2">
                 <label className="flex items-center text-gray-700 font-medium">
                   <FaClock className="mr-2 text-[#3B9AB8]" />
-                  Chọn giờ
+                  Chọn giờ khám
                 </label>
-                <input
-                  type="time"
-                  name="appointmentTime"
-                  value={formData.appointmentTime}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#3B9AB8] focus:border-[#3B9AB8] transition-colors"
-                  required
-                />
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {timeSlots.map((slot) => (
+                    <button
+                      key={slot.value}
+                      type="button"
+                      onClick={() => handleTimeSlotSelect(slot.value)}
+                      className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                        formData.appointmentTime === slot.value
+                          ? 'border-[#3B9AB8] bg-[#3B9AB8] text-white'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-[#3B9AB8] hover:bg-blue-50'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="font-semibold">{slot.label}</div>
+                        <div className="text-xs opacity-75">
+                          {slot.value < '12:00' ? 'Sáng' : 'Chiều'}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500">
+                  🕐 Giờ làm việc: 8:00 sáng - 4:30 chiều
+                </p>
+                {formData.appointmentTime && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-sm text-green-700">
+                      ✓ Đã chọn: <span className="font-semibold">{formData.appointmentTime}</span>
+                      {formData.appointmentTime < '12:00' ? ' (Buổi sáng)' : ' (Buổi chiều)'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Reason */}

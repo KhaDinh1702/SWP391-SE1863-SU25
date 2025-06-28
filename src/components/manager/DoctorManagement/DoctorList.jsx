@@ -127,12 +127,6 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
       key: 'bio',
     },
     {
-      title: 'Ảnh đại diện',
-      dataIndex: 'profilePictureURL',
-      key: 'profilePictureURL',
-      render: (url) => url ? <img src={url} alt="avatar" style={{width: 40, height: 40, objectFit: 'cover', borderRadius: '50%'}} /> : 'Không có',
-    },
-    {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',

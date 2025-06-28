@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, 
-  FaCalendarAlt, FaEdit, FaSave, FaTimes, FaIdCard 
+  FaCalendarAlt, FaEdit, FaSave, FaTimes, FaIdCard,
+  FaVenusMars, FaUserFriends 
 } from 'react-icons/fa';
 import { authService } from "../../services/authService";
 import { motion } from 'framer-motion';
@@ -10,8 +11,10 @@ import { motion } from 'framer-motion';
 export default function PatientProfile() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
+  const [patientData, setPatientData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState(null);
+  const [editedUserData, setEditedUserData] = useState(null);
+  const [editedPatientData, setEditedPatientData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,18 +27,38 @@ export default function PatientProfile() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+        // Lấy thông tin User
+        const userResponse = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'
           }
         });
 
-        if (!response.ok) throw new Error('Failed to fetch user data');
+        if (!userResponse.ok) throw new Error('Failed to fetch user data');
         
-        const data = await response.json();
-        setUserData(data);
-        setEditedData(data);
+        const userData = await userResponse.json();
+        setUserData(userData);
+        setEditedUserData(userData);
+
+        // Lấy thông tin Patient
+        try {
+          const patientResponse = await fetch(`http://localhost:5275/api/Patient/get-by-id?patientId=${currentUser.userId}`, {
+            headers: {
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (patientResponse.ok) {
+            const patientData = await patientResponse.json();
+            setPatientData(patientData);
+            setEditedPatientData(patientData);
+          }
+        } catch (patientError) {
+          console.error('Error fetching patient data:', patientError);
+          // Không báo lỗi nếu không lấy được patient data
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -48,14 +71,17 @@ export default function PatientProfile() {
 
   const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
-    setEditedData(userData);
+    setEditedUserData(userData);
+    setEditedPatientData(patientData);
     setIsEditing(false);
   };
 
   const handleSave = async () => {
     try {
       const currentUser = authService.getCurrentUser();
-      const response = await fetch(`http://localhost:5275/api/User/update-profile`, {
+      
+      // Cập nhật thông tin User
+      const userResponse = await fetch(`http://localhost:5275/api/User/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
@@ -63,27 +89,56 @@ export default function PatientProfile() {
         },
         body: JSON.stringify({
           userId: currentUser.userId,
-          fullName: editedData.fullName,
-          email: editedData.email,
-          phoneNumber: editedData.phoneNumber,
-          address: editedData.address || '',
-          dateOfBirth: editedData.dateOfBirth || null
+          fullName: editedUserData.fullName,
+          email: editedUserData.email,
+          phoneNumber: editedUserData.phoneNumber
         })
       });
 
-      if (!response.ok) throw new Error('Failed to update profile');
+      if (!userResponse.ok) throw new Error('Failed to update user profile');
       
-      const updatedData = await response.json();
-      setUserData(updatedData);
+      const updatedUserData = await userResponse.json();
+      setUserData(updatedUserData);
+
+      // Cập nhật thông tin Patient nếu có
+      if (patientData && editedPatientData) {
+        const patientResponse = await fetch(`http://localhost:5275/api/Patient/patient-update-profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: currentUser.userId,
+            fullName: editedPatientData.fullName,
+            dateOfBirth: editedPatientData.dateOfBirth,
+            gender: editedPatientData.gender,
+            address: editedPatientData.address,
+            contactPersonName: editedPatientData.contactPersonName,
+            contactPersonPhone: editedPatientData.contactPersonPhone
+          })
+        });
+
+        if (patientResponse.ok) {
+          const updatedPatientData = await patientResponse.json();
+          setPatientData(updatedPatientData);
+        }
+      }
+      
       setIsEditing(false);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleUserInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedData(prev => ({ ...prev, [name]: value }));
+    setEditedUserData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePatientInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedPatientData(prev => ({ ...prev, [name]: value }));
   };
 
   if (loading) {
@@ -134,10 +189,10 @@ export default function PatientProfile() {
                 whileHover={{ scale: 1.05 }}
                 className="relative w-28 h-28 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-white"
               >
-                {userData.avatar ? (
+                {userData.profilePictureURL ? (
                   <img 
-                    src={userData.avatar} 
-                    alt={userData.fullName} 
+                    src={userData.profilePictureURL} 
+                    alt={patientData?.fullName || userData.fullName} 
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -147,7 +202,9 @@ export default function PatientProfile() {
 
               {/* User Info */}
               <div className="text-white text-center md:text-left">
-                <h1 className="text-2xl md:text-3xl font-bold mb-1">{userData.fullName}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold mb-1">
+                  {patientData?.fullName || userData.fullName}
+                </h1>
                 <p className="text-white/90 mb-3">{userData.email}</p>
                 
                 <div className="flex justify-center md:justify-start gap-4">
@@ -159,7 +216,7 @@ export default function PatientProfile() {
                       className="flex items-center px-5 py-2 bg-white text-[#3B9AB8] rounded-full hover:bg-gray-100 transition-all shadow-md"
                     >
                       <FaEdit className="mr-2" />
-                      Edit Profile
+                      Chỉnh sửa
                     </motion.button>
                   ) : (
                     <div className="flex gap-3">
@@ -170,7 +227,7 @@ export default function PatientProfile() {
                         className="flex items-center px-5 py-2 bg-white text-green-600 rounded-full hover:bg-green-50 transition-all shadow-md"
                       >
                         <FaSave className="mr-2" />
-                        Save
+                        Lưu
                       </motion.button>
                       <motion.button
                         whileHover={{ scale: 1.03 }}
@@ -179,7 +236,7 @@ export default function PatientProfile() {
                         className="flex items-center px-5 py-2 bg-white text-gray-600 rounded-full hover:bg-gray-100 transition-all shadow-md"
                       >
                         <FaTimes className="mr-2" />
-                        Cancel
+                        Hủy
                       </motion.button>
                     </div>
                   )}
@@ -195,7 +252,7 @@ export default function PatientProfile() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                   <FaIdCard className="text-[#3B9AB8]" />
-                  Personal Information
+                  Thông tin cá nhân
                 </h2>
                 
                 <div className="space-y-5">
@@ -204,17 +261,17 @@ export default function PatientProfile() {
                       <FaUser />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Full Name</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Họ và tên</label>
                       {isEditing ? (
                         <input
                           type="text"
                           name="fullName"
-                          value={editedData.fullName}
-                          onChange={handleInputChange}
+                          value={editedPatientData?.fullName || editedUserData.fullName}
+                          onChange={patientData ? handlePatientInputChange : handleUserInputChange}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium">{userData.fullName}</p>
+                        <p className="text-gray-900 font-medium">{patientData?.fullName || userData.fullName}</p>
                       )}
                     </div>
                   </div>
@@ -229,12 +286,66 @@ export default function PatientProfile() {
                         <input
                           type="email"
                           name="email"
-                          value={editedData.email}
-                          onChange={handleInputChange}
+                          value={editedUserData.email}
+                          onChange={handleUserInputChange}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">{userData.email}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaCalendarAlt />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Ngày sinh</label>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="dateOfBirth"
+                          value={editedPatientData?.dateOfBirth ? new Date(editedPatientData.dateOfBirth).toISOString().split('T')[0] : ''}
+                          onChange={handlePatientInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {patientData?.dateOfBirth ? new Date(patientData.dateOfBirth).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'Chưa cập nhật'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaVenusMars />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Giới tính</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={editedPatientData?.gender ?? ''}
+                          onChange={handlePatientInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                        >
+                          <option value="">Chọn giới tính</option>
+                          <option value={0}>Nam</option>
+                          <option value={1}>Nữ</option>
+                          <option value={2}>Khác</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 font-medium">
+                          {patientData?.gender === 0 ? 'Nam' : 
+                           patientData?.gender === 1 ? 'Nữ' : 
+                           patientData?.gender === 2 ? 'Khác' : 'Chưa xác định'}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -245,7 +356,7 @@ export default function PatientProfile() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                   <FaPhone className="text-[#3B9AB8]" />
-                  Contact Details
+                  Thông tin liên hệ
                 </h2>
                 
                 <div className="space-y-5">
@@ -254,13 +365,13 @@ export default function PatientProfile() {
                       <FaPhone />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Số điện thoại</label>
                       {isEditing ? (
                         <input
                           type="tel"
                           name="phoneNumber"
-                          value={editedData.phoneNumber}
-                          onChange={handleInputChange}
+                          value={editedUserData.phoneNumber}
+                          onChange={handleUserInputChange}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
                         />
                       ) : (
@@ -274,44 +385,60 @@ export default function PatientProfile() {
                       <FaMapMarkerAlt />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Address</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Địa chỉ</label>
                       {isEditing ? (
                         <textarea
                           name="address"
-                          value={editedData.address || ''}
-                          onChange={handleInputChange}
+                          value={editedPatientData?.address || ''}
+                          onChange={handlePatientInputChange}
                           rows="3"
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all resize-none"
-                          placeholder="Enter your address"
+                          placeholder="Nhập địa chỉ của bạn"
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium whitespace-pre-wrap">{userData.address || 'No address provided'}</p>
+                        <p className="text-gray-900 font-medium whitespace-pre-wrap">{patientData?.address || 'Chưa cập nhật'}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
                     <div className="mt-1 text-[#3B9AB8]">
-                      <FaCalendarAlt />
+                      <FaUserFriends />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Date of Birth</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Người liên hệ khẩn cấp</label>
                       {isEditing ? (
                         <input
-                          type="date"
-                          name="dateOfBirth"
-                          value={editedData.dateOfBirth || ''}
-                          onChange={handleInputChange}
+                          type="text"
+                          name="contactPersonName"
+                          value={editedPatientData?.contactPersonName || ''}
+                          onChange={handlePatientInputChange}
                           className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                          placeholder="Tên người liên hệ"
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium">
-                          {userData.dateOfBirth ? new Date(userData.dateOfBirth).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          }) : 'Not provided'}
-                        </p>
+                        <p className="text-gray-900 font-medium">{patientData?.contactPersonName || 'Chưa cập nhật'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaPhone />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">SĐT người liên hệ</label>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          name="contactPersonPhone"
+                          value={editedPatientData?.contactPersonPhone || ''}
+                          onChange={handlePatientInputChange}
+                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                          placeholder="SĐT người liên hệ"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium">{patientData?.contactPersonPhone || 'Chưa cập nhật'}</p>
                       )}
                     </div>
                   </div>

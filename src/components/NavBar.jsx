@@ -66,7 +66,7 @@ export default function FullNavbar() {
                 </select>
                 <div className="flex items-center text-white/80 hover:text-white transition-colors duration-200">
                   <FaClock className="w-3 h-3 mr-1" />
-                  <span className="text-sm">8:00 - 20:00</span>
+                  <span className="text-sm">8:00 - 17:00</span>
                 </div>
                 <a href="mailto:info@trungtamytetonghop.vn" className="text-white/80 hover:text-white transition-colors duration-200 flex items-center">
                   <FaEnvelope className="w-3 h-3 mr-1" />

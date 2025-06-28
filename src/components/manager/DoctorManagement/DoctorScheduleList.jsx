@@ -12,9 +12,18 @@ const DoctorScheduleList = () => {
   const [appointments, setAppointments] = useState({});
 
   useEffect(() => {
-    fetchSchedules();
-    fetchDoctors();
-    fetchAppointments();
+    const initializeData = async () => {
+      try {
+        await fetchSchedules();
+        await fetchDoctors();
+        await fetchAppointments();
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        message.error('Có lỗi xảy ra khi tải dữ liệu ban đầu');
+      }
+    };
+    
+    initializeData();
   }, []);
   const fetchDoctors = async () => {
     try {
@@ -31,17 +40,47 @@ const DoctorScheduleList = () => {
   };
   const fetchAppointments = async () => {
     try {
-      const appointmentsList = await appointmentService.getAllAppointments();
-      console.log('Fetched appointments for list:', appointmentsList);
-      console.log('Sample appointment structure for list:', appointmentsList[0]);
+      // Lấy chỉ những appointment đã thanh toán cho manager
+      const response = await fetch('http://localhost:5275/api/Appointment/get-paid-appointments', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Không thể lấy danh sách cuộc hẹn đã thanh toán');
+      }
+      
+      const appointmentsList = await response.json();
+      console.log('Fetched paid appointments for list:', appointmentsList);
+      console.log('Sample paid appointment structure for list:', appointmentsList[0]);
+      
+      // Check if appointmentsList is valid array
+      if (!Array.isArray(appointmentsList)) {
+        console.warn('Appointments data is not an array:', appointmentsList);
+        setAppointments({});
+        return;
+      }
+      
       const appointmentsMap = {};
       appointmentsList.forEach(appointment => {
-        appointmentsMap[appointment.id] = appointment;
+        if (appointment && appointment.id) {
+          appointmentsMap[appointment.id] = appointment;
+        }
       });
       setAppointments(appointmentsMap);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      message.error('Không thể lấy danh sách cuộc hẹn');
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      message.error(`Không thể lấy danh sách cuộc hẹn: ${error.message}`);
+      setAppointments({}); // Set empty object on error
     }
   };
 

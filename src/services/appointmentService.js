@@ -4,7 +4,7 @@ export const appointmentService = {
   // Get all appointments for viewing
   getAllAppointments: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Appointment/get-list-appointment`, {
+      const response = await fetch(`${API_BASE_URL}/Appointment/get-paid-appointments`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });

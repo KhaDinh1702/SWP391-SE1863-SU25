@@ -33,7 +33,6 @@ const DoctorScheduleForm = ({ onSuccess }) => {
     try {
       const appointmentsList = await appointmentService.getAllAppointments();
       console.log('Fetched appointments:', appointmentsList);
-      console.log('Sample appointment structure:', appointmentsList[0]);
       setAppointments(appointmentsList);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -122,14 +121,11 @@ const DoctorScheduleForm = ({ onSuccess }) => {
             rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
           >
             <Select placeholder="Chọn bác sĩ">
-              {doctors.map(doctor => {
-                console.log('Processing doctor:', doctor);
-                return (
-                  <Select.Option key={doctor.id} value={doctor.id}>
-                    {doctor.fullName || doctor.FullName || doctor.fullname || doctor.name || 'Không có tên'} - {doctor.specialization || doctor.Specialization || 'Chưa cập nhật chuyên khoa'}
-                  </Select.Option>
-                );
-              })}
+              {doctors.map(doctor => (
+                <Select.Option key={doctor.id} value={doctor.id}>
+                  {doctor.fullName || doctor.FullName || doctor.fullname || doctor.name || 'Không có tên'} - {doctor.specialization || doctor.Specialization || 'Chưa cập nhật chuyên khoa'}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>          <Form.Item
             name="appointmentId"
@@ -139,10 +135,37 @@ const DoctorScheduleForm = ({ onSuccess }) => {
               placeholder="Chọn cuộc hẹn để gắn với lịch làm việc"
               allowClear
               showSearch
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
+              filterOption={(input, option) => {
+                const searchText = input.toLowerCase();
+                // Search trong title và patient name
+                const appointmentData = option.value && appointments.find(a => a.id === option.value);
+                if (!appointmentData) return false;
+                
+                const title = (appointmentData.appointmentTitle || 
+                             appointmentData.AppointmentTitle ||
+                             appointmentData.title ||
+                             appointmentData.Title ||
+                             'Khám bệnh').toLowerCase();
+                
+                const patientName = (appointmentData.patientName || 
+                                  appointmentData.PatientName ||
+                                  appointmentData.patient?.fullName || 
+                                  appointmentData.patient?.FullName ||
+                                  appointmentData.patient?.name || 
+                                  appointmentData.patient?.Name ||
+                                  appointmentData.user?.fullName ||
+                                  appointmentData.user?.FullName ||
+                                  appointmentData.user?.name ||
+                                  appointmentData.User?.fullName ||
+                                  appointmentData.User?.FullName ||
+                                  appointmentData.User?.name ||
+                                  appointmentData.fullName ||
+                                  appointmentData.FullName ||
+                                  appointmentData.name ||
+                                  'Bệnh nhân').toLowerCase();
+                
+                return title.includes(searchText) || patientName.includes(searchText);
+              }}
             >              {appointments.map(appointment => {
                 const appointmentDate = appointment.appointmentStartDate || 
                                       appointment.AppointmentStartDate ||
@@ -157,23 +180,82 @@ const DoctorScheduleForm = ({ onSuccess }) => {
                     minute: '2-digit'
                   }) : 'Chưa có ngày';
                 
+                const appointmentTitle = appointment.appointmentTitle || 
+                                       appointment.AppointmentTitle ||
+                                       appointment.title ||
+                                       appointment.Title ||
+                                       'Khám bệnh';
+                
                 const patientName = appointment.patientName || 
                                   appointment.PatientName ||
                                   appointment.patient?.fullName || 
+                                  appointment.patient?.FullName ||
                                   appointment.patient?.name || 
-                                  'Chưa có tên';
+                                  appointment.patient?.Name ||
+                                  appointment.user?.fullName ||
+                                  appointment.user?.FullName ||
+                                  appointment.user?.name ||
+                                  appointment.User?.fullName ||
+                                  appointment.User?.FullName ||
+                                  appointment.User?.name ||
+                                  appointment.fullName ||
+                                  appointment.FullName ||
+                                  appointment.name ||
+                                  'Bệnh nhân (ẩn danh)';
                 
                 return (
                   <Select.Option key={appointment.id} value={appointment.id}>
-                    <div>
-                      <div style={{ fontWeight: 'bold' }}>
-                        {patientName}
+                    <div style={{ padding: '4px 0' }}>
+                      <div style={{ 
+                        fontWeight: 'bold', 
+                        color: '#1890ff', 
+                        fontSize: '14px',
+                        marginBottom: '4px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {appointmentTitle}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        📅 {appointmentDate}
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#333', 
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginBottom: '2px'
+                      }}>
+                        <span style={{ marginRight: '4px' }}>👤</span>
+                        <span style={{ 
+                          flex: 1,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {patientName}
+                        </span>
+                        {patientName === 'Bệnh nhân (ẩn danh)' && 
+                          <span style={{ 
+                            fontSize: '10px', 
+                            color: '#ff7875', 
+                            marginLeft: '4px',
+                            flexShrink: 0
+                          }}>
+                            (ẩn danh)
+                          </span>
+                        }
                       </div>
-                      <div style={{ fontSize: '11px', color: '#999' }}>
-                        ID: {appointment.id.substring(0, 8)}...
+                      <div style={{ 
+                        fontSize: '11px', 
+                        color: '#666',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <span>📅 {appointmentDate}</span>
+                        <span style={{ color: '#999' }}>
+                          ID: {appointment.id.substring(0, 8)}...
+                        </span>
                       </div>
                     </div>
                   </Select.Option>
