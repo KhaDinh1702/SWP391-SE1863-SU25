@@ -56,6 +56,7 @@ const TreatmentProtocol = () => {
 
       const mappedArvData = arvData.map(p => ({ ...p, id: p.protocolId }));
       setArvProtocols(mappedArvData);
+      console.log('ARV Protocols after mapping:', mappedArvData); // Debug log
 
       const doctor = allDoctors.find(d => d.userId === userId);
       setCurrentDoctor(doctor);
@@ -80,11 +81,12 @@ const TreatmentProtocol = () => {
           arvProtocolName: arvProtocolName || 'Không rõ',
         };
       });
-      // Map patientName, startDate, endDate to each treatment stage (for display like above)
+      // Map patientName, startDate, endDate, and arvProtocolName to each treatment stage (for display like above)
       const stagesWithPatientName = stagesData.map(stage => {
         let patientName = '';
         let startDate = '';
         let endDate = '';
+        let arvProtocolName = '';
         // Try to get from protocol (by patientTreatmentProtocolId)
         if (stage.patientTreatmentProtocolId) {
           const protocol = protocolsWithPatientInfo.find(p => p.id === stage.patientTreatmentProtocolId);
@@ -92,6 +94,7 @@ const TreatmentProtocol = () => {
             if (protocol.patientName) patientName = protocol.patientName;
             if (protocol.startDate) startDate = protocol.startDate;
             if (protocol.endDate) endDate = protocol.endDate;
+            if (protocol.arvProtocolName) arvProtocolName = protocol.arvProtocolName;
           }
         }
         // Fallback to allPatients if not found
@@ -104,6 +107,7 @@ const TreatmentProtocol = () => {
           patientName: patientName || 'Không rõ',
           protocolStartDate: startDate || '',
           protocolEndDate: endDate || '',
+          arvProtocolName: arvProtocolName || 'Không rõ',
         };
       });
       setPatientProtocols(protocolsWithPatientInfo);
@@ -368,10 +372,18 @@ const TreatmentProtocol = () => {
       render: (text) => <strong>{text}</strong>,
     },
     {
-      title: 'ARV Protocol ID',
+      title: 'ARV Protocol ',
       dataIndex: 'arvProtocolId',
       key: 'arvProtocolId',
-      render: (id) => id ? id : <span style={{color: 'gray'}}>Không có ARV</span>,
+      render: (id, record) => {
+        // Tìm tên ARV protocol từ arvProtocols
+        const arv = arvProtocols.find(p => p.id === id);
+        return id ? (
+          <span>
+             {arv ? arv.protocolName : ''}
+          </span>
+        ) : <span style={{color: 'gray'}}>Không có ARV</span>;
+      },
     },
     {
       title: 'Ngày bắt đầu',
@@ -419,6 +431,12 @@ const TreatmentProtocol = () => {
       dataIndex: 'patientName',
       key: 'patientName',
       render: (text) => <strong>{text}</strong>,
+    },
+    {
+      title: 'ARV Protocol',
+      dataIndex: 'arvProtocolName',
+      key: 'arvProtocolName',
+      render: (text) => <span>{text}</span>,
     },
     {
       title: 'Tên giai đoạn',
@@ -825,14 +843,17 @@ const TreatmentProtocol = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="patientTreatmentProtocolId"
-                  label="Phác đồ điều trị"
-                  rules={[{ required: true, message: 'Vui lòng chọn phác đồ điều trị' }]}
+                  name="arvProtocolId"
+                  label="Phác đồ ARV"
+                  rules={[{ required: true, message: 'Vui lòng chọn phác đồ ARV' }]}
                 >
-                  <Select placeholder="Chọn phác đồ điều trị">
-                    {patientProtocols.map(protocol => (
-                      <Option key={protocol.id} value={protocol.id}>
-                        {protocol.id} - {protocol.patientName}
+                  <Select placeholder="Chọn phác đồ ARV">
+                    {arvProtocols.filter(p => p.id).map(p => (
+                      <Option key={p.id} value={p.id}>
+                        <div>
+                          <strong>{p.protocolName}</strong>
+                          {p.description && <span style={{ color: '#888', marginLeft: 8 }}>- {p.description}</span>}
+                        </div>
                       </Option>
                     ))}
                   </Select>
@@ -840,14 +861,20 @@ const TreatmentProtocol = () => {
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="status"
-                  label="Trạng thái"
-                  rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+                  name="patientTreatmentProtocolId"
+                  label="Phác đồ điều trị"
+                  rules={[{ required: true, message: 'Vui lòng chọn phác đồ điều trị' }]}
                 >
-                  <Select placeholder="Chọn trạng thái">
-                    <Option value="Active">Đang điều trị</Option>
-                    <Option value="Completed">Hoàn thành</Option>
-                    <Option value="Discontinued">Dừng điều trị</Option>
+                  <Select placeholder="Chọn phác đồ điều trị">
+                    {patientProtocols.map(protocol => {
+                      // Lấy 3 số đầu của id phác đồ (UUID)
+                      const shortId = protocol.id ? protocol.id.substring(0, 4) : '';
+                      return (
+                        <Option key={protocol.id} value={protocol.id}>
+                          {shortId} - {protocol.patientName}
+                        </Option>
+                      );
+                    })}
                   </Select>
                 </Form.Item>
               </Col>

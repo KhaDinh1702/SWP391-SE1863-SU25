@@ -56,9 +56,10 @@ export const labResultService = {
       if (labResultData.Conclusion) formData.append('Conclusion', labResultData.Conclusion);
       if (labResultData.Notes) formData.append('Notes', labResultData.Notes);
       // TODO: handle LabPictures if needed
-      if (labResultData.LabPictures && Array.isArray(labResultData.LabPictures)) {
-        labResultData.LabPictures.forEach((file) => {
-          if (file) formData.append('LabPictures', file);
+      // Đổi tên trường file cho đúng chuẩn backend
+      if (labResultData.LabResultPictures && Array.isArray(labResultData.LabResultPictures)) {
+        labResultData.LabResultPictures.forEach((file) => {
+          if (file) formData.append('LabResultPictures', file);
         });
       }
       const response = await fetch(`${API_BASE_URL}/LabResult/create-lab-result`, {

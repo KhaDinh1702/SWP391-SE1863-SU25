@@ -92,6 +92,7 @@ const LabResults = () => {
     }
   };
 
+  // Sửa lại hàm handleCreateResult để lấy file đúng chuẩn cho FormData
   const handleCreateResult = async (values) => {
     try {
       // Kiểm tra nếu chọn cả treatmentStageId thì doctorId phải khớp
@@ -103,7 +104,7 @@ const LabResults = () => {
         }
       }
 
-      // Chuyển đổi dữ liệu theo đúng format của CreateLabResultRequest (PascalCase)
+      // Chuẩn hóa dữ liệu gửi lên
       const requestData = {
         PatientId: values.patientId,
         TreatmentStageId: values.treatmentStageId || null,
@@ -115,6 +116,12 @@ const LabResults = () => {
         Conclusion: values.conclusion || '',
         Notes: values.notes || ''
       };
+
+      // Lấy file từ input (nếu có)
+      const fileInput = document.querySelector('input[type="file"][name="labPictures"]');
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        requestData.LabResultPictures = Array.from(fileInput.files);
+      }
 
       console.log('Creating lab result with data:', requestData);
       await labResultService.createLabResult(requestData);
@@ -356,6 +363,22 @@ const LabResults = () => {
                 <p><strong>Ngày xét nghiệm:</strong> <span style={{ fontSize: 17 }}>{selectedResult.testDate ? new Date(selectedResult.testDate).toLocaleDateString('vi-VN') : '-'}</span></p>
               </Col>
             </Row>
+
+            {selectedResult.LabPictures && selectedResult.LabPictures.length > 0 && (
+              <div>
+                <strong>Hình ảnh xét nghiệm:</strong>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+                  {selectedResult.LabPictures.map(pic => (
+                    <img
+                      key={pic.id || pic.labPictureId}
+                      src={pic.labPictureUrl}
+                      alt={pic.labPictureName}
+                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <Form
@@ -418,6 +441,18 @@ const LabResults = () => {
                   rules={[{ required: true, message: 'Vui lòng chọn ngày xét nghiệm' }]}
                 >
                   <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            {/* Thêm upload hình ảnh lab */}
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="labPictures"
+                  label="Hình ảnh xét nghiệm (tùy chọn)"
+                >
+                  <input type="file" name="labPictures" multiple accept="image/*" />
                 </Form.Item>
               </Col>
             </Row>

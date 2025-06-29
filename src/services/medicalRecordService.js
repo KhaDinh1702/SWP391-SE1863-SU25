@@ -55,6 +55,7 @@ export const medicalRecordService = {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
+          // KHÔNG thêm 'Content-Type' ở đây!
         },
         body: formData
       });
@@ -100,4 +101,4 @@ export const medicalRecordService = {
       throw error;
     }
   }
-}; 
+};

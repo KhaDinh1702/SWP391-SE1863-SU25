@@ -1,19 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Table, Spin, Alert, Typography, Avatar, Input } from 'antd';
+import { Table, Spin, Alert, Typography, Avatar, Input, Modal, Button, Form, DatePicker, Select, message, Space, Input as AntInput } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../../services/appointmentService';
 import { doctorService } from '../../../services/doctorService';
 import { patientService } from '../../../services/patientService';
+import { medicalRecordService } from '../../../services/medicalRecordService';
+import { treatmentStageService } from '../../../services/treatmentStageService';
+import { authService } from '../../../services/authService';
 import moment from 'moment';
 
 const { Title } = Typography;
 const { Search } = Input;
+const { Option } = Select;
+const { TextArea } = AntInput;
 
 const PatientProfiles = () => {
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [createForm] = Form.useForm();
+  const [createLoading, setCreateLoading] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [treatmentStages, setTreatmentStages] = useState([]);
+  const [loadingTreatmentStages, setLoadingTreatmentStages] = useState(false);
+  const [medicalRecords, setMedicalRecords] = useState([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [allDoctors, setAllDoctors] = useState([]);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -145,6 +159,73 @@ const PatientProfiles = () => {
     fetchPatientData();
   }, []);
 
+  useEffect(() => {
+    fetchTreatmentStages();
+  }, []);
+
+  useEffect(() => {
+    fetchMedicalRecords();
+  }, []);
+
+  const fetchTreatmentStages = async () => {
+    setLoadingTreatmentStages(true);
+    try {
+      const data = await treatmentStageService.getAllTreatmentStages();
+      setTreatmentStages(data);
+    } catch (error) {
+      message.error('Không thể tải danh sách giai đoạn điều trị');
+    } finally {
+      setLoadingTreatmentStages(false);
+    }
+  };
+
+  const fetchMedicalRecords = async () => {
+    setLoadingRecords(true);
+    try {
+      const data = await medicalRecordService.getAllMedicalRecords();
+      console.log('API response medical records:', data); // Log dữ liệu thực tế từ backend
+      setMedicalRecords(data);
+    } catch (error) {
+      message.error('Không thể tải danh sách hồ sơ bệnh án');
+    } finally {
+      setLoadingRecords(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setSelectedPatient(null);
+    setIsCreateModalVisible(true);
+    createForm.resetFields();
+  };
+
+  const handleCreateRecord = async (values) => {
+    setCreateLoading(true);
+    try {
+      const currentUser = authService.getCurrentUser();
+      const doctorId = currentUser?.doctorId || currentUser?.id;
+      const formData = new FormData();
+      formData.append('PatientId', values.patientId);
+      formData.append('DoctorId', doctorId);
+      formData.append('TreatmentStageId', values.treatmentStageId);
+      if (values.examinationDate) {
+        formData.append('ExaminationDate', values.examinationDate.toISOString());
+      }
+      formData.append('Diagnosis', values.diagnosis);
+      formData.append('Symptoms', values.symptoms);
+      formData.append('Prescription', values.prescription);
+      formData.append('Notes', values.notes);
+      await medicalRecordService.createMedicalRecord(formData);
+      message.success('Tạo hồ sơ bệnh án thành công!');
+      createForm.resetFields();
+      setIsCreateModalVisible(false);
+      fetchMedicalRecords(); // Refresh medical records list
+    } catch (error) {
+      message.error('Không thể tạo hồ sơ bệnh án: ' + (error.message || 'Lỗi không xác định'));
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const handleSearch = (value) => {
     const lowercasedValue = value.toLowerCase();
     const filtered = patients.filter(p => 
@@ -220,33 +301,224 @@ const PatientProfiles = () => {
         const contactPhone = text || record.ContactPersonPhone;
         return contactPhone || 'N/A';
       },
-    }
+    },
+  ];
+
+  const medicalRecordColumns = [
+    {
+      title: 'Bệnh nhân',
+      dataIndex: 'patientId',
+      key: 'patientId',
+      render: (patientId) => {
+        const patient = patients.find(p => (p.id || p.Id) === patientId);
+        return patient ? (patient.fullName || patient.FullName) : 'N/A';
+      },
+    },
+    {
+      title: 'Ngày khám',
+      dataIndex: 'examinationDate',
+      key: 'examinationDate',
+      render: (date, record) => {
+        const d = date || record.ExaminationDate;
+        return d ? moment(d).format('DD/MM/YYYY') : '-';
+      },
+    },
+    {
+      title: 'Chẩn đoán',
+      dataIndex: 'diagnosis',
+      key: 'diagnosis',
+      render: (text, record) => text || record.Diagnosis || '-',
+    },
+    {
+      title: 'Triệu chứng',
+      dataIndex: 'symptoms',
+      key: 'symptoms',
+      render: (text, record) => text || record.Symptoms || '-',
+    },
   ];
 
   return (
     <div>
-        <Title level={4}>Danh sách Bệnh nhân</Title>
+      <Title level={4}>Danh sách Bệnh nhân</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Search
-            placeholder="Tìm kiếm bệnh nhân theo tên, địa chỉ hoặc người liên hệ"
-            onSearch={handleSearch}
-            onChange={(e) => handleSearch(e.target.value)}
-            style={{ marginBottom: 16, maxWidth: 400 }}
-            enterButton
+          placeholder="Tìm kiếm bệnh nhân theo tên, địa chỉ hoặc người liên hệ"
+          onSearch={handleSearch}
+          onChange={(e) => handleSearch(e.target.value)}
+          style={{ maxWidth: 400 }}
+          enterButton
         />
-        {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-        <Spin spinning={loading}>
-            <Table
-                columns={columns}
-                dataSource={filteredPatients}
-                rowKey={(record) => record.id || record.Id || Math.random()}
-                pagination={{ pageSize: 10 }}
-                locale={{
-                  emptyText: 'Không có bệnh nhân nào'
-                }}
+        <Button type="primary" onClick={handleOpenCreateModal}>
+          Tạo hồ sơ bệnh án
+        </Button>
+      </div>
+      {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
+      <Spin spinning={loading}>
+        <Table
+          columns={columns}
+          dataSource={filteredPatients}
+          rowKey={(record) => record.id || record.Id || Math.random()}
+          pagination={{ pageSize: 10 }}
+          locale={{
+            emptyText: 'Không có bệnh nhân nào'
+          }}
+        />
+      </Spin>
+      <Modal
+        title={<span>Tạo hồ sơ bệnh án mới</span>}
+        open={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        footer={null}
+        width={900}
+        destroyOnClose={true}
+      >
+        <Form
+          form={createForm}
+          layout="vertical"
+          onFinish={handleCreateRecord}
+          autoComplete="off"
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <Form.Item
+              label="Bệnh nhân"
+              name="patientId"
+              rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân!' }]}
+            >
+              <Select
+                placeholder="Chọn bệnh nhân"
+                showSearch
+                filterOption={(input, option) =>
+                  option?.children?.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {patients.map((patient) => (
+                  <Option
+                    key={patient.id || patient.Id}
+                    value={patient.id || patient.Id}
+                  >
+                    {patient.fullName || patient.FullName} - {patient.phoneNumber || patient.PhoneNumber}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="Giai đoạn điều trị"
+              name="treatmentStageId"
+              rules={[{ required: true, message: 'Vui lòng chọn giai đoạn điều trị!' }]}
+            >
+              <Select
+                placeholder="Chọn giai đoạn điều trị"
+                loading={loadingTreatmentStages}
+              >
+                {treatmentStages.map((stage) => (
+                  <Option
+                    key={stage.id || stage.Id}
+                    value={stage.id || stage.Id}
+                  >
+                    {stage.stageName || stage.StageName || `Giai đoạn ${stage.stageOrder || stage.StageOrder || ''}`}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="Ngày khám"
+              name="examinationDate"
+              rules={[{ required: true, message: 'Vui lòng chọn ngày khám!' }]}
+            >
+              <DatePicker
+                style={{ width: '100%' }}
+                format="DD/MM/YYYY"
+                placeholder="Chọn ngày khám"
+              />
+            </Form.Item>
+          </div>
+          <Form.Item
+            label="Triệu chứng"
+            name="symptoms"
+            rules={[
+              { required: true, message: 'Vui lòng nhập triệu chứng!' },
+              { min: 10, message: 'Triệu chứng phải có ít nhất 10 ký tự!' }
+            ]}
+          >
+            <TextArea
+              rows={3}
+              placeholder="Mô tả chi tiết triệu chứng của bệnh nhân..."
+              showCount
+              maxLength={1000}
             />
+          </Form.Item>
+          <Form.Item
+            label="Chẩn đoán"
+            name="diagnosis"
+            rules={[
+              { required: true, message: 'Vui lòng nhập chẩn đoán!' },
+              { min: 5, message: 'Chẩn đoán phải có ít nhất 5 ký tự!' }
+            ]}
+          >
+            <TextArea
+              rows={3}
+              placeholder="Nhập chẩn đoán bệnh chi tiết..."
+              showCount
+              maxLength={1000}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Đơn thuốc"
+            name="prescription"
+            rules={[
+              { min: 5, message: 'Đơn thuốc phải có ít nhất 5 ký tự!' }
+            ]}
+          >
+            <TextArea
+              rows={4}
+              placeholder="Nhập đơn thuốc và hướng dẫn sử dụng (tùy chọn)..."
+              showCount
+              maxLength={2000}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Ghi chú"
+            name="notes"
+          >
+            <TextArea
+              rows={3}
+              placeholder="Ghi chú thêm về tình trạng bệnh nhân (tùy chọn)..."
+              showCount
+              maxLength={1000}
+            />
+          </Form.Item>
+          <div style={{ textAlign: 'right', marginTop: 24, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+            <Space>
+              <Button onClick={() => setIsCreateModalVisible(false)} size="large">
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={createLoading}
+                size="large"
+                style={{ minWidth: '120px' }}
+              >
+                {createLoading ? 'Đang tạo...' : 'Tạo hồ sơ bệnh án'}
+              </Button>
+            </Space>
+          </div>
+        </Form>
+      </Modal>
+      <div style={{ marginTop: 40 }}>
+        <Title level={4}>Danh sách Hồ sơ bệnh án</Title>
+        <Spin spinning={loadingRecords}>
+          <Table
+            columns={medicalRecordColumns}
+            dataSource={medicalRecords}
+            rowKey={record => record.id || record.Id || Math.random()}
+            pagination={{ pageSize: 10 }}
+            locale={{ emptyText: 'Không có hồ sơ bệnh án nào' }}
+          />
         </Spin>
+      </div>
     </div>
   );
 };
 
-export default PatientProfiles; 
+export default PatientProfiles;
