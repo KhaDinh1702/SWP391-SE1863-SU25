@@ -132,82 +132,44 @@ const DoctorSchedule = () => {
     fetchSchedules();
   };
 
-  // Tạo khung giờ từ 8:00 đến 17:00 với khoảng cách 30 phút
+  // Tạo khung giờ cố định: 8:00, 10:00, 12:00, 14:00, 16:00, mỗi khung 1 tiếng 30 phút
+  const FIXED_TIME_SLOTS = [
+    { hour: 8, minute: 0 },
+    { hour: 10, minute: 0 },
+    { hour: 12, minute: 0 },
+    { hour: 14, minute: 0 },
+    { hour: 16, minute: 0 },
+  ];
+
+  // Tạo khung giờ từ các mốc cố định, mỗi khung 1 tiếng 30 phút
   const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 8; hour < 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const endHour = minute === 30 ? hour + 1 : hour;
-        const endMinute = minute === 30 ? 0 : minute + 30;
-        const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-        slots.push({
-          time: timeStr,
-          timeRange: `${timeStr} - ${endTimeStr}`,
-          hour,
-          minute
-        });
-      }
-    }
-    return slots;
-  };
-
-  // Lấy thông tin appointment thực tế từ appointmentId
-  const getAppointmentInfo = (appointmentId) => {
-    if (!appointmentId || !appointments.length) return null;
-    
-    const appointment = appointments.find(apt => apt.id === appointmentId);
-    if (!appointment) return null;
-    
-    const startDate = appointment.appointmentStartDate || 
-                     appointment.AppointmentStartDate || 
-                     appointment.appointmentDate;
-    
-    if (!startDate) return null;
-    
-    return {
-      id: appointment.id,
-      startTime: moment(startDate),
-      patientName: appointment.patientName || appointment.PatientName || 'Bệnh nhân',
-      title: appointment.appointmentTitle || appointment.AppointmentTitle || 'Khám bệnh'
-    };
-  };
-
-  // Kiểm tra xem có lịch làm việc trong khung giờ cụ thể không
-  const getSchedulesForTimeSlot = (day, hour, minute) => {
-    const matchingSchedules = allSchedules.filter(schedule => {
-      const scheduleDate = moment(schedule.startTime);
-      const scheduleEndTime = moment(schedule.endTime);
-      
-      // Kiểm tra ngày
-      if (!scheduleDate.isSame(day, 'day')) {
-        return false;
-      }
-      
-      // Convert thời gian thành phút để so sánh dễ dàng
-      const slotStartMinutes = hour * 60 + minute;
-      const slotEndMinutes = hour * 60 + minute + 30; // Mỗi slot 30 phút
-      
-      const scheduleStartMinutes = scheduleDate.hour() * 60 + scheduleDate.minute();
-      const scheduleEndMinutes = scheduleEndTime.hour() * 60 + scheduleEndTime.minute();
-      
-      // Kiểm tra xem slot có overlap với schedule không
-      const hasOverlap = slotStartMinutes < scheduleEndMinutes && slotEndMinutes > scheduleStartMinutes;
-      
-      if (hasOverlap) {
-        console.log(`Found schedule overlap for ${day.format('DD/MM/YYYY')} ${hour}:${minute.toString().padStart(2, '0')}:`, {
-          scheduleId: schedule.originalId || schedule.id,
-          scheduleStart: scheduleDate.format('HH:mm'),
-          scheduleEnd: scheduleEndTime.format('HH:mm'),
-          isAvailable: schedule.isAvailable,
-          appointmentId: schedule.appointmentId
-        });
-      }
-      
-      return hasOverlap;
+    return FIXED_TIME_SLOTS.map(slot => {
+      const start = moment({ hour: slot.hour, minute: slot.minute });
+      const end = start.clone().add(1, 'hour').add(30, 'minutes');
+      return {
+        time: start.format('HH:mm'),
+        timeRange: `${start.format('HH:mm')} - ${end.format('HH:mm')}`,
+        hour: slot.hour,
+        minute: slot.minute,
+        endHour: end.hour(),
+        endMinute: end.minute(),
+      };
     });
-    
-    return matchingSchedules;
+  };
+
+  // Lấy các schedule trùng với khung giờ cố định (1 tiếng 30 phút)
+  const getSchedulesForTimeSlot = (day, hour, minute) => {
+    const slotStart = day.clone().set({ hour, minute, second: 0, millisecond: 0 });
+    const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
+    return allSchedules.filter(schedule => {
+      const scheduleStart = moment(schedule.startTime);
+      const scheduleEnd = moment(schedule.endTime);
+      // Kiểm tra overlap giữa slot và schedule
+      return (
+        scheduleStart.isBefore(slotEnd) && scheduleEnd.isAfter(slotStart) &&
+        scheduleStart.isSame(day, 'day')
+      );
+    });
   };
 
   // Legacy function for backward compatibility
@@ -251,7 +213,22 @@ const DoctorSchedule = () => {
         align: 'center',
         render: (_, record) => {
           const schedules = getSchedulesForTimeSlot(day, record.hour, record.minute);
-          if (schedules.length === 0) {
+          // Tìm appointment thực sự nằm trong khung giờ này
+          let appointmentInfo = null;
+          if (appointments.length > 0) {
+            appointmentInfo = appointments.find(apt => {
+              const startDate = apt.appointmentStartDate || apt.AppointmentStartDate || apt.appointmentDate;
+              if (!startDate) return false;
+              const aptMoment = moment(startDate);
+              // So khớp ngày
+              if (!aptMoment.isSame(day, 'day')) return false;
+              // So khớp giờ trong khung 1h30
+              const slotStart = day.clone().set({ hour: record.hour, minute: record.minute, second: 0, millisecond: 0 });
+              const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
+              return aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
+            });
+          }
+          if (schedules.length === 0 && !appointmentInfo) {
             return (
               <div style={{ 
                 padding: '4px',
@@ -268,7 +245,37 @@ const DoctorSchedule = () => {
             );
           }
 
-          // If only one schedule, use the original display logic
+          // Nếu có appointment trong slot này, ưu tiên hiển thị appointment
+          if (appointmentInfo) {
+            const aptMoment = moment(appointmentInfo.appointmentStartDate || appointmentInfo.AppointmentStartDate || appointmentInfo.appointmentDate);
+            return (
+              <div style={{
+                padding: '4px 6px',
+                borderRadius: '4px',
+                backgroundColor: '#fffbe6',
+                border: '1px solid #ffe58f',
+                fontSize: '11px',
+                textAlign: 'center',
+                minHeight: '30px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                color: '#d48806',
+                fontWeight: 'bold'
+              }}
+                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${appointmentInfo.patientName || appointmentInfo.PatientName || appointmentInfo.patient?.name || appointmentInfo.patient?.fullName || appointmentInfo.patientId || 'Bệnh nhân'} lúc ${aptMoment.format('HH:mm')}`}
+              >
+                <span>📅 {aptMoment.format('HH:mm')}</span>
+                <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'}</span>
+                <span style={{ color: '#722ed1', fontWeight: 600, fontSize: '12px', marginTop: 2 }}>
+                  {appointmentInfo.isAnonymous || appointmentInfo.anonymous ? 'Ẩn danh'
+                    : (appointmentInfo.patientName || appointmentInfo.PatientName || appointmentInfo.patient?.name || appointmentInfo.patient?.fullName || appointmentInfo.patientId || 'Bệnh nhân')}
+                </span>
+              </div>
+            );
+          }
+
+          // Nếu chỉ có một lịch trình, sử dụng logic hiển thị gốc
           if (schedules.length === 1) {
             const schedule = schedules[0];
             const appointmentInfo = schedule.appointmentId ? getAppointmentInfo(schedule.appointmentId) : null;
@@ -492,4 +499,4 @@ const DoctorSchedule = () => {
   );
 };
 
-export default DoctorSchedule; 
+export default DoctorSchedule;

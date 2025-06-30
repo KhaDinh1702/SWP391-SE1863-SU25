@@ -302,10 +302,20 @@ const PatientAppointmentForm = ({ patientId }) => {
     console.log('Selected date and time:', formData.appointmentDate, formData.appointmentTime);
     console.log('Appointment DateTime (local):', appointmentDateTime);
     
+    // Tính toán appointmentEndDate - mỗi cuộc hẹn kéo dài 1 tiếng 30 phút
+    const endDateTime = new Date(appointmentDateTime);
+    endDateTime.setMinutes(endDateTime.getMinutes() + 90); // Thêm 90 phút (1 tiếng 30)
+    
+    const appointmentEndDate = `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')}T${String(endDateTime.getHours()).padStart(2, '0')}:${String(endDateTime.getMinutes()).padStart(2, '0')}:00`;
+    
+    console.log('Appointment Start DateTime:', `${formData.appointmentDate}T${formData.appointmentTime}:00`);
+    console.log('Appointment End DateTime:', appointmentEndDate);
+    
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
       appointmentStartDate: `${formData.appointmentDate}T${formData.appointmentTime}:00`, // Gửi format YYYY-MM-DDTHH:MM:SS without timezone
+      appointmentEndDate: appointmentEndDate, // Thêm appointmentEndDate
       appointmentType: parseInt(formData.appointmentType),
       notes: formData.reason,
       isAnonymousAppointment: formData.isAnonymousAppointment,
