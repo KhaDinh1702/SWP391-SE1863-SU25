@@ -121,6 +121,8 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
         { text: 'Patient', value: 0 },
       ],
       onFilter: (value, record) => record.role === value,
+      sorter: (a, b) => a.role - b.role,
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Trạng thái',
@@ -155,12 +157,15 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
             onClick={() => setViewingUser(record)}
             size="small"
           />
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            size="small"
-          />
-          {record.isActive && (
+          {/* Chỉ cho phép edit nếu không phải admin khác, hoặc là chính mình */}
+          {(record.role !== 4 || record.username === localStorage.getItem('username')) && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              size="small"
+            />
+          )}
+          {record.isActive && record.username !== localStorage.getItem('username') && record.role !== 4 && (
             <Popconfirm
               title="Vô hiệu hóa người dùng này?"
               onConfirm={() => onDeactivateUser(record.id)}
@@ -263,7 +268,16 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
             <Descriptions bordered column={2}>
               <Descriptions.Item label="ID" span={2}>{viewingUser.id}</Descriptions.Item>
               <Descriptions.Item label="Tên đăng nhập">{viewingUser.username}</Descriptions.Item>
-              <Descriptions.Item label="Họ tên">{viewingUser.fullName}</Descriptions.Item>
+              <Descriptions.Item label="Họ tên">
+                {viewingUser.fullName ||
+                 viewingUser.patient?.fullName ||
+                 viewingUser.doctor?.fullName ||
+                 viewingUser.patient?.name ||
+                 viewingUser.doctor?.name ||
+                 viewingUser.name ||
+                 viewingUser.username ||
+                 'Chưa cập nhật'}
+              </Descriptions.Item>
               <Descriptions.Item label="Email">{viewingUser.email}</Descriptions.Item>
               <Descriptions.Item label="Số điện thoại">{viewingUser.phoneNumber}</Descriptions.Item>
               <Descriptions.Item label="Địa chỉ" span={2}>{viewingUser.address || 'Chưa cập nhật'}</Descriptions.Item>
