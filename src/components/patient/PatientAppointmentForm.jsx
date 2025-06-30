@@ -8,9 +8,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { API_BASE_URL, getAuthHeaders } from "../../services/config";
 
 const PatientAppointmentForm = ({ patientId }) => {
-  // Add debug log
-  console.log('PatientAppointmentForm - patientId:', patientId);
-
   // Helper function để tạo datetime với timezone Việt Nam
   const createAppointmentDateTime = (dateStr, timeStr) => {
     const [year, month, day] = dateStr.split('-');
@@ -36,32 +33,98 @@ const PatientAppointmentForm = ({ patientId }) => {
     return today.toISOString().split('T')[0];
   };
 
-  // Tạo danh sách time slots từ 8:00 đến 16:30, mỗi slot cách nhau 30 phút
+  // Tạo danh sách time slots từ 8:00 đến 16:00, mỗi slot cách nhau 2 tiếng
   const generateTimeSlots = () => {
     const slots = [];
     const startHour = 8;
     const endHour = 16;
-    const endMinute = 30;
     
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        // Dừng lại ở 16:30
-        if (hour === endHour && minute > endMinute) break;
-        
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const displayTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
-        slots.push({
-          value: timeString,
-          label: displayTime,
-          display: hour < 12 ? `${displayTime} SA` : `${displayTime} CH`
-        });
-      }
+    // Tạo các khung giờ cách nhau 2 tiếng: 8:00, 10:00, 12:00, 14:00, 16:00
+    for (let hour = startHour; hour <= endHour; hour += 2) {
+      const timeString = `${hour.toString().padStart(2, '0')}:00`;
+      const displayTime = `${hour.toString().padStart(2, '0')}:00`;
+      
+      slots.push({
+        value: timeString,
+        label: displayTime,
+        display: hour < 12 ? `${displayTime} SA` : `${displayTime} CH`
+      });
     }
     return slots;
   };
 
   const timeSlots = generateTimeSlots();
+
+  // Validation functions
+  const isTimeSlotAvailable = (selectedDate, selectedTime) => {
+    const selectedDateTime = createAppointmentDateTime(selectedDate, selectedTime);
+    const now = new Date();
+    
+    // Kiểm tra không được đặt lịch sát giờ hiện tại (tối thiểu 1 giờ trước)
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+    if (selectedDateTime < oneHourFromNow) {
+      return {
+        isValid: false,
+        message: "Bạn phải đặt lịch hẹn trước ít nhất 1 giờ so với thời gian hiện tại."
+      };
+    }
+
+    // Kiểm tra các cuộc hẹn đã có
+    for (const appointment of existingAppointments) {
+      // Chỉ kiểm tra các cuộc hẹn đang hoạt động (chưa bị hủy)
+      if (appointment.status === 2) continue; // 2 = Cancelled
+      
+      const existingDateTime = new Date(appointment.appointmentStartDate);
+      
+      // Kiểm tra bằng timestamp để chắc chắn
+      const selectedTimestamp = selectedDateTime.getTime();
+      const existingTimestamp = existingDateTime.getTime();
+      const timeDiffMinutes = Math.abs(selectedTimestamp - existingTimestamp) / (1000 * 60);
+      
+      // Nếu thời gian chênh lệch ít hơn 30 phút thì coi như cùng khung giờ
+      if (timeDiffMinutes < 30) {
+        return {
+          isValid: false,
+          message: `Khung giờ ${selectedTime} ngày ${new Date(selectedDate).toLocaleDateString('vi-VN')} đã được đặt lịch. Vui lòng chọn khung giờ khác.`
+        };
+      }
+      
+      // Kiểm tra khoảng cách 2 tiếng với các cuộc hẹn khác
+      const timeDifference = Math.abs(selectedDateTime - existingDateTime);
+      const hoursDifference = timeDifference / (1000 * 60 * 60);
+      
+      if (hoursDifference < 2 && hoursDifference > 0) {
+        const existingTimeStr = existingDateTime.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return {
+          isValid: false,
+          message: `Bạn đã có lịch hẹn vào ${existingTimeStr}. Các lịch hẹn phải cách nhau ít nhất 2 tiếng.`
+        };
+      }
+    }
+
+    return { isValid: true };
+  };
+
+  // Filter available time slots based on validation
+  const getAvailableTimeSlots = () => {
+    if (!formData.appointmentDate) return timeSlots;
+    
+    return timeSlots.map(slot => {
+      const validation = isTimeSlotAvailable(formData.appointmentDate, slot.value);
+      
+      return {
+        ...slot,
+        isDisabled: !validation.isValid,
+        disabledReason: validation.message
+      };
+    });
+  };
 
   const [formData, setFormData] = useState({
     doctorId: "",
@@ -76,6 +139,8 @@ const PatientAppointmentForm = ({ patientId }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [payUrl, setPayUrl] = useState(null);
+  const [existingAppointments, setExistingAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const navigate = useNavigate();
 
   // Add validation for patientId
@@ -85,7 +150,51 @@ const PatientAppointmentForm = ({ patientId }) => {
       alert('Không tìm thấy thông tin bệnh nhân. Vui lòng đăng nhập lại.');
       return;
     }
+    
+    // Fetch existing appointments for validation
+    const fetchExistingAppointments = async () => {
+      setLoadingAppointments(true);
+      try {
+        // Use get-paid-appointments endpoint and filter by patientId
+        const allAppointments = await appointmentService.getAllAppointments();
+        
+        // Filter appointments for this patient
+        const patientAppointments = allAppointments.filter(app => app.patientId === patientId);
+        
+        setExistingAppointments(patientAppointments || []);
+      } catch (error) {
+        console.error("Error fetching existing appointments:", error);
+        // Set empty array if method fails
+        setExistingAppointments([]);
+      } finally {
+        setLoadingAppointments(false);
+      }
+    };
+
+    fetchExistingAppointments();
   }, [patientId]);
+
+  // Function to refresh appointments data
+  const refreshAppointments = async () => {
+    if (!patientId) return;
+    
+    setLoadingAppointments(true);
+    try {
+      // Use get-paid-appointments endpoint and filter by patientId
+      const allAppointments = await appointmentService.getAllAppointments();
+      
+      // Filter appointments for this patient
+      const patientAppointments = allAppointments.filter(app => app.patientId === patientId);
+      
+      setExistingAppointments(patientAppointments || []);
+    } catch (error) {
+      console.error("Error refreshing appointments:", error);
+      // Set empty array if method fails
+      setExistingAppointments([]);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
 
   // Fetch danh sách bác sĩ từ API
   useEffect(() => {
@@ -114,6 +223,17 @@ const PatientAppointmentForm = ({ patientId }) => {
         alert("Không thể chọn ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi.");
         return; // Không cập nhật state nếu ngày không hợp lệ
       }
+      
+      // Reset thời gian khi thay đổi ngày để buộc người dùng chọn lại
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        appointmentTime: "", // Reset time selection
+      }));
+      
+      // Refresh appointments data để có thông tin mới nhất
+      refreshAppointments();
+      return;
     }
     
     setFormData((prev) => ({
@@ -124,6 +244,17 @@ const PatientAppointmentForm = ({ patientId }) => {
 
   // Hàm riêng để xử lý chọn time slot
   const handleTimeSlotSelect = (timeValue) => {
+    if (!formData.appointmentDate) {
+      alert("Vui lòng chọn ngày trước khi chọn giờ.");
+      return;
+    }
+
+    const validation = isTimeSlotAvailable(formData.appointmentDate, timeValue);
+    if (!validation.isValid) {
+      alert(validation.message);
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       appointmentTime: timeValue,
@@ -148,6 +279,14 @@ const PatientAppointmentForm = ({ patientId }) => {
     // Tạo datetime sử dụng helper function
     const appointmentDateTime = createAppointmentDateTime(formData.appointmentDate, formData.appointmentTime);
     
+    // Validation cuối cùng trước khi gửi
+    const finalValidation = isTimeSlotAvailable(formData.appointmentDate, formData.appointmentTime);
+    if (!finalValidation.isValid) {
+      alert(finalValidation.message);
+      setLoading(false);
+      return;
+    }
+    
     // Kiểm tra ngày không được trong quá khứ (so sánh từ đầu ngày)
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset giờ về 00:00:00
@@ -160,27 +299,9 @@ const PatientAppointmentForm = ({ patientId }) => {
       return;
     }
     
-    // Kiểm tra thời gian không được trong quá khứ (cho ngày hôm nay)
-    if (appointmentDateTime < new Date()) {
-      alert("Không thể đặt lịch hẹn trong quá khứ");
-      setLoading(false);
-      return;
-    }
-    
     console.log('Selected date and time:', formData.appointmentDate, formData.appointmentTime);
     console.log('Appointment DateTime (local):', appointmentDateTime);
-    console.log('Local time string:', appointmentDateTime.toString());
-    console.log('Appointment DateTime (ISO):', appointmentDateTime.toISOString());
-    console.log('Local offset minutes:', appointmentDateTime.getTimezoneOffset());
     
-    // Hiển thị thông tin debug cho user
-    const debugInfo = `
-Thời gian bạn chọn: ${formData.appointmentTime} ngày ${formData.appointmentDate}
-Thời gian local: ${appointmentDateTime.toString()}
-Thời gian sẽ gửi lên server (ISO): ${appointmentDateTime.toISOString()}
-Múi giờ offset: ${appointmentDateTime.getTimezoneOffset()} phút
-    `;
-    console.log('Debug info:', debugInfo);
     const requestPayload = {
       patientId: patientId,
       doctorId: formData.doctorId || null,
@@ -194,10 +315,9 @@ Múi giờ offset: ${appointmentDateTime.getTimezoneOffset()} phút
       paymentMethod: 'momo',
     };
     
-    console.log('Request payload with local datetime:', requestPayload);
+    console.log('Request payload:', requestPayload);
     try {
       const res = await appointmentService.createAppointmentWithMomo(requestPayload);
-      console.log("MoMo response:", res); // Debug log
       // Lấy link từ cả PaymentRedirectUrl (chữ hoa) và paymentRedirectUrl (chữ thường)
       const momoUrl = res?.PaymentRedirectUrl || res?.paymentRedirectUrl;
       if (momoUrl && typeof momoUrl === "string" && momoUrl.startsWith("http")) {
@@ -349,34 +469,61 @@ Múi giờ offset: ${appointmentDateTime.getTimezoneOffset()} phút
               </div>
               {/* Appointment Time */}
               <div className="space-y-2">
-                <label className="flex items-center text-gray-700 font-medium">
-                  <FaClock className="mr-2 text-[#3B9AB8]" />
-                  Chọn giờ khám
-                </label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {timeSlots.map((slot) => (
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center text-gray-700 font-medium">
+                    <FaClock className="mr-2 text-[#3B9AB8]" />
+                    Chọn giờ khám
+                  </label>
+                  <button
+                    type="button"
+                    onClick={refreshAppointments}
+                    disabled={loadingAppointments}
+                    className="text-sm text-[#3B9AB8] hover:text-[#2d7a94] disabled:opacity-50"
+                  >
+                    🔄 Làm mới
+                  </button>
+                </div>
+                {loadingAppointments && (
+                  <div className="text-sm text-gray-500 flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3B9AB8] mr-2"></div>
+                    Đang kiểm tra lịch hẹn hiện có...
+                  </div>
+                )}
+                <div className="grid grid-cols-5 gap-3">
+                  {getAvailableTimeSlots().map((slot) => (
                     <button
                       key={slot.value}
                       type="button"
                       onClick={() => handleTimeSlotSelect(slot.value)}
-                      className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                        formData.appointmentTime === slot.value
+                      disabled={slot.isDisabled || loadingAppointments}
+                      title={slot.isDisabled ? slot.disabledReason : ''}
+                      className={`p-4 rounded-lg border-2 text-sm font-medium transition-all ${
+                        slot.isDisabled || loadingAppointments
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : formData.appointmentTime === slot.value
                           ? 'border-[#3B9AB8] bg-[#3B9AB8] text-white'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-[#3B9AB8] hover:bg-blue-50'
                       }`}
                     >
                       <div className="text-center">
-                        <div className="font-semibold">{slot.label}</div>
-                        <div className="text-xs opacity-75">
+                        <div className="font-semibold text-lg">{slot.label}</div>
+                        <div className="text-xs opacity-75 mt-1">
                           {slot.value < '12:00' ? 'Sáng' : 'Chiều'}
                         </div>
+                        {slot.isDisabled && (
+                          <div className="text-xs text-red-500 mt-1">
+                            Không khả dụng
+                          </div>
+                        )}
                       </div>
                     </button>
                   ))}
                 </div>
-                <p className="text-sm text-gray-500">
-                  🕐 Giờ làm việc: 8:00 sáng - 4:30 chiều
-                </p>
+                <div className="space-y-1 text-sm text-gray-500">
+                  <p>🕐 Giờ làm việc: 8:00 sáng - 5:00 chiều</p>
+                  <p>⏰ Phải đặt trước ít nhất 1 giờ</p>
+                  <p>📅 Các khung giờ cách nhau 2 tiếng: 8:00, 10:00, 12:00, 14:00, 16:00</p>
+                </div>
                 {formData.appointmentTime && (
                   <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
                     <p className="text-sm text-green-700">

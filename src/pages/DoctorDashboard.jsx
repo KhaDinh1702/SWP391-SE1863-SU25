@@ -12,7 +12,6 @@ import {
 } from '@ant-design/icons';
 import DoctorSidebar from '../components/doctor/DoctorSidebar';
 import DoctorSchedule from '../components/doctor/Schedule/DoctorSchedule';
-import DoctorAppointments from '../components/doctor/Appointments/DoctorAppointments';
 import PatientProfiles from '../components/doctor/Patient/PatientProfiles';
 import LabResults from '../components/doctor/Lab/LabResults';
 import MedicalHistory from '../components/doctor/History/MedicalHistory';
@@ -48,7 +47,6 @@ const DoctorDashboard = () => {
     switch (activeTab) {
       case 'dashboard': return 'Dashboard Tổng quan';
       case 'schedule': return 'Lịch làm việc';
-      case 'appointments': return 'Lịch hẹn';
       case 'patients': return 'Hồ sơ Bệnh nhân';
       case 'lab': return 'Xét nghiệm';
       case 'history': return 'Lịch sử khám';
@@ -63,7 +61,6 @@ const DoctorDashboard = () => {
     switch (activeTab) {
       case 'dashboard': return 'Tổng quan về hoạt động của bác sĩ';
       case 'schedule': return 'Xem lịch làm việc của bản thân';
-      case 'appointments': return 'Kiểm tra các lịch hẹn đã được đặt với mình';
       case 'patients': return 'Xem thông tin chi tiết về bệnh nhân';
       case 'lab': return 'Xem kết quả xét nghiệm của bệnh nhân';
       case 'history': return 'Xem lại lịch sử điều trị của bệnh nhân';
@@ -257,7 +254,6 @@ const DoctorDashboard = () => {
           <div className="bg-white p-6 rounded-lg shadow">
             {activeTab === 'dashboard' && <DashboardOverview />}
             {activeTab === 'schedule' && <DoctorSchedule />}
-            {activeTab === 'appointments' && <DoctorAppointments />}
             {activeTab === 'patients' && <PatientProfiles />}
             {activeTab === 'lab' && <LabResults />}
             {activeTab === 'history' && <MedicalHistory />}

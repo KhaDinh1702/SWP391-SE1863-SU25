@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col } from 'antd';
-import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, Image } from 'antd';
+import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined, PictureOutlined } from '@ant-design/icons';
 import { labResultService } from '../../../services';
 import { patientService } from '../../../services/patientService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
@@ -36,10 +36,11 @@ const LabResults = () => {
     setLoading(true);
     try {
       const data = await labResultService.getAllLabResults();
-      // Map lại để luôn có labResultId
+      // Map lại để luôn có labResultId và labPictures
       const mapped = (data || []).map(r => ({
         ...r,
-        labResultId: r.labResultId || r.id || r._id || null
+        labResultId: r.labResultId || r.id || r._id || null,
+        labPictures: r.labPictures || r.LabPictures || [] // Đảm bảo có array labPictures
       }));
       setLabResults(mapped);
     } catch (error) {
@@ -208,6 +209,42 @@ const LabResults = () => {
       key: 'testName',
     },
     {
+      title: 'Hình ảnh xét nghiệm',
+      dataIndex: 'labPictures',
+      key: 'labPictures',
+      width: 120,
+      render: (_, record) => {
+        if (record.labPictures && record.labPictures.length > 0) {
+          return (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <Image
+                width={40}
+                height={40}
+                src={record.labPictures[0].labPictureUrl}
+                alt={record.labPictures[0].labPictureName || 'Lab image'}
+                style={{ objectFit: 'cover', borderRadius: 4 }}
+                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxYQbDrIocYuwRXRQExLtJEDjKRQwwxLjGUIocYdxHrYNbBuMs7d09Xn+mXt95++9fPs89M21M9VfN39/+87z2nDj/++9/w8/PzbQe//va38/Ly8vPt/NKLZ2dnP74/5Vn/HH6qy4/fP0/4l1++/fJy8daTj3c/+eSTk9c6qLttO9fHjx8/1sfn5wAAAAA="
+                preview={{
+                  mask: <div style={{ fontSize: 12, color: 'white' }}><PictureOutlined /> Xem</div>
+                }}
+              />
+              {record.labPictures.length > 1 && (
+                <span style={{ fontSize: 12, color: '#1890ff' }}>
+                  +{record.labPictures.length - 1} ảnh
+                </span>
+              )}
+            </div>
+          );
+        }
+        return (
+          <div style={{ textAlign: 'center', color: '#999', fontSize: 12 }}>
+            <PictureOutlined />
+            <div>Không có ảnh</div>
+          </div>
+        );
+      },
+    },
+    {
       title: 'Kết quả',
       dataIndex: 'resultSummary',
       key: 'resultSummary',
@@ -299,6 +336,7 @@ const LabResults = () => {
           dataSource={filteredResults}
           rowKey={record => record.labResultId || record.id || record._id || Math.random()}
           loading={loading}
+          scroll={{ x: 1000 }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -364,21 +402,25 @@ const LabResults = () => {
               </Col>
             </Row>
 
-            {selectedResult.LabPictures && selectedResult.LabPictures.length > 0 && (
+            {(selectedResult.LabPictures && selectedResult.LabPictures.length > 0) || 
+             (selectedResult.labPictures && selectedResult.labPictures.length > 0) ? (
               <div>
                 <strong>Hình ảnh xét nghiệm:</strong>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-                  {selectedResult.LabPictures.map(pic => (
-                    <img
+                  {(selectedResult.LabPictures || selectedResult.labPictures || []).map(pic => (
+                    <Image
                       key={pic.id || pic.labPictureId}
                       src={pic.labPictureUrl}
                       alt={pic.labPictureName}
-                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }}
+                      width={120}
+                      height={120}
+                      style={{ objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }}
+                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxYQbDrIocYuwRXRQExLtJEDjKRQwwxLjGUIocYdxHrYNbBuMs7d09Xn+mXt95++9fPs89M21M9VfN39/+87z2nDj/++9/w8/PzbQe//va38/Ly8vPt/NKLZ2dnP74/5Vn/HH6qy4/fP0/4l1++/fJy8daTj3c/+eSTk9c6qLttO9fHjx8/1sfn5wAAAAA="
                     />
                   ))}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         ) : (
           <Form

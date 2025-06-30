@@ -340,7 +340,7 @@ const PatientProfiles = () => {
   return (
     <div>
       <Title level={4}>Danh sách Bệnh nhân</Title>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ marginBottom: 16 }}>
         <Search
           placeholder="Tìm kiếm bệnh nhân theo tên, địa chỉ hoặc người liên hệ"
           onSearch={handleSearch}
@@ -348,9 +348,6 @@ const PatientProfiles = () => {
           style={{ maxWidth: 400 }}
           enterButton
         />
-        <Button type="primary" onClick={handleOpenCreateModal}>
-          Tạo hồ sơ bệnh án
-        </Button>
       </div>
       {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
       <Spin spinning={loading}>

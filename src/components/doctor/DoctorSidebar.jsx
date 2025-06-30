@@ -30,7 +30,6 @@ const DoctorSidebar = ({ activeTab, setActiveTab }) => {
       </div>
       <Button type={activeTab === 'dashboard' ? 'primary' : 'text'} icon={<DashboardOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('dashboard')}>Dashboard</Button>
       <Button type={activeTab === 'schedule' ? 'primary' : 'text'} icon={<CalendarOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('schedule')}>Lịch làm việc</Button>
-      <Button type={activeTab === 'appointments' ? 'primary' : 'text'} icon={<CalendarOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('appointments')}>Lịch hẹn</Button>
       <Button type={activeTab === 'patients' ? 'primary' : 'text'} icon={<ProfileOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('patients')}>Hồ sơ Bệnh nhân</Button>
       <Button type={activeTab === 'lab' ? 'primary' : 'text'} icon={<ExperimentOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('lab')}>Xét nghiệm</Button>
       <Button type={activeTab === 'history' ? 'primary' : 'text'} icon={<HistoryOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('history')}>Lịch sử khám</Button>
