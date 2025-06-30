@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Modal, Space, Tag, Tooltip, Input, Select, DatePicker, message, Form } from 'antd';
 import { EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined, PlusOutlined } from '@ant-design/icons';
-import { medicalRecordService } from '../../../services';
+import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
 import { authService } from '../../../services/authService';
 import { patientService } from '../../../services/patientService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
@@ -31,7 +31,7 @@ const MedicalHistory = () => {
     if (user) {
       setCurrentDoctor(user);
     }
-    fetchMedicalRecords();
+    fetchPatientTreatmentProtocols();
     fetchPatients();
     fetchTreatmentStages();
   }, []);
@@ -64,26 +64,24 @@ const MedicalHistory = () => {
     }
   };
 
-  const fetchMedicalRecords = async () => {
+  // Thay fetchMedicalRecords bằng fetchPatientTreatmentProtocols
+  // Chỉ lấy các protocol có status đúng bằng 'Completed'
+  const fetchPatientTreatmentProtocols = async () => {
     setLoading(true);
     try {
-      const data = await medicalRecordService.getAllMedicalRecords();
-      console.log('Fetched medical records:', data);
-      
-      // Lọc chỉ các medical records của bác sĩ hiện tại
-      const currentUser = authService.getCurrentUser();
-      const doctorId = currentUser?.doctorId || currentUser?.id;
-      
-      const doctorRecords = data.filter(record => {
-        const recordDoctorId = record.doctorId || record.DoctorId;
-        return recordDoctorId === doctorId;
+      const data = await patientTreatmentProtocolService.getAllPatientTreatmentProtocols();
+      // Log dữ liệu trả về để kiểm tra status thực tế
+      console.log('API data:', data);
+      data.forEach((item, idx) => console.log(`Record ${idx}: status=`, item.status || item.Status));
+      // Lọc các trạng thái hoàn thành: status === 2
+      const completedProtocols = data.filter(protocol => {
+        const status = protocol.status || protocol.Status;
+        return status === 2;
       });
-      
-      console.log('Filtered doctor records:', doctorRecords);
-      setMedicalRecords(doctorRecords);
+      setMedicalRecords(completedProtocols);
     } catch (error) {
-      message.error('Không thể tải danh sách hồ sơ bệnh án');
-      console.error('Error fetching medical records:', error);
+      message.error('Không thể tải danh sách phác đồ điều trị');
+      console.error('Error fetching patient treatment protocols:', error);
     } finally {
       setLoading(false);
     }
@@ -223,11 +221,22 @@ const MedicalHistory = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      render: () => (
-        <Tag color="green">
-          Hoạt động
-        </Tag>
-      ),
+      render: (_, record) => {
+        const status = record.status || record.Status;
+        let color = 'default';
+        let text = 'Không rõ';
+        if (status === 2) {
+          color = 'green';
+          text = 'Hoàn thành';
+        } else if (status === 1) {
+          color = 'blue';
+          text = 'Đang điều trị';
+        } else if (status === 0) {
+          color = 'orange';
+          text = 'Khởi tạo';
+        }
+        return <Tag color={color}>{text}</Tag>;
+      },
     },
     {
       title: 'Thao tác',
@@ -255,7 +264,7 @@ const MedicalHistory = () => {
           <Space>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchMedicalRecords}
+              onClick={fetchPatientTreatmentProtocols}
               loading={loading}
             >
               Làm mới
