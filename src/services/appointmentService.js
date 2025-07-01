@@ -144,4 +144,26 @@ export const appointmentService = {
       throw error;
     }
   },
+
+  // Update appointment online link
+  updateAppointmentOnlineLink: async (appointmentId, onlineLink) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Appointment/update-appointment-online-link`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ AppointmentId: appointmentId, OnlineLink: onlineLink }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Không thể cập nhật link trực tuyến');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating appointment online link:', error);
+      throw error;
+    }
+  },
 };

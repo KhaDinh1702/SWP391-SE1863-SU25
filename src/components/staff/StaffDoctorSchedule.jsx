@@ -194,6 +194,7 @@ const StaffDoctorSchedule = () => {
       onFilter: (value, record) => record.isAvailable === value,
       width: 120,
     },
+   
   ];
 
   return (

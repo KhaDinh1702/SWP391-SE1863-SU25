@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, message, Card, Row, Col, Select, DatePicker, Button, Space, Modal, Descriptions, Tooltip } from 'antd';
+import { Table, Tag, message, Card, Row, Col, Select, DatePicker, Button, Space, Modal, Descriptions, Tooltip, Input } from 'antd';
 import { EyeOutlined, ReloadOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../services/appointmentService';
 import { doctorService } from '../../services/doctorService';
@@ -20,6 +20,9 @@ const StaffAppointmentList = () => {
   const [dateRange, setDateRange] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [editOnlineLinkModalVisible, setEditOnlineLinkModalVisible] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [onlineLinkInput, setOnlineLinkInput] = useState('');
 
   useEffect(() => {
     fetchAppointments();
@@ -103,6 +106,26 @@ const StaffAppointmentList = () => {
   const handleViewDetails = (appointment) => {
     setSelectedAppointment(appointment);
     setDetailModalVisible(true);
+  };
+
+  const handleEditOnlineLink = (appointment) => {
+    setEditingAppointment(appointment);
+    setOnlineLinkInput(appointment.onlineLink || appointment.OnlineLink || '');
+    setEditOnlineLinkModalVisible(true);
+  };
+
+  const handleSaveOnlineLink = async () => {
+    if (!editingAppointment) return;
+    try {
+      await appointmentService.updateAppointmentOnlineLink(editingAppointment.id || editingAppointment.Id || editingAppointment.appointmentId, onlineLinkInput);
+      message.success('Cập nhật link trực tuyến thành công!');
+      setEditOnlineLinkModalVisible(false);
+      setEditingAppointment(null);
+      setOnlineLinkInput('');
+      fetchAppointments();
+    } catch (error) {
+      message.error(error.message || 'Cập nhật link trực tuyến thất bại!');
+    }
   };
 
   const getDoctorName = (appointment) => {
@@ -224,9 +247,16 @@ const StaffAppointmentList = () => {
           >
             Xem chi tiết
           </Button>
+          <Button
+            type="default"
+            onClick={() => handleEditOnlineLink(record)}
+            size="small"
+          >
+            link khám online
+          </Button>
         </Space>
       ),
-      width: 150,
+      width: 200,
     },
   ];
 
@@ -345,6 +375,21 @@ const StaffAppointmentList = () => {
             )}
           </Descriptions>
         )}
+      </Modal>
+
+      <Modal
+        title="Cập nhật link trực tuyến"
+        open={editOnlineLinkModalVisible}
+        onCancel={() => setEditOnlineLinkModalVisible(false)}
+        onOk={handleSaveOnlineLink}
+        okText="Lưu"
+        cancelText="Hủy"
+      >
+        <Input
+          value={onlineLinkInput}
+          onChange={e => setOnlineLinkInput(e.target.value)}
+          placeholder="Nhập link trực tuyến mới..."
+        />
       </Modal>
     </div>
   );
