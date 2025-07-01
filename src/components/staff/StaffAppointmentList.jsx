@@ -123,9 +123,9 @@ const StaffAppointmentList = () => {
   };
   const getAppointmentTypeLabel = (type) => {
     switch (type) {
-      case 0: return 'Trực tiếp';
-      case 1: return 'Trực tuyến';
-      default: return 'N/A';
+      case 1: return 'Offline';
+      case 0: return 'Offline';
+      default: return 'Online';
     }
   };
   const columns = [
@@ -181,11 +181,15 @@ const StaffAppointmentList = () => {
       title: 'Loại',
       dataIndex: 'appointmentType',
       key: 'appointmentType',
-      render: (type, record) => (
-        <Tag color={type === 1 ? 'blue' : 'green'}>
-          {getAppointmentTypeLabel(type || record.AppointmentType)}
-        </Tag>
-      ),
+      render: (type, record) => {
+        const value = type || record.AppointmentType;
+        const isOnline = String(value) === '1' || String(value).toLowerCase() === 'online';
+        return (
+          <Tag color={isOnline ? 'green' : 'blue'}>
+            {getAppointmentTypeLabel(value)}
+          </Tag>
+        );
+      },
       width: 120,
     },
     {
@@ -346,4 +350,4 @@ const StaffAppointmentList = () => {
   );
 };
 
-export default StaffAppointmentList; 
+export default StaffAppointmentList;

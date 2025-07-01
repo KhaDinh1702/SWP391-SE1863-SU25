@@ -287,7 +287,7 @@ const TreatmentProtocol = () => {
         Medicine: values.medicine || '',
         Status: values.status || 'Active',
         PatientId: values.patientId,
-        DoctorId: values.doctorId,
+        DoctorId: currentDoctor?.id, // Always use currentDoctor.id
         ExaminationDate: values.examinationDate.toISOString(),
         Diagnosis: values.diagnosis || '',
         Symptoms: values.symptoms || '',
@@ -939,22 +939,11 @@ const TreatmentProtocol = () => {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="doctorId"
-                    label="Bác sĩ"
-                    rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
-                  >
-                    <Select placeholder="Chọn bác sĩ">
-                      {allDoctors.map(d => (
-                        <Option key={d.id} value={d.id}>
-                          {d.fullName}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
+                {/* Bỏ chọn bác sĩ, tự động set doctorId */}
               </Row>
+              <Form.Item name="doctorId" initialValue={currentDoctor?.id} hidden>
+                <Input type="hidden" />
+              </Form.Item>
 
               <Form.Item
                 name="examinationDate"
