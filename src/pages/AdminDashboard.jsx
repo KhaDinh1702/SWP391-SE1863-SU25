@@ -10,6 +10,7 @@ import StatsCards from '../components/admin/DashboardStatus/StatsCards';
 import ReportsGenerator from '../components/admin/DashboardStatus/ReportsGenerator';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminProfile from '../components/admin/AdminProfile';
+import ReportsAndStatistics from '../components/admin/ReportsAndStatistics';
 import hivLogo from '../assets/hiv.png';
 
 const { Content, Sider, Header } = Layout;
@@ -194,6 +195,10 @@ const AdminDashboard = () => {
                 <ReportsGenerator data={users} />
               </div>
             </>
+          )}
+
+          {activeTab === 'reports' && (
+            <ReportsAndStatistics />
           )}
 
           {activeTab === 'profile' && (

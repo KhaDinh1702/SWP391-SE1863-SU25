@@ -19,6 +19,11 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
   console.log('EditUserForm all user values:', user); // See all values
   console.log('EditUserForm user.patient:', user.patient); // Check patient object
   console.log('EditUserForm user.doctor:', user.doctor); // Check doctor object
+  console.log('EditUserForm user.userId:', user.userId);
+  console.log('EditUserForm user.id:', user.id);
+  console.log('EditUserForm user.userID:', user.userID);
+  console.log('EditUserForm user.UserId:', user.UserId);
+  console.log('EditUserForm FINAL ID to use:', user.id || user.userId || user.userID || user.UserId);
   
   // Try to get fullName from nested objects
   const getFullName = () => {
@@ -37,12 +42,14 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
   const [fileList, setFileList] = useState([]);
 
   const handleSubmit = async (values) => {
-    const userIdValue = user.userId || user.id;
+    // Try multiple possible ID field names, prioritize 'id' since that's the primary key in User entity
+    const userIdValue = user.id || user.userId || user.userID || user.UserId;
     console.log('EditUserForm - user object:', user);
     console.log('EditUserForm - userIdValue:', userIdValue, typeof userIdValue);
     console.log('EditUserForm - form values:', values);
     
-    if (!userIdValue) {
+    if (!userIdValue || userIdValue === '00000000-0000-0000-0000-000000000000') {
+      console.error('Invalid or missing UserId:', userIdValue);
       message.error('Không tìm thấy UserId hợp lệ!');
       return;
     }
@@ -51,7 +58,7 @@ const EditUserForm = ({ user, onSave, onCancel, loading }) => {
       // Create the data object with the correct field names
       const formData = { 
         ...values, 
-        UserId: userIdValue,
+        UserId: userIdValue,  // Backend expects UserId
         userId: userIdValue,  // Include both for compatibility
         id: userIdValue
       };

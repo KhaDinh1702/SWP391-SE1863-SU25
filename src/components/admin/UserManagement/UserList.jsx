@@ -22,7 +22,10 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
   };
 
   const handleEdit = (user) => {
-    setEditingUser({ ...user, userId: user.userId || user.id });
+    console.log('UserList handleEdit - original user:', user);
+    const userWithId = { ...user, userId: user.id || user.userId };
+    console.log('UserList handleEdit - userWithId:', userWithId);
+    setEditingUser(userWithId);
   };
 
   const handleCancel = () => {

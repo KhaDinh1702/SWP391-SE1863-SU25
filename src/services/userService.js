@@ -1,15 +1,10 @@
 import { API_BASE_URL, getAuthHeaders } from './config';
 
-console.log('🔄 UserService module loaded with debug version');
-
 export const userService = {
   getAllUsers: async () => {
     try {
-      const headers = getAuthHeaders();
-      console.log('Auth headers:', headers);
-
       const response = await fetch(`${API_BASE_URL}/User/get-list-user`, {
-        headers: headers,
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -19,8 +14,6 @@ export const userService = {
       }
 
       const data = await response.json();
-      console.log('Received user data:', data);
-      
       return data.map(u => ({ ...u, userId: u.userId || u.id }));
     } catch (error) {
       console.error('Fetch users failed:', error);
@@ -47,29 +40,32 @@ export const userService = {
 
   updateUser: async (userData) => {
     try {
-      const userId = userData.UserId || userData.userId || userData.id;
-      console.log('UserService - userId to append:', userId);
-      console.log('UserService - userData object:', userData);
+      const userId = userData.id || userData.UserId || userData.userId;
+      const hasFileUpload = userData.avatarPicture && userData.avatarPicture instanceof File;
       
-      // If there's an avatar file, we need to use FormData
-      if (userData.avatarPicture && userData.avatarPicture instanceof File) {
-        const formData = new FormData();
-        
-        // Ensure UserId is properly formatted as string
+      if (hasFileUpload) {
         if (!userId) {
           throw new Error('UserId is required but not found in userData');
         }
         
         const userIdString = String(userId).trim();
-        console.log('UserService - userIdString:', userIdString);
+        
+        // Validate GUID format
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!guidRegex.test(userIdString)) {
+          throw new Error(`Invalid GUID format: ${userIdString}`);
+        }
+        
+        // Create FormData like labResultService does
+        const formData = new FormData();
         formData.append('UserId', userIdString);
         
-        // Add other required fields
-        if (userData.username) formData.append('Username', String(userData.username));
-        if (userData.email) formData.append('Email', String(userData.email));
-        if (userData.phoneNumber) formData.append('PhoneNumber', String(userData.phoneNumber));
+        if (userData.username) formData.append('Username', userData.username);
+        if (userData.email) formData.append('Email', userData.email);
+        if (userData.phoneNumber) formData.append('PhoneNumber', userData.phoneNumber);
+        if (userData.fullName) formData.append('FullName', userData.fullName);
         
-        // Handle Role - ensure it's an integer
+        // Handle Role
         if (userData.role !== undefined && userData.role !== null) {
           const roleMap = { Patient: 0, Staff: 1, Doctor: 2, Manager: 3, Admin: 4 };
           let roleValue;
@@ -78,37 +74,26 @@ export const userService = {
           } else {
             roleValue = parseInt(userData.role);
           }
-          console.log('UserService - role value:', roleValue);
-          formData.append('Role', String(roleValue));
+          formData.append('Role', roleValue);
         }
         
-        if (userData.fullName) formData.append('FullName', String(userData.fullName));
-        if (userData.password && userData.password.trim()) formData.append('Password', String(userData.password.trim()));
-        if (userData.specialization) formData.append('Specialization', String(userData.specialization));
-        if (userData.qualifications) formData.append('Qualifications', String(userData.qualifications));
-        if (userData.experience) formData.append('Experience', String(userData.experience));
-        if (userData.bio) formData.append('Bio', String(userData.bio));
+        if (userData.password && userData.password.trim()) {
+          formData.append('Password', userData.password.trim());
+        }
         
         formData.append('AvatarPicture', userData.avatarPicture);
 
-        // Debug: Log what's being sent
-        console.log('UserService - FormData contents:');
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}:`, value, typeof value);
-        }
-
+        // Use the exact same approach as labResultService
         const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
           method: 'PUT',
-          headers: {
-            ...getAuthHeaders(),
-            'Accept': 'application/json'
+          headers: { 
+            Authorization: getAuthHeaders().Authorization 
           },
           body: formData,
         });
-
+        
         if (!response.ok) {
           const errorText = await response.text();
-          console.log('UserService - Error response:', errorText);
           let errorMessage;
           try {
             const errorData = JSON.parse(errorText);
@@ -121,12 +106,18 @@ export const userService = {
 
         return await response.json();
       } else {
-        // No file upload - try using URL-encoded approach similar to inactiveUser
-        const params = new URLSearchParams();
-        params.append('UserId', String(userId));
-        if (userData.username) params.append('Username', String(userData.username));
-        if (userData.email) params.append('Email', String(userData.email));
-        if (userData.phoneNumber) params.append('PhoneNumber', String(userData.phoneNumber));
+        // No file upload - use URL-encoded form data
+        if (!userId) {
+          throw new Error('UserId is required but not found in userData');
+        }
+        
+        const requestBody = {
+          UserId: userId,
+          Username: userData.username || null,
+          Email: userData.email || null,
+          PhoneNumber: userData.phoneNumber || null,
+          FullName: userData.fullName || null
+        };
         
         // Handle Role
         if (userData.role !== undefined && userData.role !== null) {
@@ -137,17 +128,21 @@ export const userService = {
           } else {
             roleValue = parseInt(userData.role);
           }
-          params.append('Role', String(roleValue));
+          requestBody.Role = roleValue;
         }
         
-        if (userData.fullName) params.append('FullName', String(userData.fullName));
-        if (userData.password && userData.password.trim()) params.append('Password', String(userData.password.trim()));
-        if (userData.specialization) params.append('Specialization', String(userData.specialization));
-        if (userData.qualifications) params.append('Qualifications', String(userData.qualifications));
-        if (userData.experience) params.append('Experience', String(userData.experience));
-        if (userData.bio) params.append('Bio', String(userData.bio));
+        if (userData.password && userData.password.trim()) {
+          requestBody.Password = userData.password.trim();
+        }
 
-        console.log('UserService - URL params:', params.toString());
+        const params = new URLSearchParams();
+        params.append('UserId', String(userId));
+        if (requestBody.Username) params.append('Username', requestBody.Username);
+        if (requestBody.Email) params.append('Email', requestBody.Email);
+        if (requestBody.PhoneNumber) params.append('PhoneNumber', requestBody.PhoneNumber);
+        if (requestBody.Role !== undefined) params.append('Role', String(requestBody.Role));
+        if (requestBody.FullName) params.append('FullName', requestBody.FullName);
+        if (requestBody.Password) params.append('Password', requestBody.Password);
 
         const response = await fetch(`${API_BASE_URL}/User/admin/update-account`, {
           method: 'PUT',
@@ -161,7 +156,6 @@ export const userService = {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.log('UserService - Error response:', errorText);
           let errorMessage;
           try {
             const errorData = JSON.parse(errorText);
@@ -200,11 +194,7 @@ export const userService = {
   },
 
   createUserByAdmin: async (userData) => {
-    console.log('🚀 NEW VERSION OF CREATE USER FUNCTION CALLED 🚀');
     try {
-      console.log('=== CREATE USER DEBUG START ===');
-      console.log('Input userData:', userData);
-
       // Map role names to enum values that match backend
       const roleMap = {
         'Patient': 0,
@@ -248,47 +238,27 @@ export const userService = {
         formData.append('AvatarPicture', userData.avatarPicture);
       }
 
-      // Log all form data entries
-      console.log('FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}: "${value}"`);
-      }
-
-      // Get auth token
       const token = localStorage.getItem('token');
-      console.log('Auth token exists:', !!token);
-      console.log('Auth token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'null');
 
       const response = await fetch(`${API_BASE_URL}/User/admin/create-account`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'application/json'
-          // Don't set Content-Type - let browser handle it for FormData
         },
         body: formData,
       });
 
-      console.log('Response received:');
-      console.log('  Status:', response.status);
-      console.log('  Status Text:', response.statusText);
-      console.log('  Headers:', Object.fromEntries(response.headers.entries()));
-
       const responseText = await response.text();
-      console.log('Raw response text:', responseText);
       
       let responseData;
       try {
         responseData = JSON.parse(responseText);
-        console.log('Parsed response data:', responseData);
       } catch (e) {
-        console.log('Failed to parse JSON, treating as plain text');
         responseData = { message: responseText };
       }
 
       if (!response.ok) {
-        console.log('Request failed with status:', response.status);
-        
         if (response.status === 401) {
           throw new Error('Không có quyền truy cập. Vui lòng đăng nhập lại.');
         }
@@ -313,13 +283,9 @@ export const userService = {
         throw new Error(responseData?.message || responseText || 'Tạo tài khoản thất bại');
       }
 
-      console.log('=== CREATE USER DEBUG END ===');
       return responseData;
     } catch (error) {
-      console.error('=== CREATE USER ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('Create user failed:', error);
       throw error;
     }
   },

@@ -11,6 +11,7 @@ npm i framer-motion
 npm i recharts   
 npm i moment
 npm install react-i18next i18next i18next-browser-languagedetector
+npm install dayjs
 
 UPDATE [SWPSU25].[dbo].[Appointments]
 SET [PaymentStatus] = 1
