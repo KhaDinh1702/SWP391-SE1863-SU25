@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaUser, FaChevronDown, FaChevronUp, FaFileAlt, FaFileMedical, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaChevronDown, FaChevronUp, FaFileAlt, FaFileMedical, FaSignOutAlt, FaBell } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { authService } from "../../services/authService";
 
@@ -94,6 +94,13 @@ export default function PatientProfile() {
               >
                 <FaFileMedical className="text-[#3B9AB8]" />
                 <span>Hồ sơ y tế</span>
+              </button>
+              <button 
+                onClick={() => navigate('/notifications')}
+                className="w-full text-left px-3 py-2 rounded-md hover:bg-[#3B9AB8]/10 text-gray-700 hover:text-[#3B9AB8] transition-colors flex items-center gap-2"
+              >
+                <FaBell className="text-[#3B9AB8]" />
+                <span>Thông báo</span>
               </button>
               <button 
                 onClick={handleLogout}

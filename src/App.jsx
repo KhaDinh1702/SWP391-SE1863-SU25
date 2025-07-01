@@ -29,6 +29,7 @@ import Licenses from "./pages/Licenses";
 import TermsOfUse from "./pages/TermsOfUse";
 import AdvisoryContact from './pages/AdvisoryContact';
 import MomoPayment from "./pages/MomoPayment";
+import Notifications from './pages/patient/Notifications';
 // Import các component quản lý từ thư mục con
 
 
@@ -110,6 +111,17 @@ function App() {
             <ProtectedRoute requiredRoles={["Patient"]}>
               <ProtectedLayout>
                 <PatientAppointments />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute requiredRoles={["Patient"]}>
+              <ProtectedLayout>
+                <Notifications />
               </ProtectedLayout>
             </ProtectedRoute>
           }
