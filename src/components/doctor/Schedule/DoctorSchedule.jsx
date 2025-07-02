@@ -314,28 +314,57 @@ const DoctorSchedule = () => {
           if (appointmentInfo) {
             const aptMoment = moment(appointmentInfo.appointmentStartDate || appointmentInfo.AppointmentStartDate || appointmentInfo.appointmentDate);
             const patientDisplayName = getPatientDisplayName(appointmentInfo);
+            const isOnlineAppointment = appointmentInfo.appointmentType === 0 || appointmentInfo.AppointmentType === 0 || 
+                                      appointmentInfo.appointmentType === 'Online' || appointmentInfo.AppointmentType === 'Online';
+            const onlineLink = appointmentInfo.onlineLink || appointmentInfo.OnlineLink;
+            
             return (
               <div style={{
                 padding: '4px 6px',
                 borderRadius: '4px',
-                backgroundColor: '#fffbe6',
-                border: '1px solid #ffe58f',
+                backgroundColor: isOnlineAppointment ? '#f6ffed' : '#fffbe6',
+                border: isOnlineAppointment ? '1px solid #b7eb8f' : '1px solid #ffe58f',
                 fontSize: '11px',
                 textAlign: 'center',
                 minHeight: '30px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-                color: '#d48806',
+                color: isOnlineAppointment ? '#389e0d' : '#d48806',
                 fontWeight: 'bold'
               }}
-                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}`}
+                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
               >
-                <span>📅 {aptMoment.format('HH:mm')}</span>
+                <span>{isOnlineAppointment ? '💻' : '📅'} {aptMoment.format('HH:mm')}</span>
                 <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'}</span>
                 <span style={{ color: '#722ed1', fontWeight: 600, fontSize: '12px', marginTop: 2 }}>
                   {patientDisplayName}
                 </span>
+                {isOnlineAppointment && onlineLink && (
+                  <a 
+                    href={onlineLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: '#1890ff', 
+                      fontSize: '10px', 
+                      marginTop: 2,
+                      textDecoration: 'underline'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    🔗 Tham gia cuộc họp
+                  </a>
+                )}
+                {isOnlineAppointment && !onlineLink && (
+                  <span style={{ 
+                    color: '#ff4d4f', 
+                    fontSize: '10px', 
+                    marginTop: 2
+                  }}>
+                    Chưa có link
+                  </span>
+                )}
               </div>
             );
           }
@@ -347,6 +376,8 @@ const DoctorSchedule = () => {
             
             let showAppointment = false;
             let appointmentTime = null;
+            let isOnlineAppointment = false;
+            let onlineLink = null;
             
             if (appointmentInfo) {
               // Kiểm tra xem appointment có nằm trong ngày và khung giờ hiện tại không
@@ -363,6 +394,9 @@ const DoctorSchedule = () => {
                 // Kiểm tra xem appointment có nằm trong slot hiện tại không
                 showAppointment = appointmentSlotMinutes >= currentSlotMinutes && appointmentSlotMinutes < nextSlotMinutes;
                 appointmentTime = appointmentDate.format('HH:mm');
+                isOnlineAppointment = appointmentInfo.appointmentType === 0 || appointmentInfo.AppointmentType === 0 || 
+                                appointmentInfo.appointmentType === 'Online' || appointmentInfo.AppointmentType === 'Online';
+                onlineLink = appointmentInfo.onlineLink || appointmentInfo.OnlineLink;
               }
             }
             
@@ -371,8 +405,8 @@ const DoctorSchedule = () => {
                 style={{ 
                   padding: '4px 6px',
                   borderRadius: '4px',
-                  backgroundColor: schedule.isAvailable ? '#e6f7ff' : '#fffbe6',
-                  border: schedule.isAvailable ? '1px solid #91d5ff' : '1px solid #ffe58f',
+                  backgroundColor: schedule.isAvailable ? '#e6f7ff' : (showAppointment && isOnlineAppointment ? '#f6ffed' : '#fffbe6'),
+                  border: schedule.isAvailable ? '1px solid #91d5ff' : (showAppointment && isOnlineAppointment ? '1px solid #b7eb8f' : '1px solid #ffe58f'),
                   fontSize: '11px',
                   textAlign: 'center',
                   cursor: 'pointer',
@@ -381,11 +415,11 @@ const DoctorSchedule = () => {
                   flexDirection: 'column',
                   justifyContent: 'center'
                 }}
-                title={`Lịch ID: ${schedule.originalId || schedule.id}${showAppointment ? '\nCuộc hẹn: ' + appointmentInfo.title + ' - ' + getPatientDisplayName(appointmentInfo) + ' lúc ' + appointmentTime : ''}`}
+                title={`Lịch ID: ${schedule.originalId || schedule.id}${showAppointment ? '\nCuộc hẹn: ' + appointmentInfo.title + ' - ' + getPatientDisplayName(appointmentInfo) + ' lúc ' + appointmentTime + (isOnlineAppointment ? ' (Trực tuyến)' : '') : ''}`}
               >
                 <div style={{ 
                   fontWeight: 'bold', 
-                  color: schedule.isAvailable ? '#1890ff' : '#d48806',
+                  color: schedule.isAvailable ? '#1890ff' : (showAppointment && isOnlineAppointment ? '#389e0d' : '#d48806'),
                   marginBottom: '1px'
                 }}>
                   {schedule.isAvailable ? 'Sẵn sàng' : 'Đã tiếp nhận lịch hẹn'}
@@ -396,7 +430,32 @@ const DoctorSchedule = () => {
                     color: '#52c41a',
                     fontWeight: 'bold'
                   }}>
-                    📅 {appointmentTime}
+                    {isOnlineAppointment ? '💻' : '📅'} {appointmentTime}
+                  </div>
+                )}
+                {showAppointment && isOnlineAppointment && onlineLink && (
+                  <a 
+                    href={onlineLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ 
+                      color: '#1890ff', 
+                      fontSize: '8px', 
+                      marginTop: 2,
+                      textDecoration: 'underline'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    🔗 Tham gia
+                  </a>
+                )}
+                {showAppointment && isOnlineAppointment && !onlineLink && (
+                  <div style={{ 
+                    fontSize: '8px', 
+                    color: '#ff4d4f',
+                    marginTop: 2
+                  }}>
+                    Chưa có link
                   </div>
                 )}
                 {schedule.notes && (
@@ -486,7 +545,6 @@ const DoctorSchedule = () => {
   const startOfWeek = currentDate.clone().startOf('isoWeek').format('DD/MM');
   const endOfWeek = currentDate.clone().endOf('isoWeek').format('DD/MM/YYYY');
 
-
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
@@ -538,7 +596,19 @@ const DoctorSchedule = () => {
                 border: '1px solid #ffe58f',
                 borderRadius: 2 
               }}></div>
-              <Text>Đã tiếp nhận lịch hẹn</Text>
+              <Text>Đã tiếp nhận lịch hẹn (Trực tiếp)</Text>
+            </div>
+          </Col>
+          <Col>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ 
+                width: 16, 
+                height: 16, 
+                backgroundColor: '#f6ffed', 
+                border: '1px solid #b7eb8f',
+                borderRadius: 2 
+              }}></div>
+              <Text>Đã tiếp nhận lịch hẹn (Trực tuyến)</Text>
             </div>
           </Col>
         </Row>

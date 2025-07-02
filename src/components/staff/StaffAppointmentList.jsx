@@ -37,8 +37,6 @@ const StaffAppointmentList = () => {
     setLoading(true);
     try {
       const data = await appointmentService.getAllAppointments();
-      console.log('Fetched appointments data:', data); // Debug log để xem cấu trúc dữ liệu
-      console.log('Sample appointment:', data[0]); // Debug log appointment đầu tiên
       setAppointments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -61,7 +59,6 @@ const StaffAppointmentList = () => {
   const fetchPatients = async () => {
     try {
       const data = await patientService.getAllPatients();
-      console.log('Fetched patients data:', data); // Debug log để xem cấu trúc dữ liệu
       setPatients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching patients:', error);
@@ -147,7 +144,7 @@ const StaffAppointmentList = () => {
   const getAppointmentTypeLabel = (type) => {
     switch (type) {
       case 1: return 'Offline';
-      case 0: return 'Offline';
+      case 0: return 'Online';
       default: return 'Online';
     }
   };
@@ -206,7 +203,7 @@ const StaffAppointmentList = () => {
       key: 'appointmentType',
       render: (type, record) => {
         const value = type || record.AppointmentType;
-        const isOnline = String(value) === '1' || String(value).toLowerCase() === 'online';
+        const isOnline = value === 1 || String(value).toLowerCase() === 'online';
         return (
           <Tag color={isOnline ? 'green' : 'blue'}>
             {getAppointmentTypeLabel(value)}
@@ -237,25 +234,32 @@ const StaffAppointmentList = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button 
-            type="primary" 
-            icon={<EyeOutlined />} 
-            onClick={() => handleViewDetails(record)} 
-            size="small"
-          >
-            Xem chi tiết
-          </Button>
-          <Button
-            type="default"
-            onClick={() => handleEditOnlineLink(record)}
-            size="small"
-          >
-            link khám online
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        const appointmentType = record.appointmentType || record.AppointmentType;
+        const isOnline = !(appointmentType === 1 || String(appointmentType).toLowerCase() === 'online');
+        
+        return (
+          <Space>
+            <Button 
+              type="primary" 
+              icon={<EyeOutlined />} 
+              onClick={() => handleViewDetails(record)} 
+              size="small"
+            >
+              Xem chi tiết
+            </Button>
+            {isOnline && (
+              <Button
+                type="default"
+                onClick={() => handleEditOnlineLink(record)}
+                size="small"
+              >
+                link khám online
+              </Button>
+            )}
+          </Space>
+        );
+      },
       width: 200,
     },
   ];
