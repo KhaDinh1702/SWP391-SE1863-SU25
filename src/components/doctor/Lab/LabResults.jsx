@@ -298,7 +298,6 @@ const LabResults = () => {
               onClick={() => {
                 setSelectedResult(null);
                 setIsModalVisible(true);
-                // Không tự động setFieldsValue doctorId nữa
               }}
             >
               Thêm kết quả mới
@@ -534,6 +533,7 @@ const LabResults = () => {
                   label="Bác sĩ"
                   rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
                   initialValue={currentDoctorId || undefined}
+                  help="Chỉ được chọn bản thân trong phần chọn bác sĩ"
                 >
                   <Select
                     showSearch
