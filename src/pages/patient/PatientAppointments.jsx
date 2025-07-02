@@ -9,7 +9,7 @@ export default function PatientAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'upcoming', 'completed', 'cancelled'
+
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -20,9 +20,6 @@ export default function PatientAppointments() {
           return;
         }
 
-        console.log('Attempting to fetch appointments from:', `http://localhost:5275/api/Appointment/get-list-appointments`);
-        console.log('With token:', currentUser.token ? 'Present' : 'Missing');
-        
         const response = await fetch(`http://localhost:5275/api/Appointment/get-list-appointments`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
@@ -32,39 +29,13 @@ export default function PatientAppointments() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('API Error:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorData
-          });
           throw new Error(errorData.message || `Failed to fetch appointments: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Raw appointment data:', data); // Debug log
-        console.log('Current user:', currentUser); // Debug current user
-        
-        // Test hiển thị thời gian của một appointment để debug
-        if (data && data.length > 0) {
-          const sampleAppointment = data[0];
-          console.log('=== DATETIME DEBUG ===');
-          console.log('Sample appointment:', sampleAppointment);
-          console.log('AppointmentStartDate raw:', sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate);
-          if (sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate) {
-            const dateStr = sampleAppointment.appointmentStartDate || sampleAppointment.AppointmentStartDate;
-            const parsedDate = new Date(dateStr);
-            console.log('Parsed Date object:', parsedDate);
-            console.log('Local time string:', parsedDate.toString());
-            console.log('UTC time string:', parsedDate.toUTCString());
-            console.log('ISO string:', parsedDate.toISOString());
-            console.log('Vietnam locale string:', parsedDate.toLocaleString('vi-VN', {timeZone: 'Asia/Ho_Chi_Minh'}));
-          }
-          console.log('=== END DATETIME DEBUG ===');
-        }
         
         // Get patient ID from different possible sources
         const patientId = currentUser.patientId || currentUser.userId || currentUser.id;
-        console.log('Looking for patient appointments with ID:', patientId);
         
         // Filter appointments for the current patient and only show paid appointments
         const patientAppointments = data.filter(apt => {
@@ -73,20 +44,8 @@ export default function PatientAppointments() {
           const isPatientMatch = aptPatientId === patientId;
           const isPaid = paymentStatus === 1; // PaymentStatus.Paid = 1
           
-          console.log('Checking appointment:', {
-            appointmentId: apt.id,
-            aptPatientId,
-            currentPatientId: patientId,
-            paymentStatus,
-            isPatientMatch,
-            isPaid,
-            finalMatch: isPatientMatch && isPaid
-          });
-          
           return isPatientMatch && isPaid;
         });
-
-        console.log('Filtered patient appointments:', patientAppointments);
 
         // Fetch doctor information for each appointment
         const appointmentsWithDoctorInfo = await Promise.all(
@@ -94,14 +53,8 @@ export default function PatientAppointments() {
             try {
               // Extract doctor ID with proper casing
               const doctorId = apt.doctorId || apt.DoctorId || apt.doctor?.id || apt.Doctor?.Id;
-              console.log('Processing appointment:', {
-                appointmentId: apt.id || apt.Id,
-                doctorId: doctorId,
-                rawDoctorData: apt.doctor || apt.Doctor
-              });
 
               if (!doctorId) {
-                console.warn('No doctor ID found for appointment:', apt);
                 return {
                   ...apt,
                   doctorName: 'Không có thông tin',
@@ -112,7 +65,6 @@ export default function PatientAppointments() {
               // Try to get individual doctor info
               try {
                 const doctorInfo = await doctorService.getDoctorById(doctorId);
-                console.log('Fetched doctor data:', doctorInfo);
                 
                 if (doctorInfo) {
                   return {
@@ -123,7 +75,6 @@ export default function PatientAppointments() {
                   };
                 }
               } catch (doctorError) {
-                console.warn(`Could not fetch doctor info for ID ${doctorId}:`, doctorError);
                 // Return appointment without doctor info if fetch fails
                 return {
                   ...apt,
@@ -133,18 +84,19 @@ export default function PatientAppointments() {
               }
               return apt;
             } catch (error) {
-              console.error('Error processing appointment:', error);
               return apt;
             }
           })
         );
 
-        console.log('Processed appointments:', appointmentsWithDoctorInfo);
-        setAppointments(appointmentsWithDoctorInfo);
+        // Sắp xếp lịch hẹn theo thời gian từ tương lai đến quá khứ
+        const sortedAppointments = appointmentsWithDoctorInfo.sort((a, b) => {
+          const dateA = new Date(a.appointmentStartDate || a.AppointmentStartDate);
+          const dateB = new Date(b.appointmentStartDate || b.AppointmentStartDate);
+          return dateB.getTime() - dateA.getTime(); // Từ mới nhất đến cũ nhất
+        });
         
-        if (appointmentsWithDoctorInfo.length === 0) {
-          console.log('No appointments found for patient ID:', patientId);
-        }
+        setAppointments(sortedAppointments);
         
         setLoading(false);
       } catch (err) {
@@ -184,7 +136,6 @@ export default function PatientAppointments() {
       ));
       alert('Hủy lịch hẹn thành công');
     } catch (err) {
-      console.error('Error canceling appointment:', err);
       alert(err.message || 'Failed to cancel appointment');
     } finally {
       setLoading(false);
@@ -249,14 +200,8 @@ export default function PatientAppointments() {
       
       // Kiểm tra nếu date không hợp lệ
       if (isNaN(date.getTime())) {
-        console.error('Invalid date string:', dateString);
         return 'Ngày không hợp lệ';
       }
-      
-      console.log('Original date string:', dateString);
-      console.log('Parsed date object:', date);
-      console.log('UTC time:', date.toUTCString());
-      console.log('Local time string:', date.toString());
       
       // Nếu đây là UTC time (có 'Z' hoặc timezone), chuyển đổi về local time
       let displayDate = date;
@@ -264,7 +209,6 @@ export default function PatientAppointments() {
       // Kiểm tra nếu dateString có 'Z' (UTC) hoặc có timezone offset
       if (dateString.includes('Z') || dateString.match(/[+-]\d{2}:\d{2}$/)) {
         // Đây là UTC time, cần chuyển về local time
-        console.log('Detected UTC time, converting to local time');
         
         // Tạo local datetime từ UTC, bù trừ timezone offset
         const utcTime = date.getTime();
@@ -272,10 +216,6 @@ export default function PatientAppointments() {
         const vietnamOffset = 7 * 60 * 60000; // Vietnam is UTC+7
         
         displayDate = new Date(utcTime + localOffset + vietnamOffset);
-        console.log('Converted to Vietnam time:', displayDate);
-      } else {
-        // Đây có thể là local time rồi
-        console.log('Treating as local time');
       }
       
       const formatted = displayDate.toLocaleString('vi-VN', {
@@ -286,28 +226,23 @@ export default function PatientAppointments() {
         minute: '2-digit'
       });
       
-      console.log('Formatted result:', formatted);
       return formatted;
       
     } catch (error) {
-      console.error('Error formatting date:', error, 'Original dateString:', dateString);
       return 'Lỗi định dạng ngày';
     }
   };
 
-  const filteredAppointments = appointments.filter(apt => {
-    const status = parseInt(apt.status || apt.Status);
-    switch (filter) {
-      case 'upcoming':
-        return status === 0 || status === 1;
-      case 'completed':
-        return status === 2;
-      case 'cancelled':
-        return status === 3;
-      default:
-        return true;
-    }
-  });
+  // Helper function to get meeting link from appointment object
+  const getMeetingLink = (appointment) => {
+    // Kiểm tra cả hai cách viết có thể có của field
+    const link = appointment.OnlineLink || appointment.onlineLink;
+    
+    // Check if link exists and is not null/empty
+    return link && typeof link === 'string' && link.trim() !== '' && link !== 'null' ? link : null;
+  };
+
+  const filteredAppointments = appointments;
 
   if (loading) {
     return (
@@ -353,30 +288,6 @@ export default function PatientAppointments() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="border-b border-[#3B9AB8]/30">
-          <nav className="flex -mb-px">
-            {[
-              { id: 'all', label: 'Tất cả' },
-              { id: 'upcoming', label: 'Sắp tới' },
-              { id: 'completed', label: 'Đã hoàn thành' },
-              { id: 'cancelled', label: 'Đã hủy' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id)}
-                className={`px-4 py-3 text-sm font-medium transition-colors duration-150 ${
-                  filter === tab.id
-                    ? 'border-b-2 border-[#3B9AB8] text-[#3B9AB8] bg-[#3B9AB8]/10'
-                    : 'text-gray-500 hover:text-[#3B9AB8] hover:border-[#3B9AB8]/40'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
         {/* Appointments List */}
         <div className="divide-y divide-gray-200">
           {filteredAppointments.length === 0 ? (
@@ -384,9 +295,7 @@ export default function PatientAppointments() {
               <FaCalendarAlt className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn đã thanh toán</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {filter === 'all' 
-                  ? 'Bạn chưa có lịch hẹn đã thanh toán nào. Chỉ những lịch hẹn đã thanh toán mới được hiển thị.'
-                  : `Không có lịch hẹn đã thanh toán ${filter === 'upcoming' ? 'sắp tới' : filter === 'completed' ? 'đã hoàn thành' : 'đã hủy'}.`}
+                Bạn chưa có lịch hẹn đã thanh toán nào. Chỉ những lịch hẹn đã thanh toán mới được hiển thị.
               </p>
               <div className="mt-6">
                 <button
@@ -411,10 +320,7 @@ export default function PatientAppointments() {
                         {appointment.apointmentTitle || 'Khám bệnh'}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        <div>
-                          <div>Gốc: {appointment.appointmentStartDate || appointment.AppointmentStartDate}</div>
-                          <div>Hiển thị: {formatDate(appointment.appointmentStartDate || appointment.AppointmentStartDate)}</div>
-                        </div>
+                        {formatDate(appointment.appointmentStartDate || appointment.AppointmentStartDate)}
                       </p>
                     </div>
                   </div>
@@ -433,13 +339,15 @@ export default function PatientAppointments() {
                     </span>
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
-                    {appointment.appointmentType === 0 || appointment.AppointmentType === 0 ? (
+                    {(appointment.appointmentType === 0 || appointment.AppointmentType === 0 || 
+                      appointment.appointmentType === 'Online' || appointment.AppointmentType === 'Online') ? (
                       <FaVideo className="mr-2" />
                     ) : (
                       <FaHospital className="mr-2" />
                     )}
                     <span>
-                      {appointment.appointmentType === 0 || appointment.AppointmentType === 0
+                      {(appointment.appointmentType === 0 || appointment.AppointmentType === 0 ||
+                        appointment.appointmentType === 'Online' || appointment.AppointmentType === 'Online')
                         ? 'Khám trực tuyến'
                         : 'Khám tại phòng khám'}
                     </span>
@@ -449,6 +357,47 @@ export default function PatientAppointments() {
                     <span className="text-green-600 font-medium">Đã thanh toán</span>
                   </div>
                 </div>
+                
+                {/* Online Meeting Link for online appointments */}
+                {((appointment.appointmentType === 0 || appointment.AppointmentType === 0 ||
+                   appointment.appointmentType === 'Online' || appointment.AppointmentType === 'Online') && 
+                  getMeetingLink(appointment)) && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaVideo className="text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">Link cuộc họp trực tuyến:</span>
+                    </div>
+                    <a
+                      href={getMeetingLink(appointment)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      <FaVideo />
+                      Tham gia cuộc họp
+                    </a>
+                    <div className="mt-2 text-xs text-blue-600 break-all">
+                      Link: {getMeetingLink(appointment)}
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      * Link được cung cấp bởi nhân viên
+                    </p>
+                  </div>
+                )}
+                
+                {/* Show message for online appointments without link */}
+                {((appointment.appointmentType === 0 || appointment.AppointmentType === 0 ||
+                   appointment.appointmentType === 'Online' || appointment.AppointmentType === 'Online') && 
+                  !getMeetingLink(appointment)) && (
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center gap-2">
+                      <FaVideo className="text-yellow-600" />
+                      <span className="text-sm text-yellow-800">
+                        Link cuộc họp sẽ được cập nhật bởi nhân viên trước giờ hẹn
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {appointment.doctorSpecialization && (
                   <div className="mt-2 text-sm text-gray-500">
                     <span>Chuyên khoa: {appointment.doctorSpecialization}</span>

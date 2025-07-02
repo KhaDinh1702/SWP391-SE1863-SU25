@@ -17,6 +17,8 @@ export default function PatientProfile() {
   const [editedPatientData, setEditedPatientData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Thêm key để force refresh UI
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -69,65 +71,147 @@ export default function PatientProfile() {
     fetchUserData();
   }, [navigate]);
 
-  const handleEdit = () => setIsEditing(true);
+  // Debug effect để theo dõi thay đổi của patientData
+  useEffect(() => {
+    console.log('PatientData changed:', patientData);
+    if (patientData) {
+      console.log('PatientData details:', {
+        fullName: patientData.fullName,
+        dateOfBirth: patientData.dateOfBirth,
+        gender: patientData.gender,
+        address: patientData.address
+      });
+    }
+  }, [patientData]);
+
+  const handleEdit = () => {
+    if (!patientData?.id) {
+      setError('Không tìm thấy thông tin bệnh nhân. Vui lòng tải lại trang.');
+      return;
+    }
+    setIsEditing(true);
+    setError(null);
+  };
+  
   const handleCancel = () => {
     setEditedUserData(userData);
     setEditedPatientData(patientData);
     setIsEditing(false);
+    setError(null);
   };
 
   const handleSave = async () => {
     try {
+      setSaving(true);
+      setError(null);
+      
       const currentUser = authService.getCurrentUser();
       
-      // Cập nhật thông tin User
-      const userResponse = await fetch(`http://localhost:5275/api/User/update-profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: currentUser.userId,
-          fullName: editedUserData.fullName,
-          email: editedUserData.email,
-          phoneNumber: editedUserData.phoneNumber
-        })
-      });
-
-      if (!userResponse.ok) throw new Error('Failed to update user profile');
+      // Tạm thời chỉ cập nhật thông tin Patient (vì User update-profile endpoint chưa có)
+      // TODO: Thêm User profile update khi backend có endpoint
       
-      const updatedUserData = await userResponse.json();
-      setUserData(updatedUserData);
-
       // Cập nhật thông tin Patient nếu có
       if (patientData && editedPatientData) {
+        // Validation trước khi gửi
+        if (!editedPatientData.fullName?.trim()) {
+          throw new Error('Họ tên không được để trống');
+        }
+        if (!editedPatientData.dateOfBirth) {
+          throw new Error('Ngày sinh không được để trống');
+        }
+        if (editedPatientData.gender === undefined || editedPatientData.gender === '') {
+          throw new Error('Vui lòng chọn giới tính');
+        }
+
+        // Kiểm tra có patientData.id không (đây là PatientId thực sự)
+        if (!patientData?.id) {
+          throw new Error('Không tìm thấy thông tin Patient ID. Vui lòng tải lại trang.');
+        }
+
+        const formData = new FormData();
+        formData.append('patientId', patientData.id);
+        formData.append('fullName', editedPatientData.fullName.trim());
+        formData.append('dateOfBirth', editedPatientData.dateOfBirth);
+        formData.append('gender', editedPatientData.gender.toString());
+        formData.append('address', editedPatientData.address || '');
+        formData.append('contactPersonName', editedPatientData.contactPersonName || '');
+        formData.append('contactPersonPhone', editedPatientData.contactPersonPhone || '');
+
+        // Debug logging
+        console.log('=== PATIENT UPDATE DEBUG ===');
+        console.log('Current User:', currentUser);
+        console.log('Patient Data:', patientData);
+        console.log('Patient ID (actual):', patientData?.id);
+        console.log('User ID:', currentUser?.userId);
+        console.log('Edited Patient Data:', editedPatientData);
+        console.log('FormData entries:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        console.log('=== END DEBUG ===');
+
         const patientResponse = await fetch(`http://localhost:5275/api/Patient/patient-update-profile`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${currentUser.token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${currentUser.token}`
           },
-          body: JSON.stringify({
-            userId: currentUser.userId,
-            fullName: editedPatientData.fullName,
-            dateOfBirth: editedPatientData.dateOfBirth,
-            gender: editedPatientData.gender,
-            address: editedPatientData.address,
-            contactPersonName: editedPatientData.contactPersonName,
-            contactPersonPhone: editedPatientData.contactPersonPhone
-          })
+          body: formData
         });
 
+        console.log('Response status:', patientResponse.status);
+        
         if (patientResponse.ok) {
           const updatedPatientData = await patientResponse.json();
-          setPatientData(updatedPatientData);
+          console.log('Updated patient data:', updatedPatientData);
+          
+          // Force tạo object mới để trigger re-render
+          const newPatientData = { ...updatedPatientData };
+          const newEditedPatientData = { ...updatedPatientData };
+          
+          // Cập nhật cả patientData và editedPatientData để đồng bộ
+          setPatientData(newPatientData);
+          setEditedPatientData(newEditedPatientData);
+          
+          // Debug: Log để kiểm tra dữ liệu đã được cập nhật
+          console.log('Data after update:');
+          console.log('New patientData:', newPatientData);
+          console.log('New editedPatientData:', newEditedPatientData);
+          
+          // Cập nhật edited user data để đồng bộ
+          setEditedUserData(prev => ({
+            ...prev,
+            fullName: updatedPatientData.fullName,
+            phoneNumber: editedUserData?.phoneNumber || prev?.phoneNumber
+          }));
+          
+          // Hiển thị thông báo thành công đơn giản và điều hướng về trang chủ
+          alert('Cập nhật hồ sơ thành công!');
+          
+          // Điều hướng về trang chủ
+          navigate('/');
+        } else {
+          const errorText = await patientResponse.text();
+          console.error('Error response:', errorText);
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (e) {
+            errorData = { message: errorText };
+          }
+          throw new Error(errorData.message || `Server error: ${patientResponse.status}`);
         }
+      } else {
+        throw new Error('Không tìm thấy thông tin bệnh nhân để cập nhật');
       }
-      
-      setIsEditing(false);
     } catch (err) {
-      setError(err.message);
+      setError(`Lỗi khi cập nhật hồ sơ: ${err.message}`);
+      
+      // Auto clear error message after 5 seconds
+      setTimeout(() => {
+        setError(null);
+      }, 5000);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -174,6 +258,7 @@ export default function PatientProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 to-white py-12 px-4 sm:px-6 lg:px-8">
       <motion.div 
+        key={refreshKey} // Thêm key để force re-render
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -208,35 +293,54 @@ export default function PatientProfile() {
                 <p className="text-white/90 mb-3">{userData.email}</p>
                 
                 <div className="flex justify-center md:justify-start gap-4">
-                  {!isEditing ? (
+                  {!isEditing && patientData?.id && (
                     <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(59, 154, 184, 0.3)" }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={handleEdit}
-                      className="flex items-center px-5 py-2 bg-white text-[#3B9AB8] rounded-full hover:bg-gray-100 transition-all shadow-md"
+                      className="group flex items-center px-6 py-3 bg-white text-[#3B9AB8] rounded-xl hover:bg-gradient-to-r hover:from-white hover:to-blue-50 transition-all duration-300 shadow-lg border border-white/20 backdrop-blur-sm"
                     >
-                      <FaEdit className="mr-2" />
-                      Chỉnh sửa
+                      <FaEdit className="mr-2 group-hover:rotate-12 transition-transform duration-300" />
+                      <span className="font-semibold">Chỉnh sửa hồ sơ</span>
                     </motion.button>
-                  ) : (
+                  )}
+                  {isEditing && (
                     <div className="flex gap-3">
                       <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: saving ? 1 : 1.05, boxShadow: saving ? "none" : "0 8px 20px rgba(34, 197, 94, 0.3)" }}
+                        whileTap={{ scale: saving ? 1 : 0.95 }}
                         onClick={handleSave}
-                        className="flex items-center px-5 py-2 bg-white text-green-600 rounded-full hover:bg-green-50 transition-all shadow-md"
+                        disabled={saving}
+                        className={`group flex items-center px-6 py-3 rounded-xl transition-all duration-300 shadow-lg ${
+                          saving 
+                            ? 'bg-gray-400 text-white cursor-not-allowed' 
+                            : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                        }`}
                       >
-                        <FaSave className="mr-2" />
-                        Lưu
+                        {saving ? (
+                          <>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                              className="mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent"
+                            />
+                            <span className="font-semibold">Đang lưu...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaSave className="mr-2 group-hover:scale-110 transition-transform duration-300" />
+                            <span className="font-semibold">Lưu thay đổi</span>
+                          </>
+                        )}
                       </motion.button>
                       <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.05, boxShadow: "0 8px 20px rgba(107, 114, 128, 0.3)" }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleCancel}
-                        className="flex items-center px-5 py-2 bg-white text-gray-600 rounded-full hover:bg-gray-100 transition-all shadow-md"
+                        className="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg"
                       >
-                        <FaTimes className="mr-2" />
-                        Hủy
+                        <FaTimes className="mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                        <span className="font-semibold">Hủy bỏ</span>
                       </motion.button>
                     </div>
                   )}
@@ -247,6 +351,19 @@ export default function PatientProfile() {
 
           {/* Profile Details */}
           <div className="p-6 md:p-8">
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 flex items-center gap-2"
+              >
+                <FaTimes className="text-red-600" />
+                <span>{error}</span>
+              </motion.div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Personal Information */}
               <div className="space-y-6">
@@ -266,32 +383,14 @@ export default function PatientProfile() {
                         <input
                           type="text"
                           name="fullName"
-                          value={editedPatientData?.fullName || editedUserData.fullName}
-                          onChange={patientData ? handlePatientInputChange : handleUserInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                          value={editedPatientData?.fullName || ''}
+                          onChange={handlePatientInputChange}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30"
+                          placeholder="Nhập họ và tên"
+                          required
                         />
                       ) : (
-                        <p className="text-gray-900 font-medium">{patientData?.fullName || userData.fullName}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 text-[#3B9AB8]">
-                      <FaEnvelope />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
-                      {isEditing ? (
-                        <input
-                          type="email"
-                          name="email"
-                          value={editedUserData.email}
-                          onChange={handleUserInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
-                        />
-                      ) : (
-                        <p className="text-gray-900 font-medium">{userData.email}</p>
+                        <p className="text-gray-900 font-medium">{patientData?.fullName || userData?.fullName || 'Chưa cập nhật'}</p>
                       )}
                     </div>
                   </div>
@@ -308,7 +407,8 @@ export default function PatientProfile() {
                           name="dateOfBirth"
                           value={editedPatientData?.dateOfBirth ? new Date(editedPatientData.dateOfBirth).toISOString().split('T')[0] : ''}
                           onChange={handlePatientInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30"
+                          required
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">
@@ -333,7 +433,8 @@ export default function PatientProfile() {
                           name="gender"
                           value={editedPatientData?.gender ?? ''}
                           onChange={handlePatientInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30"
+                          required
                         >
                           <option value="">Chọn giới tính</option>
                           <option value={0}>Nam</option>
@@ -346,36 +447,6 @@ export default function PatientProfile() {
                            patientData?.gender === 1 ? 'Nữ' : 
                            patientData?.gender === 2 ? 'Khác' : 'Chưa xác định'}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <FaPhone className="text-[#3B9AB8]" />
-                  Thông tin liên hệ
-                </h2>
-                
-                <div className="space-y-5">
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 text-[#3B9AB8]">
-                      <FaPhone />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Số điện thoại</label>
-                      {isEditing ? (
-                        <input
-                          type="tel"
-                          name="phoneNumber"
-                          value={editedUserData.phoneNumber}
-                          onChange={handleUserInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
-                        />
-                      ) : (
-                        <p className="text-gray-900 font-medium">{userData.phoneNumber}</p>
                       )}
                     </div>
                   </div>
@@ -392,12 +463,44 @@ export default function PatientProfile() {
                           value={editedPatientData?.address || ''}
                           onChange={handlePatientInputChange}
                           rows="3"
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all resize-none"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30 resize-none"
                           placeholder="Nhập địa chỉ của bạn"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium whitespace-pre-wrap">{patientData?.address || 'Chưa cập nhật'}</p>
                       )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <FaPhone className="text-[#3B9AB8]" />
+                  Thông tin liên hệ
+                </h2>
+                
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaEnvelope />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                      <p className="text-gray-900 font-medium">{userData?.email || 'Chưa cập nhật'}</p>
+                      <p className="text-xs text-gray-500 mt-1">* Email không thể thay đổi</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1 text-[#3B9AB8]">
+                      <FaPhone />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Số điện thoại</label>
+                      <p className="text-gray-900 font-medium">{userData?.phoneNumber || 'Chưa cập nhật'}</p>
+                      <p className="text-xs text-gray-500 mt-1">* Số điện thoại không thể thay đổi</p>
                     </div>
                   </div>
 
@@ -413,8 +516,8 @@ export default function PatientProfile() {
                           name="contactPersonName"
                           value={editedPatientData?.contactPersonName || ''}
                           onChange={handlePatientInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
-                          placeholder="Tên người liên hệ"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30"
+                          placeholder="Tên người liên hệ khẩn cấp"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">{patientData?.contactPersonName || 'Chưa cập nhật'}</p>
@@ -434,8 +537,8 @@ export default function PatientProfile() {
                           name="contactPersonPhone"
                           value={editedPatientData?.contactPersonPhone || ''}
                           onChange={handlePatientInputChange}
-                          className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#3B9AB8] focus:ring-2 focus:ring-[#3B9AB8]/30 transition-all"
-                          placeholder="SĐT người liên hệ"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#3B9AB8] focus:ring-4 focus:ring-[#3B9AB8]/20 transition-all duration-300 bg-gradient-to-r from-white to-blue-50/30"
+                          placeholder="Số điện thoại người liên hệ"
                         />
                       ) : (
                         <p className="text-gray-900 font-medium">{patientData?.contactPersonPhone || 'Chưa cập nhật'}</p>
