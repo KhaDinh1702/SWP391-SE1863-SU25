@@ -298,6 +298,7 @@ const LabResults = () => {
               onClick={() => {
                 setSelectedResult(null);
                 setIsModalVisible(true);
+                // Không tự động setFieldsValue doctorId nữa
               }}
             >
               Thêm kết quả mới
@@ -492,7 +493,8 @@ const LabResults = () => {
               <Col span={24}>
                 <Form.Item
                   name="labPictures"
-                  label="Hình ảnh xét nghiệm (tùy chọn)"
+                  label="Hình ảnh xét nghiệm (bắt buộc)"
+                  rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh xét nghiệm' }]}
                 >
                   <input type="file" name="labPictures" multiple accept="image/*" />
                 </Form.Item>

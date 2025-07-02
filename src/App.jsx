@@ -30,6 +30,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 import AdvisoryContact from './pages/AdvisoryContact';
 import MomoPayment from "./pages/MomoPayment";
 import Notifications from './pages/patient/Notifications';
+import MedicalRecordPage from './pages/MedicalRecordPage';
 // Import các component quản lý từ thư mục con
 
 
@@ -134,6 +135,26 @@ function App() {
           element={
             <ProtectedRoute requiredRoles={["Staff"]}>
               <StaffDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Medical Record route */}
+        <Route
+          path="/medical-record"
+          element={
+            <ProtectedRoute requiredRoles={["Patient", "Doctor", "Admin"]}>
+              <MedicalRecordPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/medical-records"
+          element={
+            <ProtectedRoute requiredRoles={["Patient"]}>
+              <ProtectedLayout>
+                <MedicalRecordPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
