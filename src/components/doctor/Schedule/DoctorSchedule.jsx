@@ -4,6 +4,7 @@ import { LeftOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons';
 import { doctorScheduleService } from '../../../services/doctorScheduleService';
 import { doctorService } from '../../../services/doctorService';
 import { appointmentService } from '../../../services/appointmentService';
+import { patientService } from '../../../services/patientService';
 import moment from 'moment';
 import 'moment/locale/vi'; // Import Vietnamese locale for moment
 
@@ -12,6 +13,7 @@ const { Title, Text } = Typography;
 const DoctorSchedule = () => {
   const [allSchedules, setAllSchedules] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState({}); // Cache patient info by patientId
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState(moment());
@@ -52,7 +54,6 @@ const DoctorSchedule = () => {
       }
 
       const doctorId = currentDoctor.id;
-      console.log('Fetching schedules for doctor:', doctorId);
       
       // Fetch both schedules and appointments
       const [allSchedulesResponse, allAppointmentsResponse] = await Promise.all([
@@ -60,21 +61,41 @@ const DoctorSchedule = () => {
         appointmentService.getAllAppointments()
       ]);
       
-      console.log('All schedules response:', allSchedulesResponse);
-      console.log('All appointments response:', allAppointmentsResponse);
-      
       // Store appointments for later reference
       setAppointments(allAppointmentsResponse || []);
 
+      // Fetch all patients to create a mapping
+      if (allAppointmentsResponse && allAppointmentsResponse.length > 0) {
+        const uniquePatientIds = [...new Set(allAppointmentsResponse.map(apt => apt.patientId).filter(Boolean))];
+        
+        try {
+          // Fetch all patients at once
+          const allPatientsResponse = await patientService.getAllPatients();
+          
+          if (allPatientsResponse && Array.isArray(allPatientsResponse)) {
+            // Create mapping from patientId to patient info
+            const patientMapping = {};
+            allPatientsResponse.forEach(patient => {
+              if (patient.id || patient.patientId) {
+                const patientId = patient.id || patient.patientId;
+                patientMapping[patientId] = patient;
+              }
+            });
+            
+            setPatients(patientMapping);
+          }
+        } catch (error) {
+          console.error('Error fetching all patients:', error);
+        }
+      }
+
       if (allSchedulesResponse && Array.isArray(allSchedulesResponse)) {
           const doctorSchedules = allSchedulesResponse.filter(s => s.doctorId === doctorId);
-          console.log('Filtered doctor schedules:', doctorSchedules);
           
           const expandedSchedules = [];
           doctorSchedules.forEach(schedule => {
               const start = moment(schedule.startTime);
               const end = moment(schedule.endTime);
-              console.log(`Processing schedule: ${schedule.id}, Start: ${start.format()}, End: ${end.format()}, Available: ${schedule.isAvailable}, AppointmentId: ${schedule.appointmentId}`);
 
               // Nếu start và end là cùng ngày, chỉ tạo 1 entry với thời gian chính xác
               if (start.isSame(end, 'day')) {
@@ -105,7 +126,6 @@ const DoctorSchedule = () => {
               }
           });
 
-          console.log('Expanded schedules:', expandedSchedules);
           setAllSchedules(expandedSchedules);
           setLastRefresh(moment());
       } else {
@@ -178,6 +198,51 @@ const DoctorSchedule = () => {
     return schedules.length > 0 ? schedules[0] : null;
   };
 
+  // Helper function to get appointment info
+  const getAppointmentInfo = (appointmentId) => {
+    return appointments.find(apt => apt.id === appointmentId || apt.appointmentId === appointmentId);
+  };
+
+  // Helper function to get patient display name
+  const getPatientDisplayName = (appointmentInfo) => {
+    if (!appointmentInfo) return 'Bệnh nhân';
+    
+    // Kiểm tra nếu là anonymous
+    if (appointmentInfo.isAnonymousAppointment || appointmentInfo.anonymous) {
+      return 'Ẩn danh';
+    }
+    
+    // Kiểm tra nếu đã có thông tin patient trong cache
+    if (appointmentInfo.patientId && patients[appointmentInfo.patientId]) {
+      const patientInfo = patients[appointmentInfo.patientId];
+      
+      // Thử các trường khác nhau cho tên
+      const name = patientInfo.fullName || 
+                   patientInfo.name || 
+                   patientInfo.Name ||
+                   patientInfo.FullName ||
+                   (patientInfo.firstName && patientInfo.lastName ? `${patientInfo.firstName} ${patientInfo.lastName}` : null) ||
+                   (patientInfo.FirstName && patientInfo.LastName ? `${patientInfo.FirstName} ${patientInfo.LastName}` : null);
+      
+      if (name) {
+        return name;
+      }
+    }
+    
+    // Ưu tiên các trường tên có sẵn trong appointment
+    const patientName = appointmentInfo.patientName || 
+                       appointmentInfo.PatientName || 
+                       appointmentInfo.patient?.name || 
+                       appointmentInfo.patient?.fullName ||
+                       appointmentInfo.patient?.firstName + ' ' + appointmentInfo.patient?.lastName ||
+                       appointmentInfo.name ||
+                       appointmentInfo.fullName ||
+                       appointmentInfo.firstName + ' ' + appointmentInfo.lastName;
+    
+    // Nếu có tên thì trả về tên, không thì trả về "Bệnh nhân" thay vì ID
+    return patientName || 'Bệnh nhân';
+  };
+
   const renderTimetableView = () => {
     const startOfWeek = currentDate.clone().startOf('isoWeek');
     const days = [];
@@ -248,6 +313,7 @@ const DoctorSchedule = () => {
           // Nếu có appointment trong slot này, ưu tiên hiển thị appointment
           if (appointmentInfo) {
             const aptMoment = moment(appointmentInfo.appointmentStartDate || appointmentInfo.AppointmentStartDate || appointmentInfo.appointmentDate);
+            const patientDisplayName = getPatientDisplayName(appointmentInfo);
             return (
               <div style={{
                 padding: '4px 6px',
@@ -263,13 +329,12 @@ const DoctorSchedule = () => {
                 color: '#d48806',
                 fontWeight: 'bold'
               }}
-                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${appointmentInfo.patientName || appointmentInfo.PatientName || appointmentInfo.patient?.name || appointmentInfo.patient?.fullName || appointmentInfo.patientId || 'Bệnh nhân'} lúc ${aptMoment.format('HH:mm')}`}
+                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}`}
               >
                 <span>📅 {aptMoment.format('HH:mm')}</span>
                 <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'}</span>
                 <span style={{ color: '#722ed1', fontWeight: 600, fontSize: '12px', marginTop: 2 }}>
-                  {appointmentInfo.isAnonymous || appointmentInfo.anonymous ? 'Ẩn danh'
-                    : (appointmentInfo.patientName || appointmentInfo.PatientName || appointmentInfo.patient?.name || appointmentInfo.patient?.fullName || appointmentInfo.patientId || 'Bệnh nhân')}
+                  {patientDisplayName}
                 </span>
               </div>
             );
@@ -306,8 +371,8 @@ const DoctorSchedule = () => {
                 style={{ 
                   padding: '4px 6px',
                   borderRadius: '4px',
-                  backgroundColor: schedule.isAvailable ? '#e6f7ff' : '#fff1f0',
-                  border: schedule.isAvailable ? '1px solid #91d5ff' : '1px solid #ffccc7',
+                  backgroundColor: schedule.isAvailable ? '#e6f7ff' : '#fffbe6',
+                  border: schedule.isAvailable ? '1px solid #91d5ff' : '1px solid #ffe58f',
                   fontSize: '11px',
                   textAlign: 'center',
                   cursor: 'pointer',
@@ -316,14 +381,14 @@ const DoctorSchedule = () => {
                   flexDirection: 'column',
                   justifyContent: 'center'
                 }}
-                title={`Lịch ID: ${schedule.originalId || schedule.id}${showAppointment ? '\nCuộc hẹn: ' + appointmentInfo.title + ' - ' + appointmentInfo.patientName + ' lúc ' + appointmentTime : ''}`}
+                title={`Lịch ID: ${schedule.originalId || schedule.id}${showAppointment ? '\nCuộc hẹn: ' + appointmentInfo.title + ' - ' + getPatientDisplayName(appointmentInfo) + ' lúc ' + appointmentTime : ''}`}
               >
                 <div style={{ 
                   fontWeight: 'bold', 
-                  color: schedule.isAvailable ? '#1890ff' : '#ff4d4f',
+                  color: schedule.isAvailable ? '#1890ff' : '#d48806',
                   marginBottom: '1px'
                 }}>
-                  {schedule.isAvailable ? 'Sẵn sàng' : 'Bận'}
+                  {schedule.isAvailable ? 'Sẵn sàng' : 'Đã tiếp nhận lịch hẹn'}
                 </div>
                 {showAppointment && (
                   <div style={{ 
@@ -469,11 +534,11 @@ const DoctorSchedule = () => {
               <div style={{ 
                 width: 16, 
                 height: 16, 
-                backgroundColor: '#fff1f0', 
-                border: '1px solid #ffccc7',
+                backgroundColor: '#fffbe6', 
+                border: '1px solid #ffe58f',
                 borderRadius: 2 
               }}></div>
-              <Text>Bận - Không thể tiếp nhận lịch hẹn</Text>
+              <Text>Đã tiếp nhận lịch hẹn</Text>
             </div>
           </Col>
         </Row>
