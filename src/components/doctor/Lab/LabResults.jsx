@@ -6,6 +6,7 @@ import { patientService } from '../../../services/patientService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
 import { userService } from '../../../services/userService';
 import { doctorService } from '../../../services/doctorService';
+import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -15,6 +16,7 @@ const LabResults = () => {
   const [labResults, setLabResults] = useState([]);
   const [patients, setPatients] = useState([]);
   const [treatmentStages, setTreatmentStages] = useState([]);
+  const [treatmentProtocols, setTreatmentProtocols] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -28,6 +30,7 @@ const LabResults = () => {
     fetchLabResults();
     fetchPatients();
     fetchTreatmentStages();
+    fetchTreatmentProtocols();
     fetchDoctors();
   }, []);
 
@@ -76,17 +79,51 @@ const LabResults = () => {
   const fetchPatients = async () => {
     try {
       const data = await patientService.getAllPatients();
+      console.log('Fetched patients data:', data);
+      // Log each patient in detail
+      data.forEach((patient, index) => {
+        console.log(`Patient ${index}:`, {
+          id: patient.id,
+          patientId: patient.patientId,
+          PatientId: patient.PatientId, // Check if it's capitalized
+          fullName: patient.fullName,
+          FullName: patient.FullName // Check if it's capitalized
+        });
+      });
       setPatients(data);
     } catch (error) {
+      console.error('Error fetching patients:', error);
       message.error('Không thể tải danh sách bệnh nhân');
+    }
+  };
+
+  const fetchTreatmentProtocols = async () => {
+    try {
+      const data = await patientTreatmentProtocolService.getAllPatientTreatmentProtocols();
+      console.log('Fetched treatment protocols data:', data);
+      // Log each protocol in detail with ALL properties
+      data.forEach((protocol, index) => {
+        console.log(`Treatment protocol ${index} - ALL PROPERTIES:`, protocol);
+      });
+      setTreatmentProtocols(data);
+    } catch (error) {
+      console.error('Error fetching treatment protocols:', error);
+      message.error('Không thể tải danh sách phác đồ điều trị');
     }
   };
 
   const fetchTreatmentStages = async () => {
     try {
       const data = await treatmentStageService.getAllTreatmentStages();
+      console.log('Fetched treatment stages data:', data);
+      // Log each stage in detail with ALL properties
+      data.forEach((stage, index) => {
+        console.log(`Treatment stage ${index} - ALL PROPERTIES:`, stage);
+        console.log(`Treatment stage ${index} - Object.keys:`, Object.keys(stage));
+      });
       setTreatmentStages(data);
     } catch (error) {
+      console.error('Error fetching treatment stages:', error);
       message.error('Không thể tải danh sách giai đoạn điều trị');
     }
   };
@@ -165,15 +202,8 @@ const LabResults = () => {
         return;
       }
 
-      // Kiểm tra nếu chọn cả treatmentStageId thì doctorId phải khớp
-      if (values.treatmentStageId) {
-        const stage = treatmentStages.find(ts => ts.treatmentStageId === values.treatmentStageId);
-        console.log('Selected treatment stage:', stage);
-        if (stage && stage.doctorId && currentDoctor.id && stage.doctorId !== currentDoctor.id) {
-          message.error('Bác sĩ không phù hợp với giai đoạn điều trị đã chọn!');
-          return;
-        }
-      }
+      // Note: Removed doctor ID validation for treatment stages
+      // Lab doctors should be able to create results for any treatment stage
 
       // Chuẩn hóa dữ liệu gửi lên
       const requestData = {
@@ -598,15 +628,51 @@ const LabResults = () => {
                     }
                     notFoundContent={!form.getFieldValue('patientId') ? 'Vui lòng chọn bệnh nhân trước' : 'Không có giai đoạn phù hợp'}
                   >
-                    {treatmentStages.map((stage) => {
-                      // Sử dụng treatmentStageId làm key
-                      const key = stage.treatmentStageId || stage.id || `stage-${stage.stageName}`;
-                      return (
-                        <Option key={key} value={stage.treatmentStageId}>
-                          {stage.stageName} {stage.treatmentStageId ? `(${stage.treatmentStageId})` : ''} - {patients.find(p => p.patientId === stage.patientId)?.fullName || 'Không rõ bệnh nhân'}
-                        </Option>
-                      );
-                    })}
+                    {treatmentStages
+                      .filter(stage => {
+                        // Only show stages for the selected patient
+                        const selectedPatientId = form.getFieldValue('patientId');
+                        if (!selectedPatientId) return true; // Show all if no patient selected
+                        
+                        // Find the patient through treatment protocol
+                        if (stage.patientTreatmentProtocolId) {
+                          const protocol = treatmentProtocols.find(p => 
+                            (p.id === stage.patientTreatmentProtocolId || p.patientTreatmentProtocolId === stage.patientTreatmentProtocolId)
+                          );
+                          if (protocol && (protocol.patientId === selectedPatientId || protocol.PatientId === selectedPatientId)) {
+                            return true;
+                          }
+                        }
+                        
+                        return false;
+                      })
+                      .map((stage) => {
+                        // Sử dụng treatmentStageId làm key
+                        const key = stage.treatmentStageId || stage.id || `stage-${stage.stageName}`;
+                        
+                        // Find patient name through treatment protocol
+                        let patientName = 'Không rõ bệnh nhân';
+                        if (stage.patientTreatmentProtocolId) {
+                          const protocol = treatmentProtocols.find(p => 
+                            (p.id === stage.patientTreatmentProtocolId || p.patientTreatmentProtocolId === stage.patientTreatmentProtocolId)
+                          );
+                          if (protocol) {
+                            const protocolPatientId = protocol.patientId || protocol.PatientId;
+                            const patient = patients.find(p => (p.id === protocolPatientId || p.patientId === protocolPatientId));
+                            if (patient) {
+                              patientName = patient.fullName || patient.FullName || 'Tên không rõ';
+                            }
+                          }
+                        }
+                        
+                        const displayName = `${stage.stageName || 'Giai đoạn không rõ'} - ${patientName}`;
+                        
+                        return (
+                          <Option key={key} value={stage.treatmentStageId || stage.id}>
+                            {displayName}
+                          </Option>
+                        );
+                      })}
                   </Select>
                 </Form.Item>
               </Col>
