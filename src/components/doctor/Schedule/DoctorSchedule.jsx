@@ -18,6 +18,7 @@ const DoctorSchedule = () => {
   const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState(moment());
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [currentDoctor, setCurrentDoctor] = useState(null); // Store current doctor info
 
   useEffect(() => {
     moment.locale('vi');
@@ -45,15 +46,25 @@ const DoctorSchedule = () => {
       }
 
       const allDoctors = await doctorService.getAllDoctors();
-      const currentDoctor = allDoctors.find(d => d.userId === userId);
+      const currentDoctorInfo = allDoctors.find(d => d.userId === userId);
 
-      if (!currentDoctor) {
+      if (!currentDoctorInfo) {
         setError('Không thể tìm thấy thông tin bác sĩ.');
         setLoading(false);
         return;
       }
 
-      const doctorId = currentDoctor.id;
+      setCurrentDoctor(currentDoctorInfo); // Store doctor info
+      const doctorId = currentDoctorInfo.id;
+      
+      // Phân loại bác sĩ theo chuyên khoa
+      const specialization = currentDoctorInfo.specialization?.toLowerCase() || '';
+      const doctorType = {
+        isTestDoctor: specialization.includes('xét nghiệm') || specialization.includes('test') || specialization.includes('lab'),
+        isTreatmentDoctor: specialization.includes('điều trị') || specialization.includes('treatment') || specialization.includes('therapy'),
+        isConsultantDoctor: specialization.includes('tư vấn') || specialization.includes('consultation') || specialization.includes('counseling'),
+        specialization: currentDoctorInfo.specialization || 'Chưa xác định'
+      };
       
       // Fetch both schedules and appointments
       const [allSchedulesResponse, allAppointmentsResponse] = await Promise.all([
@@ -61,12 +72,72 @@ const DoctorSchedule = () => {
         appointmentService.getAllAppointments()
       ]);
       
-      // Store appointments for later reference
-      setAppointments(allAppointmentsResponse || []);
+      // Lọc appointments theo chuyên khoa của bác sĩ
+      let filteredAppointments = allAppointmentsResponse || [];
+      
+      // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
+      if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
+        filteredAppointments = filteredAppointments.filter(apt => {
+          const title = (apt.appointmentTitle || apt.AppointmentTitle || '').toLowerCase();
+          const notes = (apt.notes || apt.Notes || '').toLowerCase();
+          
+          // Lọc theo bác sĩ xét nghiệm
+          if (doctorType.isTestDoctor) {
+            return title.includes('xét nghiệm') || 
+                   title.includes('test') || 
+                   title.includes('lab') ||
+                   notes.includes('xét nghiệm') || 
+                   notes.includes('test') || 
+                   notes.includes('lab') ||
+                   apt.doctorId === doctorId;
+          }
+          
+          // Lọc theo bác sĩ điều trị
+          if (doctorType.isTreatmentDoctor) {
+            return title.includes('điều trị') || 
+                   title.includes('treatment') || 
+                   title.includes('therapy') ||
+                   title.includes('chữa trị') ||
+                   notes.includes('điều trị') || 
+                   notes.includes('treatment') || 
+                   notes.includes('therapy') ||
+                   notes.includes('chữa trị') ||
+                   apt.doctorId === doctorId;
+          }
+          
+          // Lọc theo bác sĩ tư vấn
+          if (doctorType.isConsultantDoctor) {
+            return title.includes('tư vấn') || 
+                   title.includes('consultation') || 
+                   title.includes('counseling') ||
+                   title.includes('khám tư vấn') ||
+                   notes.includes('tư vấn') || 
+                   notes.includes('consultation') || 
+                   notes.includes('counseling') ||
+                   notes.includes('khám tư vấn') ||
+                   apt.doctorId === doctorId;
+          }
+          
+          return false;
+        });
+      }
+      
+      // Store filtered appointments for later reference
+      setAppointments(filteredAppointments);
+      
+      // Debug log
+      console.log('Chuyên khoa bác sĩ:', doctorType.specialization);
+      console.log('Loại bác sĩ:', {
+        isTestDoctor: doctorType.isTestDoctor,
+        isTreatmentDoctor: doctorType.isTreatmentDoctor,
+        isConsultantDoctor: doctorType.isConsultantDoctor
+      });
+      console.log('Tổng số appointments:', allAppointmentsResponse?.length || 0);
+      console.log('Appointments sau khi lọc:', filteredAppointments.length);
 
       // Fetch all patients to create a mapping
-      if (allAppointmentsResponse && allAppointmentsResponse.length > 0) {
-        const uniquePatientIds = [...new Set(allAppointmentsResponse.map(apt => apt.patientId).filter(Boolean))];
+      if (filteredAppointments && filteredAppointments.length > 0) {
+        const uniquePatientIds = [...new Set(filteredAppointments.map(apt => apt.patientId).filter(Boolean))];
         
         try {
           // Fetch all patients at once
@@ -243,6 +314,45 @@ const DoctorSchedule = () => {
     return patientName || 'Bệnh nhân';
   };
 
+  // Helper function to get doctor type info
+  const getDoctorTypeInfo = (currentDoctor) => {
+    const specialization = currentDoctor?.specialization?.toLowerCase() || '';
+    
+    if (specialization.includes('xét nghiệm') || specialization.includes('test') || specialization.includes('lab')) {
+      return {
+        type: 'test',
+        title: 'Lịch làm việc xét nghiệm',
+        appointmentType: 'xét nghiệm',
+        description: 'Trang này chỉ hiển thị các lịch hẹn liên quan đến xét nghiệm. Chỉ những cuộc hẹn có tiêu đề hoặc ghi chú chứa từ khóa "xét nghiệm", "test", "lab" mới được hiển thị.'
+      };
+    }
+    
+    if (specialization.includes('điều trị') || specialization.includes('treatment') || specialization.includes('therapy')) {
+      return {
+        type: 'treatment',
+        title: 'Lịch làm việc điều trị',
+        appointmentType: 'điều trị',
+        description: 'Trang này chỉ hiển thị các lịch hẹn liên quan đến điều trị. Chỉ những cuộc hẹn có tiêu đề hoặc ghi chú chứa từ khóa "điều trị", "treatment", "therapy", "chữa trị" mới được hiển thị.'
+      };
+    }
+    
+    if (specialization.includes('tư vấn') || specialization.includes('consultation') || specialization.includes('counseling')) {
+      return {
+        type: 'consultation',
+        title: 'Lịch làm việc tư vấn',
+        appointmentType: 'tư vấn',
+        description: 'Trang này chỉ hiển thị các lịch hẹn liên quan đến tư vấn. Chỉ những cuộc hẹn có tiêu đề hoặc ghi chú chứa từ khóa "tư vấn", "consultation", "counseling", "khám tư vấn" mới được hiển thị.'
+      };
+    }
+    
+    return {
+      type: 'general',
+      title: 'Lịch làm việc của tôi',
+      appointmentType: 'khám bệnh',
+      description: 'Hiển thị tất cả các lịch hẹn của bạn.'
+    };
+  };
+
   const renderTimetableView = () => {
     const startOfWeek = currentDate.clone().startOf('isoWeek');
     const days = [];
@@ -333,10 +443,10 @@ const DoctorSchedule = () => {
                 color: isOnlineAppointment ? '#389e0d' : '#d48806',
                 fontWeight: 'bold'
               }}
-                title={`Cuộc hẹn: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
+                title={`Cuộc hẹn ${doctorTypeInfo.appointmentType}: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || doctorTypeInfo.appointmentType} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
               >
                 <span>{isOnlineAppointment ? '💻' : '📅'} {aptMoment.format('HH:mm')}</span>
-                <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || 'Khám bệnh'}</span>
+                <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || doctorTypeInfo.appointmentType}</span>
                 <span style={{ color: '#722ed1', fontWeight: 600, fontSize: '12px', marginTop: 2 }}>
                   {patientDisplayName}
                 </span>
@@ -422,7 +532,7 @@ const DoctorSchedule = () => {
                   color: schedule.isAvailable ? '#1890ff' : (showAppointment && isOnlineAppointment ? '#389e0d' : '#d48806'),
                   marginBottom: '1px'
                 }}>
-                  {schedule.isAvailable ? 'Sẵn sàng' : 'Đã tiếp nhận lịch hẹn'}
+                  {schedule.isAvailable ? 'Sẵn sàng' : `Đã tiếp nhận lịch ${doctorTypeInfo.appointmentType}`}
                 </div>
                 {showAppointment && (
                   <div style={{ 
@@ -544,12 +654,19 @@ const DoctorSchedule = () => {
 
   const startOfWeek = currentDate.clone().startOf('isoWeek').format('DD/MM');
   const endOfWeek = currentDate.clone().endOf('isoWeek').format('DD/MM/YYYY');
+  
+  // Get current doctor info from localStorage
+  const getCurrentDoctorInfo = () => {
+    return currentDoctor || { specialization: 'Chưa xác định' };
+  };
+  
+  const doctorTypeInfo = getDoctorTypeInfo(getCurrentDoctorInfo());
 
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
-            <Title level={4}>Lịch làm việc của tôi</Title>
+            <Title level={4}>{doctorTypeInfo.title}</Title>
             <Text>Tuần: {startOfWeek} - {endOfWeek}</Text>
             {lastRefresh && (
               <div>
@@ -574,6 +691,13 @@ const DoctorSchedule = () => {
       </Row>
       
       <div style={{ marginBottom: 16 }}>
+        <Alert 
+          message={doctorTypeInfo.title} 
+          description={doctorTypeInfo.description}
+          type="info" 
+          showIcon 
+          style={{ marginBottom: 16 }} 
+        />
         <Row gutter={16}>
           <Col>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -584,7 +708,7 @@ const DoctorSchedule = () => {
                 border: '1px solid #91d5ff',
                 borderRadius: 2 
               }}></div>
-              <Text>Sẵn sàng tiếp nhận lịch hẹn</Text>
+              <Text>Sẵn sàng tiếp nhận lịch {doctorTypeInfo.appointmentType}</Text>
             </div>
           </Col>
           <Col>
@@ -596,7 +720,7 @@ const DoctorSchedule = () => {
                 border: '1px solid #ffe58f',
                 borderRadius: 2 
               }}></div>
-              <Text>Đã tiếp nhận lịch hẹn (Trực tiếp)</Text>
+              <Text>Đã tiếp nhận lịch {doctorTypeInfo.appointmentType} (Trực tiếp)</Text>
             </div>
           </Col>
           <Col>
@@ -608,7 +732,7 @@ const DoctorSchedule = () => {
                 border: '1px solid #b7eb8f',
                 borderRadius: 2 
               }}></div>
-              <Text>Đã tiếp nhận lịch hẹn (Trực tuyến)</Text>
+              <Text>Đã tiếp nhận lịch {doctorTypeInfo.appointmentType} (Trực tuyến)</Text>
             </div>
           </Col>
         </Row>
