@@ -21,16 +21,38 @@ const LabResults = () => {
   const [selectedResult, setSelectedResult] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [currentDoctorId, setCurrentDoctorId] = useState(null);
+  const [currentDoctor, setCurrentDoctor] = useState(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
     fetchLabResults();
     fetchPatients();
     fetchTreatmentStages();
-    fetchCurrentDoctorId();
     fetchDoctors();
   }, []);
+
+  // Separate useEffect to fetch current doctor after doctors are loaded
+  useEffect(() => {
+    if (doctors.length > 0) {
+      fetchCurrentDoctor();
+    }
+  }, [doctors]);
+
+  // Update form field when currentDoctor changes
+  useEffect(() => {
+    if (currentDoctor?.id && form) {
+      form.setFieldsValue({ doctorId: currentDoctor.id });
+      console.log('Setting form doctorId to:', currentDoctor.id);
+    }
+  }, [currentDoctor, form]);
+
+  // Also set doctorId when opening the modal
+  useEffect(() => {
+    if (isModalVisible && currentDoctor?.id && form) {
+      form.setFieldsValue({ doctorId: currentDoctor.id });
+      console.log('Setting form doctorId in modal to:', currentDoctor.id);
+    }
+  }, [isModalVisible, currentDoctor, form]);
 
   const fetchLabResults = async () => {
     setLoading(true);
@@ -72,34 +94,82 @@ const LabResults = () => {
   const fetchDoctors = async () => {
     try {
       const data = await doctorService.getAllDoctors();
+      console.log('Fetched doctors data:', data);
       setDoctors(data);
     } catch (error) {
+      console.error('Error fetching doctors:', error);
       message.error('Không thể tải danh sách bác sĩ');
     }
   };
 
-  const fetchCurrentDoctorId = async () => {
+  const fetchCurrentDoctor = async () => {
     try {
       // Lấy userId từ token hoặc localStorage
       const userId = localStorage.getItem('userId');
-      if (!userId) return;
-      // Gọi API lấy user, lấy doctorId từ user
-      const user = await userService.getUserById(userId);
-      if (user && user.doctorId) {
-        setCurrentDoctorId(user.doctorId);
+      console.log('Looking for doctor with userId:', userId);
+      console.log('Available doctors:', doctors);
+      
+      if (!userId) {
+        console.log('No userId found in localStorage');
+        return;
+      }
+      
+      // Tìm doctor từ danh sách doctors theo userId (giống TreatmentProtocol)
+      const doctor = doctors.find(d => d.userId === userId);
+      console.log('Found doctor:', doctor);
+      
+      if (doctor) {
+        setCurrentDoctor(doctor);
+        console.log('Current doctor set to:', doctor);
+      } else {
+        console.log('No doctor found for userId:', userId);
+        console.log('Available doctor userIds:', doctors.map(d => d.userId));
       }
     } catch (error) {
-      // Không cần báo lỗi nếu không phải bác sĩ
+      console.error('Error fetching current doctor:', error);
+    }
+  };
+
+  // Function to ensure doctorId is set before form submission
+  const handleFormSubmit = async () => {
+    try {
+      // Ensure doctorId is set before validation
+      if (currentDoctor?.id) {
+        form.setFieldsValue({ doctorId: currentDoctor.id });
+      }
+      
+      // Validate and submit form
+      const values = await form.validateFields();
+      console.log('Form values before submit:', values);
+      
+      // Double-check doctorId is set
+      if (!values.doctorId && currentDoctor?.id) {
+        values.doctorId = currentDoctor.id;
+      }
+      
+      await handleCreateResult(values);
+    } catch (error) {
+      console.error('Form submission error:', error);
     }
   };
 
   // Sửa lại hàm handleCreateResult để lấy file đúng chuẩn cho FormData
   const handleCreateResult = async (values) => {
     try {
+      console.log('Current doctor:', currentDoctor);
+      console.log('Form values:', values);
+
+      // Kiểm tra currentDoctor có tồn tại không
+      if (!currentDoctor?.id) {
+        message.error('Không thể xác định bác sĩ hiện tại. Vui lòng thử lại.');
+        return;
+      }
+
       // Kiểm tra nếu chọn cả treatmentStageId thì doctorId phải khớp
       if (values.treatmentStageId) {
         const stage = treatmentStages.find(ts => ts.treatmentStageId === values.treatmentStageId);
-        if (stage && stage.doctorId && values.doctorId && stage.doctorId !== values.doctorId) {
+        console.log('Selected treatment stage:', stage);
+        if (stage && stage.doctorId && currentDoctor.id && stage.doctorId !== currentDoctor.id) {
           message.error('Bác sĩ không phù hợp với giai đoạn điều trị đã chọn!');
           return;
         }
@@ -109,7 +179,7 @@ const LabResults = () => {
       const requestData = {
         PatientId: values.patientId,
         TreatmentStageId: values.treatmentStageId || null,
-        DoctorId: values.doctorId || null,
+        DoctorId: values.doctorId || currentDoctor.id || null, // Ưu tiên values.doctorId từ form
         TestName: values.testName,
         TestType: values.testType || '',
         TestDate: values.testDate.toISOString(),
@@ -117,6 +187,9 @@ const LabResults = () => {
         Conclusion: values.conclusion || '',
         Notes: values.notes || ''
       };
+
+      console.log('Final request data:', requestData);
+      console.log('DoctorId being sent:', requestData.DoctorId);
 
       // Lấy file từ input (nếu có)
       const fileInput = document.querySelector('input[type="file"][name="labPictures"]');
@@ -298,6 +371,13 @@ const LabResults = () => {
               onClick={() => {
                 setSelectedResult(null);
                 setIsModalVisible(true);
+                // Set doctorId immediately when opening modal
+                if (currentDoctor?.id) {
+                  setTimeout(() => {
+                    form.setFieldsValue({ doctorId: currentDoctor.id });
+                    console.log('Setting doctorId in modal open handler:', currentDoctor.id);
+                  }, 100);
+                }
               }}
             >
               Thêm kết quả mới
@@ -369,7 +449,7 @@ const LabResults = () => {
           }}>
             Hủy
           </Button>,
-          <Button key="submit" type="primary" onClick={() => form.submit()}>
+          <Button key="submit" type="primary" onClick={handleFormSubmit}>
             Tạo kết quả
           </Button>
         ]}
@@ -427,6 +507,9 @@ const LabResults = () => {
             form={form}
             layout="vertical"
             onFinish={handleCreateResult}
+            initialValues={{
+              doctorId: currentDoctor?.id
+            }}
           >
             <Row gutter={16}>
               <Col span={12}>
@@ -501,7 +584,7 @@ const LabResults = () => {
             </Row>
 
             <Row gutter={16}>
-              <Col span={12}>
+              <Col span={24}>
                 <Form.Item
                   name="treatmentStageId"
                   label="Giai đoạn điều trị"
@@ -527,34 +610,11 @@ const LabResults = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="doctorId"
-                  label="Bác sĩ"
-                  rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
-                  initialValue={currentDoctorId || undefined}
-                >
-                  <Select
-                    showSearch
-                    placeholder="Chọn bác sĩ"
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                    }
-                  >
-                    {doctors.map((d) => {
-                      // Sử dụng doctorId hoặc id làm key
-                      const key = d.doctorId || d.id || `doctor-${d.fullName}`;
-                      return (
-                        <Option key={key} value={d.doctorId}>
-                          {d.fullName} {d.doctorId ? `(${d.doctorId})` : ''}
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                </Form.Item>
-              </Col>
+              {/* Bỏ chọn bác sĩ, tự động set doctorId */}
             </Row>
+            <Form.Item name="doctorId" hidden>
+              <Input type="hidden" />
+            </Form.Item>
 
             <Form.Item
               name="resultSummary"
