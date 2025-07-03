@@ -1,5 +1,5 @@
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Modal, Form, Input, Select, message } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
 // Helper function to map backend doctor fields to frontend fields
@@ -17,7 +17,7 @@ function mapDoctorFromBackend(doctor) {
   };
 }
 
-const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
+const DoctorList = ({ doctors, onEdit, onSave, isLoading }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingDoctor, setEditingDoctor] = useState(null);
@@ -35,22 +35,10 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
       qualifications: record.qualifications || '',
       experience: record.experience || '',
       bio: record.bio || '',
-      profilePictureURL: record.profilePictureURL || '',
       isActive: record.isActive,
       doctorId: record.doctorId
     });
     setIsModalVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa bác sĩ này?',
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: () => onDelete(id),
-    });
   };
 
   const handleSubmit = async () => {
@@ -59,32 +47,35 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
       const values = await form.validateFields();
       console.log('Form values:', values); // Debug log
 
-      const doctorData = {
-        ...values,
-        doctorId: editingDoctor?.doctorId,
-        fullName: values.fullName?.trim(),
-        specialization: values.specialization,
-        qualifications: values.qualifications?.trim(),
-        experience: values.experience?.trim(),
-        bio: values.bio?.trim(),
-        profilePictureURL: values.profilePictureURL?.trim(),
-        isActive: values.isActive,
-      };
-
       if (editingDoctor) {
+        const doctorData = {
+          ...values,
+          doctorId: editingDoctor.doctorId,
+          fullName: values.fullName?.trim(),
+          specialization: values.specialization,
+          qualifications: values.qualifications?.trim(),
+          experience: values.experience?.trim(),
+          bio: values.bio?.trim() || '',
+          isActive: values.isActive,
+        };
+
         const updateData = {
           ...editingDoctor,
           ...doctorData,
           doctorId: editingDoctor.doctorId
         };
+        
         console.log('Sending update data:', updateData); // Debug log
+        
         if (onSave) {
           await onSave(updateData);
         } else if (onEdit) {
           await onEdit(updateData);
         }
+        
         message.success('Cập nhật thông tin bác sĩ thành công');
       }
+      
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
@@ -93,7 +84,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
         const firstError = error.errorFields[0];
         message.error(firstError.errors[0]);
       } else {
-        message.error('Có lỗi xảy ra khi lưu thông tin bác sĩ');
+        message.error(error.message || 'Có lỗi xảy ra khi lưu thông tin bác sĩ');
       }
     } finally {
       setSubmitting(false);
@@ -140,22 +131,13 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
       title: 'Thao tác',
       key: 'action',
       render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            Sửa
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-          >
-            Xóa
-          </Button>
-        </Space>
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          onClick={() => handleEdit(record)}
+        >
+          Sửa
+        </Button>
       ),
     },
   ];
@@ -200,9 +182,14 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
           <Form.Item
             name="specialization"
             label="Chuyên khoa"
-            rules={[{ required: true, message: 'Vui lòng nhập chuyên khoa' }]}
+            rules={[{ required: true, message: 'Vui lòng chọn chuyên khoa' }]}
           >
-            <Input placeholder="Nhập chuyên khoa" />
+            <Select placeholder="Chọn chuyên khoa">
+              <Select.Option value="Xét nghiệm">Xét nghiệm</Select.Option>
+              <Select.Option value="Tư vấn">Tư vấn</Select.Option>
+              <Select.Option value="Điều trị">Điều trị</Select.Option>
+
+            </Select>
           </Form.Item>          <Form.Item
             name="qualifications"
             label="Bằng cấp"
@@ -229,12 +216,7 @@ const DoctorList = ({ doctors, onEdit, onDelete, onSave, isLoading }) => {
           >
             <Input.TextArea rows={2} placeholder="Nhập mô tả thêm về bác sĩ (không bắt buộc)" />
           </Form.Item>
-          <Form.Item
-            name="profilePictureURL"
-            label="Ảnh đại diện (URL)"
-          >
-            <Input placeholder="Nhập URL ảnh đại diện (nếu có)" />
-          </Form.Item>
+          
           <Form.Item
             name="isActive"
             label="Trạng thái"

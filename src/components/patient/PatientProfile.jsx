@@ -1,36 +1,47 @@
 import { useState, useEffect } from 'react';
-import { FaUser, FaChevronDown, FaChevronUp, FaFileAlt, FaFileMedical, FaSignOutAlt, FaBell } from 'react-icons/fa';
+import { FaUser, FaChevronDown, FaChevronUp, FaFileAlt, FaFileMedical, FaSignOutAlt, FaBell, FaCamera } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { authService } from "../../services/authService";
 
 export default function PatientProfile() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const currentUser = authService.getCurrentUser();
-      if (currentUser) {
-        try {
-          const response = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
-            headers: {
-              'Authorization': `Bearer ${currentUser.token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setUserData(data);
+  const fetchUserData = async () => {
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      try {
+        const response = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
           }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
+  }, [refreshKey]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, []);
 
   const handleLogout = () => {
@@ -51,8 +62,12 @@ export default function PatientProfile() {
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="w-10 h-10 rounded-full bg-[#3B9AB8]/20 flex items-center justify-center">
-            {userData.avatar ? (
-              <img src={userData.avatar} alt={userData.fullName} className="w-full h-full rounded-full object-cover" />
+            {userData.profilePictureURL || userData.avatar ? (
+              <img 
+                src={userData.profilePictureURL || userData.avatar} 
+                alt={userData.fullName} 
+                className="w-full h-full rounded-full object-cover" 
+              />
             ) : (
               <FaUser className="text-[#3B9AB8] text-xl" />
             )}

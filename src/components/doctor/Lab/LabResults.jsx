@@ -533,7 +533,6 @@ const LabResults = () => {
                   label="Bác sĩ"
                   rules={[{ required: true, message: 'Vui lòng chọn bác sĩ' }]}
                   initialValue={currentDoctorId || undefined}
-                  help="Chỉ được chọn bản thân trong phần chọn bác sĩ"
                 >
                   <Select
                     showSearch

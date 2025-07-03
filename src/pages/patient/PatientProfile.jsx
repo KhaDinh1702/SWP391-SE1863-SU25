@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, 
   FaCalendarAlt, FaEdit, FaSave, FaTimes, FaIdCard,
-  FaVenusMars, FaUserFriends 
+  FaVenusMars, FaUserFriends, FaCamera 
 } from 'react-icons/fa';
 import { authService } from "../../services/authService";
 import { motion } from 'framer-motion';
@@ -19,6 +19,8 @@ export default function PatientProfile() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // Thêm key để force refresh UI
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -98,6 +100,35 @@ export default function PatientProfile() {
     setEditedPatientData(patientData);
     setIsEditing(false);
     setError(null);
+    setSelectedAvatar(null);
+    setAvatarPreview(null);
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Vui lòng chọn file ảnh hợp lệ');
+        return;
+      }
+      
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Kích thước ảnh không được vượt quá 5MB');
+        return;
+      }
+      
+      setSelectedAvatar(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      setError(null);
+    }
   };
 
   const handleSave = async () => {
@@ -136,6 +167,11 @@ export default function PatientProfile() {
         formData.append('address', editedPatientData.address || '');
         formData.append('contactPersonName', editedPatientData.contactPersonName || '');
         formData.append('contactPersonPhone', editedPatientData.contactPersonPhone || '');
+        
+        // Add avatar file if selected
+        if (selectedAvatar) {
+          formData.append('avatarPicture', selectedAvatar);
+        }
 
         // Debug logging
         console.log('=== PATIENT UPDATE DEBUG ===');
@@ -177,15 +213,29 @@ export default function PatientProfile() {
           console.log('New patientData:', newPatientData);
           console.log('New editedPatientData:', newEditedPatientData);
           
-          // Cập nhật edited user data để đồng bộ
-          setEditedUserData(prev => ({
-            ...prev,
+          // Cập nhật edited user data để đồng bộ avatar và thông tin khác
+          const updatedUserData = {
+            ...userData,
             fullName: updatedPatientData.fullName,
-            phoneNumber: editedUserData?.phoneNumber || prev?.phoneNumber
-          }));
+            phoneNumber: editedUserData?.phoneNumber || userData?.phoneNumber,
+            // Cập nhật avatar nếu có trong response
+            profilePictureURL: updatedPatientData.profilePictureURL || updatedPatientData.avatar || userData.profilePictureURL,
+            avatar: updatedPatientData.profilePictureURL || updatedPatientData.avatar || userData.avatar
+          };
+          
+          setUserData(updatedUserData);
+          setEditedUserData(updatedUserData);
           
           // Hiển thị thông báo thành công đơn giản và điều hướng về trang chủ
           alert('Cập nhật hồ sơ thành công!');
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('profileUpdated'));
+          
+          // Reset editing state và avatar state
+          setIsEditing(false);
+          setSelectedAvatar(null);
+          setAvatarPreview(null);
           
           // Điều hướng về trang chủ
           navigate('/');
@@ -213,11 +263,6 @@ export default function PatientProfile() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleUserInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditedUserData(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePatientInputChange = (e) => {
@@ -274,14 +319,41 @@ export default function PatientProfile() {
                 whileHover={{ scale: 1.05 }}
                 className="relative w-28 h-28 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden border-4 border-white"
               >
-                {userData.profilePictureURL ? (
-                  <img 
-                    src={userData.profilePictureURL} 
-                    alt={patientData?.fullName || userData.fullName} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <FaUser className="text-[#3B9AB8] text-5xl" />
+                {(() => {
+                  if (avatarPreview) {
+                    return (
+                      <img 
+                        src={avatarPreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    );
+                  }
+                  
+                  if (userData.profilePictureURL || userData.avatar) {
+                    return (
+                      <img 
+                        src={userData.profilePictureURL || userData.avatar} 
+                        alt={patientData?.fullName || userData.fullName} 
+                        className="w-full h-full object-cover"
+                      />
+                    );
+                  }
+                  
+                  return <FaUser className="text-[#3B9AB8] text-5xl" />;
+                })()}
+                
+                {/* Camera overlay for editing */}
+                {isEditing && (
+                  <label className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer opacity-0 hover:opacity-100 transition-opacity duration-200">
+                    <FaCamera className="text-white text-2xl" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </motion.div>
 
