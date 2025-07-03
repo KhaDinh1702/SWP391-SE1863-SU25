@@ -649,7 +649,18 @@ const TreatmentProtocol = () => {
               <Select placeholder="Chọn bệnh nhân" showSearch filterOption={(input, option) =>
                   option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                 }>
-                {patients.map(p => <Option key={p.id} value={p.id}>{p.fullName}</Option>)}
+                {patients
+                  .filter(patient => {
+                    // Chỉ hiển thị bệnh nhân đã có lịch hẹn
+                    return appointmentsData.some(appointment => 
+                      appointment.patientId === patient.id || appointment.PatientId === patient.id
+                    );
+                  })
+                  .map(p => (
+                    <Option key={p.id} value={p.id}>
+                      {p.fullName}
+                    </Option>
+                  ))}
               </Select>
             </Form.Item>
 
@@ -931,11 +942,18 @@ const TreatmentProtocol = () => {
                     rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân' }]}
                   >
                     <Select placeholder="Chọn bệnh nhân">
-                      {patients.map(p => (
-                        <Option key={p.id} value={p.id}>
-                          {p.fullName}
-                        </Option>
-                      ))}
+                      {patients
+                        .filter(patient => {
+                          // Chỉ hiển thị bệnh nhân đã có lịch hẹn
+                          return appointmentsData.some(appointment => 
+                            appointment.patientId === patient.id || appointment.PatientId === patient.id
+                          );
+                        })
+                        .map(p => (
+                          <Option key={p.id} value={p.id}>
+                            {p.fullName}
+                          </Option>
+                        ))}
                     </Select>
                   </Form.Item>
                 </Col>
