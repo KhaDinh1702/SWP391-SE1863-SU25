@@ -582,19 +582,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                       </button>
                     </div>
                   )}
-                  {/* Debug info - show current selection */}
-                  <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm">
-                    <div className="font-semibold text-gray-700 mb-1">🔍 Debug Info:</div>
-                    <div><strong>Hình thức:</strong> {formData.meetingFormat === 0 ? '🖥️ Trực tuyến' : '🏥 Tại phòng khám'}</div>
-                    <div><strong>Loại cuộc hẹn:</strong> {
-                      formData.appointmentType === 0 ? '🧪 Xét nghiệm' :
-                      formData.appointmentType === 1 ? '💊 Điều trị' :
-                      formData.appointmentType === 2 ? '💬 Tư vấn' : '❓ Chưa chọn'
-                    }</div>
-                    <div><strong>Frontend meetingFormat:</strong> {formData.meetingFormat}</div>
-                    <div><strong>Frontend appointmentType:</strong> {formData.appointmentType}</div>
-                    <div><strong>Backend AppointmentType:</strong> {formData.meetingFormat} ({formData.meetingFormat === 0 ? 'Online' : 'Offline'})</div>
-                  </div>
                 </div>
               )}
 

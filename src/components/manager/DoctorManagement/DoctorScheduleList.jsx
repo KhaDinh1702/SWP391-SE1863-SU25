@@ -41,7 +41,7 @@ const DoctorScheduleList = () => {
   const fetchAppointments = async () => {
     try {
       // Lấy chỉ những appointment đã thanh toán cho manager
-      const response = await fetch('http://localhost:5275/api/Appointment/get-paid-appointments', {
+      const response = await fetch('https://localhost:7040/api/Appointment/get-paid-appointments', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -87,7 +87,7 @@ const DoctorScheduleList = () => {
   const fetchSchedules = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5275/api/DoctorSchedule/get-list-doctor-schedule', {
+      const response = await fetch('https://localhost:7040/api/DoctorSchedule/get-list-doctor-schedule', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

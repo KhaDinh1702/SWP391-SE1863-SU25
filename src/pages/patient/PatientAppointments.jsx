@@ -20,7 +20,7 @@ export default function PatientAppointments() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5275/api/Appointment/get-list-appointments`, {
+        const response = await fetch(`https://localhost:7040/api/Appointment/get-list-appointments`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'
@@ -117,7 +117,7 @@ export default function PatientAppointments() {
     try {
       setLoading(true);
       const currentUser = authService.getCurrentUser();
-      const response = await fetch(`http://localhost:5275/api/Appointment/cancel-appointment/${appointmentId}`, {
+      const response = await fetch(`https://localhost:7040/api/Appointment/cancel-appointment/${appointmentId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,

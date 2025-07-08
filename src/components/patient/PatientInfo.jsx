@@ -23,7 +23,7 @@ const PatientInfo = () => {
       }
 
       // Lấy thông tin User trước
-      const userResponse = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+      const userResponse = await fetch(`https://localhost:7040/api/User/get-by-id?userId=${currentUser.userId}`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
           'Content-Type': 'application/json'
@@ -35,7 +35,7 @@ const PatientInfo = () => {
         setUserData(userData);
 
         // Sau đó lấy thông tin Patient
-        const patientResponse = await fetch(`http://localhost:5275/api/Patient/get-by-user-id?userId=${currentUser.userId}`, {
+        const patientResponse = await fetch(`https://localhost:7040/api/Patient/get-by-user-id?userId=${currentUser.userId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'

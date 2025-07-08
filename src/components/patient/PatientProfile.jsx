@@ -13,7 +13,7 @@ export default function PatientProfile() {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
       try {
-        const response = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+        const response = await fetch(`https://localhost:7040/api/User/get-by-id?userId=${currentUser.userId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'

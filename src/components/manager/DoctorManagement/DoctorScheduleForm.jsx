@@ -64,7 +64,7 @@ const DoctorScheduleForm = ({ onSuccess }) => {
   const fetchPaidAppointments = async () => {
     try {
       // Call a specific API endpoint for paid appointments
-      const response = await axios.get('http://localhost:5275/api/Appointment/get-paid-appointments');
+      const response = await axios.get('https://localhost:7040/api/Appointment/get-paid-appointments');
       const paidAppointments = response.data;
       
       console.log('Fetched paid appointments:', paidAppointments);
@@ -152,7 +152,7 @@ const DoctorScheduleForm = ({ onSuccess }) => {
       };
 
       console.log('Creating doctor schedule with data:', scheduleData);
-      await axios.post('http://localhost:5275/api/DoctorSchedule/create-doctor-schedule', scheduleData);
+      await axios.post('https://localhost:7040/api/DoctorSchedule/create-doctor-schedule', scheduleData);
       message.success('Tạo lịch làm việc thành công');
 
       form.resetFields();
@@ -199,7 +199,7 @@ const DoctorScheduleForm = ({ onSuccess }) => {
       };
 
       console.log('Updating doctor schedule with data:', updateData);
-      await axios.put('http://localhost:5275/api/DoctorSchedule/update-doctor-schedule', updateData);
+      await axios.put('https://localhost:7040/api/DoctorSchedule/update-doctor-schedule', updateData);
       message.success('Cập nhật lịch làm việc thành công');
 
       updateForm.resetFields();

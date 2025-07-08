@@ -29,7 +29,7 @@ export default function Notifications() {
     if (currentUser) {
       try {
         // Lấy thông tin bệnh nhân để có patientId
-        const userResponse = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+        const userResponse = await fetch(`https://localhost:7040/api/User/get-by-id?userId=${currentUser.userId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ export default function Notifications() {
         // Lấy nhắc nhở uống thuốc từ API thật
         let treatmentReminders = [];
         try {
-          const reminderResponse = await fetch(`http://localhost:5275/api/Reminder/upcomingReminderForDrinkMedicine?userId=${currentUser.userId}`, {
+          const reminderResponse = await fetch(`https://localhost:7040/api/Reminder/upcomingReminderForDrinkMedicine?userId=${currentUser.userId}`, {
             headers: {
               'Authorization': `Bearer ${currentUser.token}`,
               'Content-Type': 'application/json'
@@ -251,7 +251,7 @@ export default function Notifications() {
           
           // Fallback: thử gọi endpoint upcomingAppointment nếu getAllAppointments fail
           try {
-            const appointmentResponse = await fetch(`http://localhost:5275/api/Appointment/upcomingAppointment?userId=${currentUser.userId}`, {
+            const appointmentResponse = await fetch(`https://localhost:7040/api/Appointment/upcomingAppointment?userId=${currentUser.userId}`, {
               headers: {
                 'Authorization': `Bearer ${currentUser.token}`,
                 'Content-Type': 'application/json'

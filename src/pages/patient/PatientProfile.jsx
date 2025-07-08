@@ -32,7 +32,7 @@ export default function PatientProfile() {
         }
 
         // Lấy thông tin User
-        const userResponse = await fetch(`http://localhost:5275/api/User/get-by-id?userId=${currentUser.userId}`, {
+        const userResponse = await fetch(`https://localhost:7040/api/User/get-by-id?userId=${currentUser.userId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`,
             'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ export default function PatientProfile() {
 
         // Lấy thông tin Patient
         try {
-          const patientResponse = await fetch(`http://localhost:5275/api/Patient/get-by-id?patientId=${currentUser.userId}`, {
+          const patientResponse = await fetch(`https://localhost:7040/api/Patient/get-by-id?patientId=${currentUser.userId}`, {
             headers: {
               'Authorization': `Bearer ${currentUser.token}`,
               'Content-Type': 'application/json'
@@ -186,7 +186,7 @@ export default function PatientProfile() {
         }
         console.log('=== END DEBUG ===');
 
-        const patientResponse = await fetch(`http://localhost:5275/api/Patient/patient-update-profile`, {
+        const patientResponse = await fetch(`https://localhost:7040/api/Patient/patient-update-profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
