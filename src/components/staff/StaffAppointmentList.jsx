@@ -16,6 +16,7 @@ const StaffAppointmentList = () => {
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
 
   const [dateRange, setDateRange] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -23,6 +24,33 @@ const StaffAppointmentList = () => {
   const [editOnlineLinkModalVisible, setEditOnlineLinkModalVisible] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [onlineLinkInput, setOnlineLinkInput] = useState('');
+  
+  // States for reschedule functionality
+  const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
+  const [reschedulingAppointment, setReschedulingAppointment] = useState(null);
+  const [newStartDate, setNewStartDate] = useState(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+
+  // Generate fixed time slots (8h, 10h, 12h, 14h, 16h)
+  const generateTimeSlots = () => {
+    const slots = [];
+    const startHour = 8;
+    const endHour = 16;
+    
+    for (let hour = startHour; hour <= endHour; hour += 2) {
+      const timeString = `${hour.toString().padStart(2, '0')}:00`;
+      const displayTime = `${hour.toString().padStart(2, '0')}:00`;
+      
+      slots.push({
+        value: timeString,
+        label: displayTime,
+        display: hour < 12 ? `${displayTime} SA` : `${displayTime} CH`
+      });
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
 
   useEffect(() => {
     fetchAppointments();
@@ -31,7 +59,7 @@ const StaffAppointmentList = () => {
   }, []);
   useEffect(() => {
     applyFilters();
-  }, [appointments, selectedDoctor, dateRange]);
+  }, [appointments, selectedDoctor, selectedStatus, dateRange]);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -76,6 +104,13 @@ const StaffAppointmentList = () => {
       );
     }
 
+    // Filter by status
+    if (selectedStatus !== null) {
+      filtered = filtered.filter(appointment => 
+        (appointment.status !== undefined ? appointment.status : appointment.Status) === selectedStatus
+      );
+    }
+
     // Filter by date range
     if (dateRange && dateRange.length === 2) {
       const [startDate, endDate] = dateRange;
@@ -96,6 +131,7 @@ const StaffAppointmentList = () => {
   };
   const clearFilters = () => {
     setSelectedDoctor(null);
+    setSelectedStatus(null);
     setDateRange(null);
     message.info('Đã xóa tất cả bộ lọc');
   };
@@ -122,6 +158,130 @@ const StaffAppointmentList = () => {
       fetchAppointments();
     } catch (error) {
       message.error(error.message || 'Cập nhật link trực tuyến thất bại!');
+    }
+  };
+
+  // Reschedule functionality
+  const handleReschedule = (appointment) => {
+    setReschedulingAppointment(appointment);
+    setNewStartDate(null);
+    setSelectedTimeSlot(null);
+    setRescheduleModalVisible(true);
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!reschedulingAppointment) return;
+    
+    try {
+      const appointmentId = reschedulingAppointment.id || reschedulingAppointment.Id || reschedulingAppointment.appointmentId;
+      
+      if (!newStartDate || !selectedTimeSlot) {
+        message.error('Vui lòng chọn ngày và khung giờ mới!');
+        return;
+      }
+      
+      // Create datetime from selected date and time slot
+      const dateObj = new Date(newStartDate);
+      const [hours, minutes] = selectedTimeSlot.split(':');
+      const startDateTime = new Date(
+        dateObj.getFullYear(),
+        dateObj.getMonth(),
+        dateObj.getDate(),
+        parseInt(hours),
+        parseInt(minutes),
+        0,
+        0
+      );
+      
+      // Check if selected time is in the past
+      if (startDateTime < new Date()) {
+        message.error('Không thể dời lịch về thời gian đã qua!');
+        return;
+      }
+      
+      // Automatically add 1 hour 30 minutes for end time
+      const endDateTime = new Date(startDateTime.getTime() + 90 * 60000);
+      
+      // Check for slot conflicts with paid appointments only
+      const conflictingAppointment = appointments.find(apt => {
+        // Skip current appointment being rescheduled
+        const currentAptId = reschedulingAppointment.id || reschedulingAppointment.Id || reschedulingAppointment.appointmentId;
+        const aptId = apt.id || apt.Id || apt.appointmentId;
+        if (aptId === currentAptId) return false;
+        
+        // Only check conflict with paid appointments (status = 1, 3, 4)
+        const status = apt.status || apt.Status;
+        if (status !== 1 && status !== 3 && status !== 4) return false;
+        
+        const aptStart = new Date(apt.appointmentStartDate || apt.AppointmentStartDate);
+        const aptEnd = new Date(apt.appointmentEndDate || apt.AppointmentEndDate);
+        
+        // Check if time slots overlap
+        return (startDateTime < aptEnd && endDateTime > aptStart);
+      });
+      
+      if (conflictingAppointment) {
+        const conflictPatient = patients.find(p => 
+          (p.id || p.patientId) === (conflictingAppointment.patientId || conflictingAppointment.PatientId)
+        );
+        const patientName = conflictPatient ? `${conflictPatient.firstName} ${conflictPatient.lastName}` : 'N/A';
+        message.error(`Khung giờ này đã có lịch hẹn khác (Bệnh nhân: ${patientName}). Vui lòng chọn khung giờ khác!`);
+        return;
+      }
+      
+      console.log('Reschedule debug:', {
+        selectedDate: newStartDate,
+        selectedTimeSlot,
+        startDateTime,
+        endDateTime,
+        startDateTimeString: startDateTime.toString(),
+        endDateTimeString: endDateTime.toString()
+      });
+      
+      await appointmentService.rescheduleAppointment(
+        appointmentId,
+        startDateTime,
+        endDateTime
+      );
+      
+      message.success('Đã dời lịch cuộc hẹn thành công!');
+      
+      setRescheduleModalVisible(false);
+      setReschedulingAppointment(null);
+      setNewStartDate(null);
+      setSelectedTimeSlot(null);
+      
+      // Refresh appointments list
+      setTimeout(() => {
+        fetchAppointments();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Reschedule error:', error);
+      message.error(error.message || 'Dời lịch cuộc hẹn thất bại!');
+    }
+  };
+
+  // Status management functions
+  const getAppointmentStatusLabel = (status) => {
+    switch (status) {
+      case 0: return 'Chờ thanh toán';
+      case 1: return 'Đã thanh toán';
+      case 2: return 'Đã hủy';
+      case 3: return 'Hoàn thành';
+      case 4: return 'Dời lịch';
+      default: return 'Chờ thanh toán';
+    }
+  };
+
+  const getAppointmentStatusColor = (status) => {
+    switch (status) {
+      case 0: return 'orange';   // Chờ thanh toán
+      case 1: return 'green';    // Đã thanh toán
+      case 2: return 'red';      // Đã hủy
+      case 3: return 'blue';     // Hoàn thành
+      case 4: return 'purple';   // Dời lịch
+      default: return 'orange';
     }
   };
 
@@ -232,6 +392,21 @@ const StaffAppointmentList = () => {
       width: 180,
     },
     {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => {
+        const color = getAppointmentStatusColor(status);
+        const label = getAppointmentStatusLabel(status);
+        return (
+          <Tag color={color} style={{ fontWeight: 500 }}>
+            {label}
+          </Tag>
+        );
+      },
+      width: 150,
+    },
+    {
       title: 'Hành động',
       key: 'action',
       render: (_, record) => {
@@ -257,10 +432,17 @@ const StaffAppointmentList = () => {
                 link khám online
               </Button>
             )}
+            <Button
+              type="default"
+              onClick={() => handleReschedule(record)}
+              size="small"
+            >
+              Dời lịch
+            </Button>
           </Space>
         );
       },
-      width: 200,
+      width: 300,
     },
   ];
 
@@ -279,7 +461,8 @@ const StaffAppointmentList = () => {
           </Button>
         }
       >
-        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>          <Col xs={24} sm={12} md={6}>
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>          
+          <Col xs={24} sm={12} md={5}>
             <Select
               placeholder="Chọn bác sĩ"
               style={{ width: '100%' }}
@@ -298,7 +481,22 @@ const StaffAppointmentList = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={8}>
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Chọn trạng thái"
+              style={{ width: '100%' }}
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              allowClear
+            >
+              <Option value={0}>Chờ thanh toán</Option>
+              <Option value={1}>Đã thanh toán</Option>
+              <Option value={2}>Đã hủy</Option>
+              <Option value={3}>Hoàn thành</Option>
+              <Option value={4}>Dời lịch</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={7}>
             <RangePicker
               style={{ width: '100%' }}
               value={dateRange}
@@ -307,7 +505,7 @@ const StaffAppointmentList = () => {
               format="DD/MM/YYYY"
             />
           </Col>
-          <Col xs={24} sm={12} md={4}>
+          <Col xs={24} sm={12} md={3}>
             <Space>
               <Button onClick={clearFilters}>
                 Xóa bộ lọc
@@ -394,6 +592,108 @@ const StaffAppointmentList = () => {
           onChange={e => setOnlineLinkInput(e.target.value)}
           placeholder="Nhập link trực tuyến mới..."
         />
+      </Modal>
+
+      <Modal
+        title="Dời lịch cuộc hẹn"
+        open={rescheduleModalVisible}
+        onCancel={() => setRescheduleModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setRescheduleModalVisible(false)}>
+            Hủy
+          </Button>,
+          <Button key="confirm" type="primary" onClick={handleConfirmReschedule}>
+            Xác nhận
+          </Button>
+        ]}
+        width={700}
+      >
+        {reschedulingAppointment && (
+          <div>
+            <p><strong>Bệnh nhân:</strong> {getPatientName(reschedulingAppointment)}</p>
+            <p><strong>Bác sĩ:</strong> {getDoctorName(reschedulingAppointment)}</p>
+            <p><strong>Thời gian hiện tại:</strong> {formatDateTime(reschedulingAppointment.appointmentStartDate || reschedulingAppointment.AppointmentStartDate)}</p>
+            
+            <div style={{ marginTop: 16 }}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                  Chọn ngày mới: <span style={{ color: 'red' }}>*</span>
+                </div>
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  placeholder="Chọn ngày mới"
+                  style={{ width: '100%' }}
+                  value={newStartDate ? dayjs(newStartDate) : null}
+                  onChange={(date) => {
+                    setNewStartDate(date?.toDate());
+                    setSelectedTimeSlot(null); // Reset time slot when date changes
+                  }}
+                  disabledDate={(current) => {
+                    // Disable past dates
+                    return current && current < dayjs().startOf('day');
+                  }}
+                />
+              </div>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+                  Chọn khung giờ: <span style={{ color: 'red' }}>*</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                  {timeSlots.map((slot) => (
+                    <Button
+                      key={slot.value}
+                      type={selectedTimeSlot === slot.value ? 'primary' : 'default'}
+                      onClick={() => setSelectedTimeSlot(slot.value)}
+                      disabled={!newStartDate}
+                      style={{
+                        height: '60px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold' }}>{slot.label}</div>
+                      <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                        {slot.value < '12:00' ? 'Sáng' : 'Chiều'}
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+                {!newStartDate && (
+                  <div style={{ marginTop: 8, color: '#999', fontSize: '12px' }}>
+                    Vui lòng chọn ngày trước khi chọn khung giờ
+                  </div>
+                )}
+                {selectedTimeSlot && (
+                  <div style={{ marginTop: 8, padding: '8px', backgroundColor: '#f0f8f0', border: '1px solid #b7eb8f', borderRadius: '4px' }}>
+                    <div style={{ color: '#52c41a', fontSize: '14px' }}>
+                      ✓ Đã chọn: <strong>{selectedTimeSlot}</strong> 
+                      {selectedTimeSlot < '12:00' ? ' (Buổi sáng)' : ' (Buổi chiều)'}
+                    </div>
+                    <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                      Thời gian kết thúc sẽ tự động là: <strong>
+                        {dayjs(`2000-01-01T${selectedTimeSlot}:00`).add(90, 'minute').format('HH:mm')}
+                      </strong> (+ 1 giờ 30 phút)
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ padding: '12px', backgroundColor: '#f6f6f6', borderRadius: '4px', marginTop: '16px' }}>
+                <div style={{ fontSize: '14px', color: '#666' }}>
+                  <strong>Lưu ý:</strong>
+                  <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                    <li>Chỉ có thể chọn các khung giờ cố định: 8:00, 10:00, 12:00, 14:00, 16:00</li>
+                    <li>Mỗi cuộc hẹn kéo dài 1 giờ 30 phút</li>
+                    <li>Các lịch hẹn phải cách nhau tối thiểu 2 tiếng</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

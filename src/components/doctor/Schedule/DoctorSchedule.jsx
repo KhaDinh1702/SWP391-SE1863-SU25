@@ -75,6 +75,13 @@ const DoctorSchedule = () => {
       // Lọc appointments theo chuyên khoa của bác sĩ
       let filteredAppointments = allAppointmentsResponse || [];
       
+      // Lọc chỉ lấy các appointment đã thanh toán (status = 1, 3, 4)
+      // Loại bỏ những appointment chờ thanh toán (status = 0)
+      filteredAppointments = filteredAppointments.filter(apt => {
+        const status = apt.status || apt.Status;
+        return status === 1 || status === 3 || status === 4;
+      });
+      
       // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
       if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
         filteredAppointments = filteredAppointments.filter(apt => {

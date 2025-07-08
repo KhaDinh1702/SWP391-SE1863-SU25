@@ -71,8 +71,10 @@ const PatientAppointmentForm = ({ patientId }) => {
 
     // Kiểm tra các cuộc hẹn đã có
     for (const appointment of existingAppointments) {
-      // Chỉ kiểm tra các cuộc hẹn đang hoạt động (chưa bị hủy)
-      if (appointment.status === 2) continue; // 2 = Cancelled
+      // Chỉ kiểm tra các cuộc hẹn đã thanh toán và đang hoạt động
+      // Status: 0 = Pending, 1 = Confirmed/Paid, 2 = Cancelled, 3 = Completed, 4 = Rescheduled
+      if (appointment.status === 2) continue; // Skip cancelled appointments
+      if (appointment.status === 0) continue; // Skip pending/unpaid appointments
       
       const existingDateTime = new Date(appointment.appointmentStartDate);
       

@@ -16,3 +16,5 @@ npm install dayjs
 UPDATE [SWPSU25].[dbo].[Appointments]
 SET [PaymentStatus] = 1
 WHERE [PaymentStatus] = 0;
+
+dotnet run --launch-profile https
