@@ -2,27 +2,24 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import boYTeLogo from '../assets/bo-y-te.jpg';
 import boCongThuongLogo from '../assets/bo-cong-thuong.png';
+import FullNavbar from '../components/NavBar';
+import Footer from '../components/Footer';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5">
+      {/* NavBar */}
+      <FullNavbar />
+      
+      {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-16 text-gray-800">
         <div className="bg-white rounded-xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl relative">
-          <div className="flex justify-between items-center mb-8">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#3B9AB8]">
               Chính Sách Bảo Mật Thông Tin Cá Nhân
             </h1>
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-2 bg-[#3B9AB8] hover:bg-[#2D7A94] text-white font-medium rounded-lg transition-colors duration-300 flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-              Về trang chủ
-            </button>
           </div>
 
           <div className="prose prose-lg max-w-none">
@@ -131,6 +128,9 @@ export default function PrivacyPolicy() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 } 

@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft, FaCalendarAlt, FaUserMd, FaArrowRight } from 'react-icons/fa';
+import FullNavbar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 const blogPosts = [
   {
@@ -43,31 +45,27 @@ const blogPosts = [
 
 const Blog = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-16 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/10 to-[#2D7A94]/10 rounded-3xl transform -skew-y-2"></div>
-          <div className="relative">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94]">
-              Kiến Thức Về HIV/AIDS
-            </h1>
-            <p className="text-xl text-[#2D7A94] max-w-2xl mx-auto">
-              Cập nhật thông tin chính xác về phòng ngừa và điều trị HIV tại Việt Nam
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5">
+      {/* NavBar */}
+      <FullNavbar />
+      
+      {/* Main Content */}
+      <div className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header Section */}
+          <div className="text-center mb-16 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#3B9AB8]/10 to-[#2D7A94]/10 rounded-3xl transform -skew-y-2"></div>
+            <div className="relative">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94]">
+                Kiến Thức Về HIV/AIDS
+              </h1>
+              <p className="text-xl text-[#2D7A94] max-w-2xl mx-auto">
+                Cập nhật thông tin chính xác về phòng ngừa và điều trị HIV tại Việt Nam
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Back to Home Button */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/5"
-        >
-          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-semibold">Quay lại trang chủ</span>
-        </Link>
-
-        {/* Blog Posts Grid */}
+          {/* Blog Posts Grid */}
         <div className="grid gap-8 md:grid-cols-2">
           {blogPosts.map((post) => (
             <div 
@@ -114,7 +112,11 @@ const Blog = () => {
             </div>
           ))}
         </div>
+        </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

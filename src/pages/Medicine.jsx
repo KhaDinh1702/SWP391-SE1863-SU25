@@ -4,6 +4,8 @@ import { FiAlertCircle, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Modal } from 'antd';
+import FullNavbar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 export default function MedicinePage() {
   const [selectedMedicine, setSelectedMedicine] = useState(null);
@@ -134,6 +136,9 @@ export default function MedicinePage() {
 
   return (
     <div className="font-sans bg-gradient-to-b from-[#f0f9fb] to-white min-h-screen">
+      {/* NavBar */}
+      <FullNavbar />
+      
       {/* Hero Section */}
       <div className="relative bg-[#3B9AB8] text-white py-24 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')] opacity-10"></div>
@@ -153,17 +158,6 @@ export default function MedicinePage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="container mx-auto px-6 pt-6">
-      <Link 
-          to="/" 
-          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/10"
-        >
-          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-semibold">Quay lại trang chủ</span>
-        </Link>
       </div>
 
       {/* Main Content */}
@@ -410,6 +404,9 @@ export default function MedicinePage() {
           </div>
         )}
       </Modal>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

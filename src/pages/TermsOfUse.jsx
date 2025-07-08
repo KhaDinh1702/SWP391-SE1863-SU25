@@ -1,20 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import FullNavbar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 export default function TermsOfUse() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#3B9AB8]/10 to-white font-sans px-4 py-8 max-w-6xl mx-auto text-gray-800 md:px-8 md:py-12">
-      {/* Back to Home Link */}
-      <div className="absolute top-6 left-6">
-        <Link
-          to="/"
-          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/10"
-        >
-          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-semibold">Quay lại trang chủ</span>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#3B9AB8]/10 to-white font-sans">
+      {/* NavBar */}
+      <FullNavbar />
+      
+      {/* Main Content */}
+      <div className="px-4 py-8 max-w-6xl mx-auto text-gray-800 md:px-8 md:py-12">
 
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-bold text-[#3B9AB8] mb-4">Điều Khoản Sử Dụng</h1>
@@ -133,6 +130,10 @@ export default function TermsOfUse() {
           <p>Không có mối quan hệ liên doanh, hợp tác, việc làm hoặc đại lý nào được tạo ra giữa bạn và chúng tôi do Điều Khoản Sử Dụng hoặc sử dụng Trang web này. Bạn đồng ý rằng Điều Khoản Sử Dụng này sẽ không được hiểu là có lợi cho chúng tôi nhờ vào việc soạn thảo chúng. Bạn từ bỏ bất kỳ và tất cả các biện pháp phòng vệ mà bạn có thể có dựa trên hình thức điện tử của các Điều Khoản Sử Dụng này và việc các bên không ký kết để thực hiện Điều Khoản Sử Dụng này.</p>
         </div>
       </section>
+      </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 } 

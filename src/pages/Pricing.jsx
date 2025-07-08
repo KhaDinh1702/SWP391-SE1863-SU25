@@ -1,6 +1,8 @@
 import { FaClinicMedical, FaPills, FaVial, FaUserShield, FaHeartbeat, FaArrowLeft, FaInfoCircle, FaCheckCircle, FaClock, FaPhone } from "react-icons/fa";
 import { MdHealthAndSafety, MdLocalHospital, MdPayment } from "react-icons/md";
 import { Link } from "react-router-dom";
+import FullNavbar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 export default function PricingPage() {
   const pricingCategories = [
@@ -180,6 +182,9 @@ export default function PricingPage() {
 
   return (
     <div className="font-sans bg-gradient-to-br from-[#3B9AB8]/10 via-white to-[#3B9AB8]/5 min-h-screen">
+      {/* NavBar */}
+      <FullNavbar />
+      
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] text-white py-32 overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://img.freepik.com/free-photo/doctor-with-stethoscope-hands-hospital-background_1423-1.jpg')] bg-cover bg-center opacity-20 animate-pulse"></div>
@@ -204,17 +209,6 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="container mx-auto px-6 pt-8">
-        <Link 
-          to="/" 
-          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/5"
-        >
-          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-semibold">Quay lại trang chủ</span>
-        </Link>
       </div>
 
       {/* Pricing Content */}
@@ -319,6 +313,9 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -1,23 +1,19 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import FullNavbar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 export default function Licenses() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#3B9AB8]/10 to-white font-sans px-4 py-8 max-w-6xl mx-auto text-gray-800 md:px-8 md:py-12">
-      {/* Back to Home Link */}
-      <div className="absolute top-6 left-6">
-        <Link
-          to="/"
-          className="inline-flex items-center px-8 py-4 bg-white text-[#3B9AB8] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group hover:bg-[#3B9AB8]/10"
-        >
-          <FaArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-          <span className="font-semibold">Quay lại trang chủ</span>
-        </Link>
-      </div>
-
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#3B9AB8] mb-4">Giấy Phép Hoạt Động & Chính Sách</h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#3B9AB8]/10 to-white font-sans">
+      {/* NavBar */}
+      <FullNavbar />
+      
+      {/* Main Content */}
+      <div className="px-4 py-8 max-w-6xl mx-auto text-gray-800 md:px-8 md:py-12">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#3B9AB8] mb-4">Giấy Phép Hoạt Động & Chính Sách</h1>
         <p className="text-xl md:text-2xl font-medium text-[#3B9AB8]">Thông tin pháp lý và quy định sử dụng dịch vụ tại 3AE</p>
       </div>
 
@@ -97,6 +93,10 @@ export default function Licenses() {
           </div>
         </div>
       </section>
+      </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 } 

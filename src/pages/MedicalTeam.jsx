@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Footer from '../components/Footer';
-import Navbar from '../components/NavBar';
+import FullNavbar from '../components/NavBar';
 
 const teamData = {
   'Bác sĩ': [
@@ -85,7 +85,7 @@ export default function MedicalTeam() {
 
   return (
     <div className="min-h-screen bg-[#f6fafd] flex flex-col">
-      <Navbar />
+      <FullNavbar />
       <div className="bg-gradient-to-r from-[#3B9AB8] to-[#2D7A94] py-10 px-4 md:px-0">
         <div className="max-w-screen-xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">ĐỘI NGŨ Y TẾ<br className="md:hidden" /> TẠI 3AE</h1>
