@@ -33,6 +33,7 @@ const ARVProtocols = () => {
 
   const handleCreateSuccess = () => {
     setModalVisible(false);
+    form.resetFields(); // Reset form after successful creation
     fetchProtocols();
     message.success('Tạo phác đồ thành công!');
   };
@@ -45,7 +46,11 @@ const ARVProtocols = () => {
   };
 
   const handleEditProtocol = (protocol) => {
-    setSelectedProtocol(protocol);
+    // Convert isDefault from 1/0 to true/false for Switch component
+    setSelectedProtocol({ 
+      ...protocol, 
+      isDefault: protocol.isDefault === 1 || protocol.isDefault === true 
+    });
     setUpdateModalVisible(true);
   };
 
@@ -55,28 +60,15 @@ const ARVProtocols = () => {
     { title: 'Chỉ định', dataIndex: 'indications', key: 'indications', ellipsis: true },
     { title: 'Liều dùng', dataIndex: 'dosage', key: 'dosage', ellipsis: true },
     { title: 'Tác dụng phụ', dataIndex: 'sideEffects', key: 'sideEffects', ellipsis: true },
-    { title: 'Mặc định', dataIndex: 'isDefault', key: 'isDefault', render: val => val ? 'Có' : 'Không' },
+    { title: 'Mặc định', dataIndex: 'isDefault', key: 'isDefault', render: val => (val === 1 || val === true) ? 'Có' : 'Không' },
     { title: 'Loại phác đồ', dataIndex: 'protocolType', key: 'protocolType', render: val => PROTOCOL_TYPE_LABELS[val] || val },
-    {
-      title: 'Hành động',
-      key: 'actions',
-      render: (_, record) => (
-        <Button 
-          type="link" 
-          icon={<EditOutlined />} 
-          onClick={() => handleEditProtocol(record)}
-        >
-          Chỉnh sửa
-        </Button>
-      ),
-    },
   ];
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2>Danh sách phác đồ ARV</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setModalVisible(true); }}>
           Tạo phác đồ mới
         </Button>
       </div>
@@ -90,30 +82,16 @@ const ARVProtocols = () => {
       <Modal
         title="Tạo phác đồ ARV mới"
         open={modalVisible}
-        onCancel={() => setModalVisible(false)}
+        onCancel={() => { 
+          form.resetFields(); 
+          setModalVisible(false); 
+        }}
         footer={null}
       >
         <CreateARVProtocolForm onSuccess={handleCreateSuccess} form={form} />
       </Modal>
       
-      <Modal
-        title="Cập nhật phác đồ ARV"
-        open={updateModalVisible}
-        onCancel={() => {
-          setUpdateModalVisible(false);
-          setSelectedProtocol(null);
-        }}
-        footer={null}
-        width={600}
-      >
-        {selectedProtocol && (
-          <UpdateARVProtocolForm 
-            onSuccess={handleUpdateSuccess} 
-            form={updateForm} 
-            protocolData={selectedProtocol}
-          />
-        )}
-      </Modal>
+      {/* Update modal removed since backend doesn't support update */}
     </div>
   );
 };

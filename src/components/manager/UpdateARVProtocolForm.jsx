@@ -37,6 +37,8 @@ const UpdateARVProtocolForm = ({ onSuccess, form, protocolData }) => {
       indications: values.indications || "",
       dosage: values.dosage || "",
       sideEffects: values.sideEffects || "",
+      // Convert boolean to 1/0 for backend
+      isDefault: values.isDefault ? 1 : 0,
     };
     console.log('Update payload:', payload);
     try {

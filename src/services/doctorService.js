@@ -215,5 +215,126 @@ export const doctorService = {
       console.error('Delete doctor failed:', error);
       throw error;
     }
-  }
-}; 
+  },
+
+  // Lấy thống kê dashboard của bác sĩ
+  getDoctorStats: async (doctorId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-doctor-stats?doctorId=${doctorId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching doctor stats:', error);
+      throw error;
+    }
+  },
+
+  // Lấy lịch hẹn của bác sĩ hôm nay
+  getTodayAppointments: async (doctorId) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`${API_BASE_URL}/Appointment/get-doctor-appointments?doctorId=${doctorId}&date=${today}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching today appointments:', error);
+      throw error;
+    }
+  },
+
+  // Lấy danh sách bệnh nhân của bác sĩ
+  getDoctorPatients: async (doctorId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Patient/get-doctor-patients?doctorId=${doctorId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching doctor patients:', error);
+      throw error;
+    }
+  },
+
+  // Lấy kết quả xét nghiệm chờ xử lý
+  getPendingLabResults: async (doctorId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/LabResult/get-pending-results?doctorId=${doctorId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching pending lab results:', error);
+      throw error;
+    }
+  },
+
+  // Lấy điều trị đang hoạt động
+  getActiveTreatments: async (doctorId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Treatment/get-active-treatments?doctorId=${doctorId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching active treatments:', error);
+      throw error;
+    }
+  },
+
+  // Lấy thông tin bác sĩ hiện tại
+  getCurrentDoctor: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-current-doctor`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching current doctor:', error);
+      throw error;
+    }
+  },
+};

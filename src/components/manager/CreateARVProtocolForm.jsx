@@ -23,6 +23,8 @@ const CreateARVProtocolForm = ({ onSuccess, form }) => {
       indications: values.indications || "",
       dosage: values.dosage || "",
       sideEffects: values.sideEffects || "",
+      // Convert boolean to 1/0 for backend
+      isDefault: values.isDefault ? 1 : 0,
     };
     console.log('Submit payload:', payload);
     try {
@@ -66,7 +68,16 @@ const CreateARVProtocolForm = ({ onSuccess, form }) => {
       <Form.Item label="Tác dụng phụ" name="sideEffects">
         <TextArea rows={2} onChange={e => form.setFieldsValue({ sideEffects: e.target.value })} />
       </Form.Item>
-      <Form.Item label="Mặc định" name="isDefault" valuePropName="checked"> <Switch /> </Form.Item>
+      <Form.Item 
+        label="Mặc định" 
+        name="isDefault" 
+        valuePropName="checked"
+      > 
+        <Switch 
+          checkedChildren="Có" 
+          unCheckedChildren="Không"
+        /> 
+      </Form.Item>
       <Form.Item label="Loại phác đồ (ProtocolType)" name="protocolType" rules={[{ required: true, message: 'Chọn loại phác đồ' }]}> 
         <Select
           options={PROTOCOL_TYPE_OPTIONS}
