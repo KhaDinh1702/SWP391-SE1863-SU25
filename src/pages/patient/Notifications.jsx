@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
-import { FaBell, FaPills, FaCalendarAlt, FaClock, FaArrowLeft, FaWifi, FaExclamationTriangle } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from 'react';
+import { FaBell, FaPills, FaCalendarAlt, FaClock, FaArrowLeft, FaWifi, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { authService } from "../../services/authService";
 import { appointmentService } from "../../services/appointmentService";
-import { patientTreatmentProtocolService } from "../../services/patientTreatmentProtocolService";
-import { patientService } from "../../services/patientService";
 import { useNotification } from '../../contexts/NotificationContext';
 
 // Trang thông báo cho bệnh nhân
@@ -18,10 +16,17 @@ export default function Notifications() {
   const [reminders, setReminders] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [readReminders, setReadReminders] = useState(new Set()); // Track locally read reminders
+  const [readAppointments, setReadAppointments] = useState(new Set()); // Track locally read appointments
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Mặc định là 7 ngày tới
+    return '';
+  });
+  const [allReminders, setAllReminders] = useState([]); // Lưu tất cả reminders từ API
   const navigate = useNavigate();
   
   // Sử dụng SignalR context
-  const { notifications, unreadCount, isConnected, markAsRead, addTestNotification } = useNotification();
+  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead, addTestNotification } = useNotification();
 
   useEffect(() => {
     fetchNotifications();
@@ -31,6 +36,58 @@ export default function Notifications() {
       Notification.requestPermission();
     }
   }, []);
+
+  // Effect để re-filter reminders khi selectedDate thay đổi
+  useEffect(() => {
+    if (allReminders.length > 0) {
+      filterRemindersByDate();
+    }
+  }, [selectedDate, allReminders]);
+
+  // Function để filter reminders theo ngày được chọn
+  const filterRemindersByDate = () => {
+    let filteredReminders = [];
+    
+    if (selectedDate) {
+      // Nếu có chọn ngày cụ thể, chỉ hiển thị reminders của ngày đó
+      const selectedDateObj = new Date(selectedDate);
+      const startOfDay = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate());
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+      
+      filteredReminders = allReminders.filter(reminder => {
+        const reminderDate = new Date(reminder.reminderTime);
+        return reminderDate >= startOfDay && reminderDate < endOfDay;
+      });
+      
+      console.log(`📅 Filtered ${filteredReminders.length} reminders for selected date: ${selectedDate}`);
+    } else {
+      // Nếu không chọn ngày, hiển thị 7 ngày tới (mặc định)
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const in7Days = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      
+      filteredReminders = allReminders.filter(reminder => {
+        const reminderDate = new Date(reminder.reminderTime);
+        return reminderDate >= today && reminderDate < in7Days;
+      });
+      
+      console.log(`📅 Filtered ${filteredReminders.length} reminders for next 7 days`);
+    }
+    
+    // Sắp xếp theo thời gian
+    filteredReminders.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
+    setReminders(filteredReminders);
+  };
+
+  // Handler để xử lý thay đổi ngày
+  const handleDateChange = (event) => {
+    setSelectedDate(event.target.value);
+  };
+
+  // Handler để reset về hiển thị 7 ngày tới
+  const handleResetToWeekView = () => {
+    setSelectedDate('');
+  };
 
   // Kết hợp real-time notifications với static data
   useEffect(() => {
@@ -78,9 +135,60 @@ export default function Notifications() {
     }
   }, [notifications]);
 
-  const handleMarkAsRead = async (notificationId) => {
+  const handleMarkAsRead = useCallback(async (notificationId) => {
     await markAsRead(notificationId);
+  }, [markAsRead]);
+
+  const handleMarkReminderAsRead = (reminderId) => {
+    setReadReminders(prev => new Set([...prev, reminderId]));
   };
+
+  const handleMarkAppointmentAsRead = (appointmentId) => {
+    setReadAppointments(prev => new Set([...prev, appointmentId]));
+  };
+
+  const showToastNotification = useCallback((notification) => {
+    // Tạo toast element
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 z-50 bg-white border-l-4 border-blue-500 rounded-lg shadow-lg p-4 max-w-sm transform translate-x-full transition-transform duration-300';
+    toast.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            💊
+          </div>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-semibold text-gray-900 text-sm">${notification.title || 'Nhắc uống thuốc!'}</h4>
+          <p class="text-gray-600 text-sm mt-1">${notification.message || 'Đã đến giờ uống thuốc'}</p>
+          <div class="mt-2 flex gap-2">
+            <button onclick="this.closest('.fixed').remove(); window.markAsRead('${notification.id}')" 
+                    class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+              Đã uống
+            </button>
+            <button onclick="this.closest('.fixed').remove()" 
+                    class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+    
+    // Auto remove after 15 seconds
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+      setTimeout(() => document.body.removeChild(toast), 300);
+    }, 15000);
+    
+    // Make markAsRead available globally for the toast
+    window.markAsRead = (id) => handleMarkAsRead(id);
+  }, [handleMarkAsRead]);
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -112,9 +220,13 @@ export default function Notifications() {
             }
           });
           
+          console.log(`📞 API Call: https://localhost:7040/api/Reminder/upcomingReminderForDrinkMedicine?userId=${currentUser.userId}`);
+          console.log(`📞 API Response Status: ${reminderResponse.status} ${reminderResponse.statusText}`);
+          
           if (reminderResponse.ok) {
             const remindersData = await reminderResponse.json();
-            console.log(`📋 Found ${remindersData?.length || 0} medicine reminders`);
+            console.log(`📋 API trả về ${remindersData?.length || 0} medicine reminders from API`);
+            console.log('🔍 Raw reminder data (FULL):', JSON.stringify(remindersData, null, 2));
             
             treatmentReminders = (remindersData || []).map((reminder, index) => {
               // Tạo unique ID bằng cách kết hợp stageId, protocolId và reminderDateTime
@@ -125,6 +237,13 @@ export default function Notifications() {
               if (reminder.medicine && reminder.stageName) {
                 medicineName = `${reminder.medicine} (${reminder.stageName})`;
               }
+              
+              console.log(`📍 Processing reminder ${index + 1}:`, {
+                reminderDateTime: reminder.reminderDateTime,
+                medicine: reminder.medicine,
+                stageName: reminder.stageName,
+                parsed: reminder.reminderDateTime ? new Date(reminder.reminderDateTime) : null
+              });
               
               return {
                 id: uniqueId,
@@ -140,54 +259,23 @@ export default function Notifications() {
                 displayTitle: reminder.medicine ? 
                   `${reminder.medicine} - ${reminder.stageName || `Giai đoạn ${reminder.stageNumber || 1}`}` :
                   `${reminder.stageName || 'Điều trị HIV'} - Giai đoạn ${reminder.stageNumber || 1}`,
-                displayDescription: reminder.description || 'Nhắc nhở uống thuốc theo đúng lịch trình điều trị'
+                displayDescription: reminder.description || 'Nhắc nhở uống thuốc theo đúng lịch trình điều trị',
+                // Debug info
+                originalData: reminder
               };
             });
             
-            // 🔥 Group reminders theo ngày và chỉ lấy 7 ngày tiếp theo
-            const groupedByDate = {};
-            const now = new Date();
-            const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            console.log(`� Processed ${treatmentReminders.length} reminders before date filter`);
             
-            treatmentReminders.forEach(reminder => {
-              const reminderDate = new Date(reminder.reminderTime);
-              
-              // Chỉ lấy reminders trong 7 ngày tới
-              if (reminderDate >= now && reminderDate <= next7Days) {
-                const dateKey = reminderDate.toDateString(); // Tue Jul 02 2025
-                
-                if (!groupedByDate[dateKey]) {
-                  groupedByDate[dateKey] = {
-                    date: dateKey,
-                    dateObj: reminderDate,
-                    reminders: []
-                  };
-                }
-                groupedByDate[dateKey].reminders.push(reminder);
-              }
-            });
+            // Lưu tất cả reminders từ API để có thể filter sau
+            setAllReminders(treatmentReminders);
+            // Không cần filter ở đây, sẽ được filter trong useEffect
             
-            // Chuyển thành array và sort theo ngày
-            const dailyReminders = Object.values(groupedByDate)
-              .sort((a, b) => a.dateObj - b.dateObj)
-              .map(day => ({
-                ...day,
-                // Chỉ lấy reminder sớm nhất trong ngày để hiển thị
-                primaryReminder: day.reminders.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime))[0],
-                totalCount: day.reminders.length
-              }));
-            
-            console.log(`📅 Processed ${dailyReminders.length} days of reminders`);
-            
-            // Sử dụng daily reminders thay vì tất cả reminders
-            treatmentReminders = dailyReminders.map(day => ({
-              ...day.primaryReminder,
-              displayTitle: `${day.primaryReminder.displayTitle}${day.totalCount > 1 ? ` (+${day.totalCount - 1} lần khác)` : ''}`,
-              dailyCount: day.totalCount,
-              allRemindersInDay: day.reminders
-            }));
-            
-            console.log(`✅ Processed ${treatmentReminders.length} treatment reminders`);
+            console.log(`✅ Stored ${treatmentReminders.length} treatment reminders from API`);
+          } else {
+            console.error(`❌ API Error: ${reminderResponse.status} ${reminderResponse.statusText}`);
+            const errorText = await reminderResponse.text();
+            console.error(`❌ API Error Response:`, errorText);
           }
         } catch (reminderError) {
           console.error('Error fetching medicine reminders:', reminderError);
@@ -284,47 +372,9 @@ export default function Notifications() {
           }
         }
         
-        // Nếu không có dữ liệu thực, dùng dữ liệu mẫu
-        if (treatmentReminders.length === 0) {
-          console.log('📋 Using sample reminder data');
-          treatmentReminders = [
-            {
-              id: `sample-reminder-1-${Date.now()}`,
-              medicineName: "Efavirenz + Tenofovir + Emtricitabine",
-              reminderTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-              dosage: "Theo đơn thuốc của bác sĩ",
-              note: "Giai đoạn điều trị HIV 1",
-              stageInfo: "Giai đoạn 1",
-              medicine: "Efavirenz + Tenofovir + Emtricitabine",
-              displayTitle: "Efavirenz + Tenofovir + Emtricitabine - Giai đoạn 1",
-              displayDescription: "Giai đoạn điều trị HIV 1"
-            },
-            {
-              id: `sample-reminder-2-${Date.now() + 1}`, 
-              medicineName: "Dolutegravir + Tenofovir alafenamide + Emtricitabine",
-              reminderTime: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-              dosage: "Theo đơn thuốc của bác sĩ",
-              note: "Điều trị ARV theo giai đoạn",
-              stageInfo: "Giai đoạn 2",
-              medicine: "Dolutegravir + Tenofovir alafenamide + Emtricitabine",
-              displayTitle: "Dolutegravir + Tenofovir alafenamide + Emtricitabine - Giai đoạn 2",
-              displayDescription: "Nhắc nhở uống thuốc theo đúng lịch trình điều trị"
-            }
-          ];
-        }
-        
-        if (upcomingAppointments.length === 0) {
-          console.log('📅 Using sample appointment data');
-          upcomingAppointments = [
-            {
-              reason: "Khám định kỳ theo dõi HIV",
-              appointmentDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-              doctorName: "BS. Nguyễn Văn A", 
-              location: "Phòng khám số 1 - Tầng 2",
-              notes: "Reminder: Your appointment is scheduled for tomorrow at 9:00 AM."
-            }
-          ];
-        }
+        // Debug trước khi set state
+        console.log('🔧 Setting reminders state with data:', treatmentReminders);
+        console.log('🔧 Setting appointments state with data:', upcomingAppointments);
         
         setReminders(treatmentReminders);
         setAppointments(upcomingAppointments);
@@ -333,26 +383,17 @@ export default function Notifications() {
         console.log(`📋 Medicine reminders: ${treatmentReminders.length} items`);
         console.log(`📅 Upcoming appointments: ${upcomingAppointments.length} items`);
         
+        // Debug sau khi set state (sẽ hiển thị trong render tiếp theo)
+        setTimeout(() => {
+          console.log('🔍 Current reminders state after setState:', treatmentReminders);
+          console.log('🔍 Current appointments state after setState:', upcomingAppointments);
+        }, 100);
+        
       } catch (error) {
         console.error('Error fetching notifications:', error);
-        // Fallback to sample data on error
-        setReminders([
-          {
-            medicineName: "Giai đoạn 1 - Điều trị HIV khởi đầu",
-            reminderTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-            dosage: "Theo đơn thuốc",
-            note: "Giai đoạn 1 - Điều trị HIV khởi đầu"
-          }
-        ]);
-        setAppointments([
-          {
-            reason: "Khám bệnh",
-            appointmentDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            doctorName: "BS. Phạm Thanh Hiếu", 
-            location: "Phòng khám",
-            notes: "Reminder: Your appointment is scheduled for tomorrow at 9:00 AM."
-          }
-        ]);
+        // Nếu có lỗi, để trống
+        setReminders([]);
+        setAppointments([]);
       }
     }
     setLoading(false);
@@ -410,8 +451,50 @@ export default function Notifications() {
     }
   };
 
+  // Hiển thị popup/toast khi có medication reminder mới
+  useEffect(() => {
+    const medicationNotifications = notifications.filter(n => 
+      n.type === 'medication' && !n.isRead && n.timestamp > Date.now() - 60000 // Mới trong 1 phút
+    );
+    
+    medicationNotifications.forEach(notification => {
+      // Hiển thị browser notification
+      if (Notification.permission === 'granted') {
+        const browserNotif = new Notification('💊 Nhắc uống thuốc!', {
+          body: `${notification.title || 'Đã đến giờ uống thuốc'}\n${notification.message || ''}`,
+          icon: '/favicon.ico',
+          tag: `medication-${notification.id}`, // Tránh duplicate
+          requireInteraction: true // Yêu cầu user click để đóng
+        });
+        
+        browserNotif.onclick = () => {
+          window.focus();
+          handleMarkAsRead(notification.id);
+          browserNotif.close();
+        };
+        
+        // Tự động đóng sau 10 giây
+        setTimeout(() => browserNotif.close(), 10000);
+      }
+      
+      // Hiển thị toast notification trong app
+      showToastNotification(notification);
+    });
+  }, [notifications, handleMarkAsRead, showToastNotification]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* Debug log ở đầu render */}
+      {console.log('🎯 RENDER DEBUG:', {
+        remindersLength: reminders.length,
+        appointmentsLength: appointments.length,
+        remindersData: reminders,
+        appointmentsData: appointments,
+        loading: loading,
+        currentUserExists: !!authService.getCurrentUser(),
+        currentUserId: authService.getCurrentUser()?.userId
+      })}
+      
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -433,21 +516,45 @@ export default function Notifications() {
               )}
             </div>
             
-            {/* Connection status indicator */}
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-              isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {isConnected ? <FaWifi /> : <FaExclamationTriangle />}
-              <span>{isConnected ? 'Kết nối' : 'Mất kết nối'}</span>
+            <div className="flex items-center gap-3">
+              {/* Mark All as Read Button */}
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
+                  title="Đánh dấu tất cả thông báo là đã đọc"
+                >
+                  <FaCheck className="text-sm" />
+                  <span>Đánh dấu tất cả đã đọc</span>
+                </button>
+              )}
+              
+              {/* Connection status indicator */}
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {isConnected ? <FaWifi /> : <FaExclamationTriangle />}
+                <span>{isConnected ? 'Kết nối' : 'Mất kết nối'}</span>
+              </div>
             </div>
           </div>
           <p className="text-gray-600 mt-2">
-            Xem các nhắc nhở uống thuốc và lịch hẹn sắp tới
+            Xem các nhắc nhở uống thuốc trong 7 ngày tới và lịch hẹn sắp tới
             {isConnected && <span className="text-green-600"> • Cập nhật trực tiếp</span>}
           </p>
           
+          {/* Success message when no unread notifications */}
+          {unreadCount === 0 && notifications.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-green-700">
+                <FaCheck className="text-green-600" />
+                <span className="font-medium">Tuyệt vời! Bạn đã đọc hết tất cả thông báo.</span>
+              </div>
+            </div>
+          )}
+          
           {/* Debug info - chỉ hiển thị khi đang development */}
-          {process.env.NODE_ENV === 'development' && (
+          {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
             <div className="mt-4 p-3 bg-gray-100 rounded-lg text-sm">
               <p><strong>Debug Info:</strong></p>
               <p>SignalR Connected: {isConnected ? '✅' : '❌'}</p>
@@ -498,6 +605,47 @@ export default function Notifications() {
           )}
         </div>
 
+        {/* Date Filter Controls */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <FaCalendarAlt className="text-[#3B9AB8] text-lg" />
+              <h3 className="text-lg font-semibold text-gray-800">Lọc nhắc nhở theo ngày</h3>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="dateFilter" className="text-sm font-medium text-gray-600">
+                  Chọn ngày:
+                </label>
+                <input
+                  id="dateFilter"
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  min={new Date().toISOString().split('T')[0]} // Không cho chọn ngày quá khứ
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-transparent text-sm"
+                />
+              </div>
+              
+              <button
+                onClick={handleResetToWeekView}
+                className="px-4 py-2 bg-[#3B9AB8] text-white rounded-lg hover:bg-[#2d7a94] transition-colors duration-200 text-sm font-medium"
+              >
+                Xem 7 ngày tới
+              </button>
+            </div>
+          </div>
+          
+          <div className="mt-3 text-sm text-gray-600">
+            {selectedDate ? (
+              <span>Hiển thị nhắc nhở cho ngày: <strong>{new Date(selectedDate).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
+            ) : (
+              <span>Hiển thị nhắc nhở trong <strong>7 ngày tới</strong></span>
+            )}
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3B9AB8]"></div>
@@ -523,7 +671,18 @@ export default function Notifications() {
                 {reminders.length === 0 ? (
                   <div className="text-center py-8">
                     <FaPills className="text-gray-300 text-4xl mx-auto mb-4" />
-                    <p className="text-gray-500">Không có nhắc nhở uống thuốc nào</p>
+                    <p className="text-gray-500 mb-2">
+                      {selectedDate 
+                        ? `Không có nhắc nhở uống thuốc nào cho ngày ${new Date(selectedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                        : 'Không có nhắc nhở uống thuốc nào trong 7 ngày tới'
+                      }
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {selectedDate 
+                        ? 'Hãy chọn ngày khác hoặc xem 7 ngày tới để tìm nhắc nhở'
+                        : 'Hãy kiểm tra lại lịch điều trị của bạn'
+                      }
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -537,10 +696,17 @@ export default function Notifications() {
                       } ${
                         reminder.isRealTime && !reminder.isRead ? 'ring-2 ring-blue-300' : ''
                       } ${
-                        reminder.isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
+                        reminder.isRead || readReminders.has(reminder.id) ? 'opacity-60 bg-gray-50' : 'bg-white'
                       }`}
-                      onClick={() => reminder.isRealTime && !reminder.isRead && handleMarkAsRead(reminder.id)}
-                      title={reminder.isRead ? 'Đã đọc' : 'Click để đánh dấu đã đọc'}
+                      onClick={() => {
+                        // Đánh dấu đã đọc cho tất cả loại reminders
+                        if (reminder.isRealTime && !reminder.isRead) {
+                          handleMarkAsRead(reminder.id);
+                        } else if (!readReminders.has(reminder.id)) {
+                          handleMarkReminderAsRead(reminder.id);
+                        }
+                      }}
+                      title={reminder.isRead || readReminders.has(reminder.id) ? 'Đã đọc' : 'Click để đánh dấu đã đọc'}
                       >
                         <div className="flex items-start gap-4">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -565,7 +731,12 @@ export default function Notifications() {
                                     {reminder.isRead ? 'Đã đọc' : 'Mới'}
                                   </span>
                                 )}
-                                {!reminder.isRealTime && reminder.isRead && (
+                                {(!reminder.isRealTime && readReminders.has(reminder.id)) && (
+                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                                    Đã đọc
+                                  </span>
+                                )}
+                                {(!reminder.isRealTime && reminder.isRead) && (
                                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
                                     Đã đọc
                                   </span>
@@ -662,33 +833,73 @@ export default function Notifications() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {appointments.map((appointment, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    {appointments.map((appointment, index) => {
+                      const appointmentId = appointment.appointmentId || appointment.id || `appointment-${index}`;
+                      const isRead = appointment.isRead || readAppointments.has(appointmentId);
+                      return (
+                      <div 
+                        key={appointmentId} 
+                        className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          appointment.isRealTime && !appointment.isRead ? 'ring-2 ring-green-300 border-green-200' : 'border-gray-200'
+                        } ${
+                          isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
+                        }`}
+                        onClick={() => {
+                          // Đánh dấu đã đọc cho appointments
+                          if (appointment.isRealTime && !appointment.isRead) {
+                            handleMarkAsRead(appointment.appointmentId || appointment.id);
+                          } else if (!readAppointments.has(appointmentId)) {
+                            handleMarkAppointmentAsRead(appointmentId);
+                          }
+                        }}
+                        title={isRead ? 'Đã xem' : 'Click để đánh dấu đã xem'}
+                      >
                         <div className="flex items-start gap-4">
                           <div className="w-10 h-10 bg-[#3B9AB8]/20 rounded-full flex items-center justify-center flex-shrink-0">
                             <FaCalendarAlt className="text-[#3B9AB8]" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-medium text-gray-800 mb-1">
-                              {appointment.reason || appointment.title || 'Cuộc hẹn khám'}
-                            </h3>
+                            <div className="flex items-start justify-between mb-2">
+                              <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                                {appointment.reason || appointment.title || 'Cuộc hẹn khám'}
+                                {appointment.isRealTime && (
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    appointment.isRead ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {appointment.isRead ? 'Đã xem' : 'Mới'}
+                                  </span>
+                                )}
+                                {(!appointment.isRealTime && readAppointments.has(appointmentId)) && (
+                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                                    Đã xem
+                                  </span>
+                                )}
+                              </h3>
+                            </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                               <FaClock />
-                              <span>{formatDate(appointment.appointmentDate || appointment.dateTime)}</span>
+                              <span className="font-medium">{formatDate(appointment.appointmentDate || appointment.dateTime)}</span>
                             </div>
                             {appointment.doctorName && (
-                              <p className="text-sm text-gray-600">Bác sĩ: {appointment.doctorName}</p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium text-gray-700">👨‍⚕️ Bác sĩ:</span> {appointment.doctorName}
+                              </p>
                             )}
                             {appointment.location && (
-                              <p className="text-sm text-gray-600">Địa điểm: {appointment.location}</p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium text-gray-700">📍 Địa điểm:</span> {appointment.location}
+                              </p>
                             )}
                             {appointment.notes && (
-                              <p className="text-sm text-gray-600 mt-1">Ghi chú: {appointment.notes}</p>
+                              <p className="text-sm text-gray-600 mt-1 p-2 rounded border-l-4 bg-blue-50 border-[#3B9AB8]">
+                                <span className="font-medium text-gray-700">📝 Ghi chú:</span> {appointment.notes}
+                              </p>
                             )}
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -154,6 +154,28 @@ export const NotificationProvider = ({ children }) => {
     });
   };
 
+  const markAllAsRead = async () => {
+    console.log('🔄 Marking all notifications as read');
+    
+    // Gửi requests để mark tất cả notifications là đã đọc
+    const unreadNotifications = notifications.filter(n => !n.isRead);
+    const markPromises = unreadNotifications.map(notif => signalRService.markAsRead(notif.id));
+    
+    try {
+      await Promise.all(markPromises);
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+    
+    // Cập nhật local state
+    setNotifications(prev => 
+      prev.map(notif => ({ ...notif, isRead: true }))
+    );
+    
+    setUnreadCount(0);
+    console.log('✅ All notifications marked as read');
+  };
+
   const clearAll = () => {
     setNotifications([]);
     setUnreadCount(0);
@@ -194,14 +216,63 @@ export const NotificationProvider = ({ children }) => {
     addNotification(testNotifications[type]);
   };
 
+  // Test medication reminders function for debugging
+  const testMedicationReminders = async () => {
+    console.log('🧪 Testing medication reminder system from NotificationContext...');
+    
+    const result = await signalRService.testMedicationReminders();
+    console.log('Test result:', result);
+    
+    // Also test API
+    try {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        const response = await fetch(`https://localhost:7040/api/reminder/upcomingReminderForDrinkMedicine?futureDays=1`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📋 API Response - Upcoming reminders:', data);
+          
+          if (data.length > 0) {
+            console.log('✅ Found upcoming medication reminders:', data.length);
+            data.forEach((reminder, index) => {
+              console.log(`🔔 Reminder ${index + 1}:`, {
+                stageName: reminder.stageName,
+                medicine: reminder.medicine,
+                reminderDateTime: new Date(reminder.reminderDateTime),
+                description: reminder.description
+              });
+            });
+          } else {
+            console.log('⚠️ No upcoming medication reminders found');
+          }
+        } else {
+          console.error('❌ API call failed:', response.status);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error testing API:', error);
+    }
+    
+    return result;
+  };
+
   const value = {
     notifications,
     unreadCount,
     isConnected,
     markAsRead,
+    markAllAsRead,
     clearAll,
     addNotification,
-    addTestNotification // Thêm method test
+    addTestNotification, // Thêm method test
+    testMedicationReminders, // Thêm test function
+    testMedicationReminders // Thêm function test medication reminders
   };
 
   return (
