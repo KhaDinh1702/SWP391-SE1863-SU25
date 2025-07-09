@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { FaBell, FaPills, FaCalendarAlt, FaClock, FaArrowLeft } from 'react-icons/fa';
+import { FaBell, FaPills, FaCalendarAlt, FaClock, FaArrowLeft, FaWifi, FaExclamationTriangle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { authService } from "../../services/authService";
 import { appointmentService } from "../../services/appointmentService";
 import { patientTreatmentProtocolService } from "../../services/patientTreatmentProtocolService";
 import { patientService } from "../../services/patientService";
+import { useNotification } from '../../contexts/NotificationContext';
 
 // Trang thông báo cho bệnh nhân
 // Hiển thị nhắc nhở uống thuốc và lịch hẹn sắp tới
@@ -18,10 +19,68 @@ export default function Notifications() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Sử dụng SignalR context
+  const { notifications, unreadCount, isConnected, markAsRead, addTestNotification } = useNotification();
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Request notification permission
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
+
+  // Kết hợp real-time notifications với static data
+  useEffect(() => {
+    // Filter real-time notifications by type
+    const medicationNotifications = notifications.filter(n => n.type === 'medication');
+    const appointmentNotifications = notifications.filter(n => n.type === 'appointment');
+    
+    // Merge với dữ liệu hiện có
+    if (medicationNotifications.length > 0) {
+      const newReminders = medicationNotifications.map(notif => ({
+        id: notif.id,
+        medicineName: notif.data?.medicineName || notif.title,
+        reminderTime: notif.data?.reminderTime || notif.timestamp,
+        dosage: notif.data?.dosage || "Theo đơn thuốc của bác sĩ",
+        note: notif.message,
+        displayTitle: notif.title,
+        displayDescription: notif.message,
+        isRealTime: true,
+        isRead: notif.isRead
+      }));
+      
+      setReminders(prev => {
+        // Merge và remove duplicates
+        const merged = [...newReminders, ...prev.filter(r => !r.isRealTime)];
+        return merged.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
+      });
+    }
+
+    if (appointmentNotifications.length > 0) {
+      const newAppointments = appointmentNotifications.map(notif => ({
+        appointmentId: notif.id,
+        reason: notif.data?.reason || notif.title,
+        appointmentDate: notif.data?.appointmentDate || notif.timestamp,
+        doctorName: notif.data?.doctorName || 'Bác sĩ',
+        location: notif.data?.location || 'Phòng khám',
+        notes: notif.message,
+        isRealTime: true,
+        isRead: notif.isRead
+      }));
+      
+      setAppointments(prev => {
+        const merged = [...newAppointments, ...prev.filter(a => !a.isRealTime)];
+        return merged.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+      });
+    }
+  }, [notifications]);
+
+  const handleMarkAsRead = async (notificationId) => {
+    await markAsRead(notificationId);
+  };
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -41,7 +100,6 @@ export default function Notifications() {
         }
         
         const userData = await userResponse.json();
-        console.log('User data:', userData);
         console.log(`Starting to fetch notifications for user: ${currentUser.userId}`);
         
         // Lấy nhắc nhở uống thuốc từ API thật
@@ -56,22 +114,9 @@ export default function Notifications() {
           
           if (reminderResponse.ok) {
             const remindersData = await reminderResponse.json();
-            console.log('Reminders data:', remindersData);
-            console.log('Number of reminders:', remindersData?.length || 0);
-            
-            // Debug: In ra cấu trúc của reminder đầu tiên
-            if (remindersData && remindersData.length > 0) {
-              console.log('Sample reminder structure:', remindersData[0]);
-              console.log('Available keys in reminder:', Object.keys(remindersData[0]));
-              console.log('🔬 Treatment Protocol Analysis:');
-              console.log('- StageId:', remindersData[0].stageId);
-              console.log('- PatientTreatmentProtocolId:', remindersData[0].patientTreatmentProtocolId);
-              console.log('- Medicine field:', remindersData[0].medicine || 'Not found');
-              console.log('- This reminder belongs to protocol:', remindersData[0].patientTreatmentProtocolId);
-            }
+            console.log(`📋 Found ${remindersData?.length || 0} medicine reminders`);
             
             treatmentReminders = (remindersData || []).map((reminder, index) => {
-              console.log(`Processing reminder ${index + 1}:`, reminder);
               // Tạo unique ID bằng cách kết hợp stageId, protocolId và reminderDateTime
               const uniqueId = `${reminder.stageId || 'unknown'}-${reminder.patientTreatmentProtocolId || 'no-protocol'}-${reminder.reminderDateTime || index}`;
               
@@ -100,7 +145,6 @@ export default function Notifications() {
             });
             
             // 🔥 Group reminders theo ngày và chỉ lấy 7 ngày tiếp theo
-            console.log('📊 Grouping reminders by date...');
             const groupedByDate = {};
             const now = new Date();
             const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -133,8 +177,7 @@ export default function Notifications() {
                 totalCount: day.reminders.length
               }));
             
-            console.log('📅 Daily reminders:', dailyReminders);
-            console.log(`Found reminders for ${dailyReminders.length} days`);
+            console.log(`📅 Processed ${dailyReminders.length} days of reminders`);
             
             // Sử dụng daily reminders thay vì tất cả reminders
             treatmentReminders = dailyReminders.map(day => ({
@@ -144,8 +187,7 @@ export default function Notifications() {
               allRemindersInDay: day.reminders
             }));
             
-            console.log('Processed treatment reminders:', treatmentReminders);
-            console.log('Reminder IDs:', treatmentReminders.map(r => r.id));
+            console.log(`✅ Processed ${treatmentReminders.length} treatment reminders`);
           }
         } catch (reminderError) {
           console.error('Error fetching medicine reminders:', reminderError);
@@ -156,28 +198,10 @@ export default function Notifications() {
         try {
           // Sử dụng getAllAppointments để lấy tất cả appointments
           const allAppointments = await appointmentService.getAllAppointments();
-          console.log('All appointments from API:', allAppointments);
-          console.log('Number of total appointments:', allAppointments?.length || 0);
-          
-          // Debug: In ra cấu trúc của appointment đầu tiên
-          if (allAppointments && allAppointments.length > 0) {
-            console.log('Sample appointment structure:', allAppointments[0]);
-            console.log('Available keys in appointment:', Object.keys(allAppointments[0]));
-          }
-          
-          // Debug: In ra thông tin user để so sánh
-          console.log('Current user ID for matching:', currentUser.userId);
-          console.log('User data ID for matching:', userData.id);
-          console.log('User data patientId for matching:', userData.patientId);
+          console.log(`📅 Found ${allAppointments?.length || 0} total appointments`);
           
           // Filter appointments của user hiện tại với nhiều cách thử
           const userAppointments = (allAppointments || []).filter(apt => {
-            console.log(`Checking appointment ID: ${apt.appointmentId || apt.id}`);
-            console.log(`  - apt.patientId: ${apt.patientId} (type: ${typeof apt.patientId})`);
-            console.log(`  - apt.userId: ${apt.userId} (type: ${typeof apt.userId})`);
-            console.log(`  - apt.patient: ${apt.patient}`);
-            console.log(`  - apt.patientName: ${apt.patientName}`);
-            
             // Thử match với nhiều field có thể có
             const isMatch = apt.patientId === currentUser.userId || 
                            apt.userId === currentUser.userId ||
@@ -191,40 +215,24 @@ export default function Notifications() {
                            String(apt.patientId) === String(userData.id) ||
                            String(apt.userId) === String(userData.id);
                            
-            console.log(`  - Match result: ${isMatch}`);
             return isMatch;
           });
           
-          console.log('User appointments after filter:', userAppointments);
-          console.log('Number of user appointments:', userAppointments.length);
+          console.log(`📋 Found ${userAppointments.length} appointments for current user`);
           
-          // Nếu không có appointments nào match, thử không filter để xem tất cả
+          // Nếu không có appointments nào match, log để debug
           if (userAppointments.length === 0) {
-            console.log('🔍 No appointments matched - showing all appointments for debugging:');
-            allAppointments?.forEach((apt, index) => {
-              console.log(`Appointment ${index + 1}:`, {
-                id: apt.appointmentId || apt.id,
-                patientId: apt.patientId,
-                userId: apt.userId,
-                patientName: apt.patientName,
-                doctorName: apt.doctorName,
-                date: apt.appointmentDate || apt.appointmentStartDate,
-                reason: apt.reason || apt.appointmentTitle
-              });
-            });
+            console.log('⚠️ No appointments matched current user');
           }
           
           // Lọc lịch hẹn sắp tới (trong vòng 30 ngày)
           const now = new Date();
           const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
           
-          console.log(`Filtering appointments between ${now.toISOString()} and ${in30Days.toISOString()}`);
-          
           upcomingAppointments = userAppointments
             .filter(apt => {
               const aptDate = new Date(apt.appointmentDate || apt.appointmentStartDate);
               const isUpcoming = aptDate >= now && aptDate <= in30Days;
-              console.log(`Appointment ${apt.appointmentId || apt.id} date: ${aptDate.toISOString()}, is upcoming: ${isUpcoming}`);
               return isUpcoming;
             })
             .sort((a, b) => new Date(a.appointmentDate || a.appointmentStartDate) - new Date(b.appointmentDate || b.appointmentStartDate))
@@ -243,11 +251,10 @@ export default function Notifications() {
               status: appointment.status
             }));
             
-          console.log('Filtered upcoming appointments:', upcomingAppointments);
+          console.log(`✅ Found ${upcomingAppointments.length} upcoming appointments`);
           
         } catch (appointmentError) {
           console.error('Error fetching appointments:', appointmentError);
-          console.info('Falling back to alternative appointment API approach');
           
           // Fallback: thử gọi endpoint upcomingAppointment nếu getAllAppointments fail
           try {
@@ -260,7 +267,7 @@ export default function Notifications() {
             
             if (appointmentResponse.ok) {
               const appointmentsData = await appointmentResponse.json();
-              console.log('Fallback appointments data:', appointmentsData);
+              console.log(`📅 Fallback: Found ${appointmentsData?.length || 0} appointments`);
               
               upcomingAppointments = (appointmentsData || []).map(appointment => ({
                 reason: appointment.appointmentTitle || 'Cuộc hẹn khám',
@@ -279,7 +286,7 @@ export default function Notifications() {
         
         // Nếu không có dữ liệu thực, dùng dữ liệu mẫu
         if (treatmentReminders.length === 0) {
-          console.log('No treatment reminders found, using sample data');
+          console.log('📋 Using sample reminder data');
           treatmentReminders = [
             {
               id: `sample-reminder-1-${Date.now()}`,
@@ -307,7 +314,7 @@ export default function Notifications() {
         }
         
         if (upcomingAppointments.length === 0) {
-          console.log('No upcoming appointments found, using sample data');
+          console.log('📅 Using sample appointment data');
           upcomingAppointments = [
             {
               reason: "Khám định kỳ theo dõi HIV",
@@ -415,11 +422,80 @@ export default function Notifications() {
             <FaArrowLeft />
             <span>Quay lại</span>
           </button>
-          <div className="flex items-center gap-3">
-            <FaBell className="text-[#3B9AB8] text-2xl" />
-            <h1 className="text-3xl font-bold text-gray-800">Thông báo</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FaBell className="text-[#3B9AB8] text-2xl" />
+              <h1 className="text-3xl font-bold text-gray-800">Thông báo</h1>
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-sm px-2 py-1 rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            
+            {/* Connection status indicator */}
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+              isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {isConnected ? <FaWifi /> : <FaExclamationTriangle />}
+              <span>{isConnected ? 'Kết nối' : 'Mất kết nối'}</span>
+            </div>
           </div>
-          <p className="text-gray-600 mt-2">Xem các nhắc nhở uống thuốc và lịch hẹn sắp tới</p>
+          <p className="text-gray-600 mt-2">
+            Xem các nhắc nhở uống thuốc và lịch hẹn sắp tới
+            {isConnected && <span className="text-green-600"> • Cập nhật trực tiếp</span>}
+          </p>
+          
+          {/* Debug info - chỉ hiển thị khi đang development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-3 bg-gray-100 rounded-lg text-sm">
+              <p><strong>Debug Info:</strong></p>
+              <p>SignalR Connected: {isConnected ? '✅' : '❌'}</p>
+              <p>Real-time Notifications: {notifications.length}</p>
+              <p>Unread Count: {unreadCount}</p>
+              <p>Read Notifications: {notifications.filter(n => n.isRead).length}</p>
+              <p>Unread Notifications: {notifications.filter(n => !n.isRead).length}</p>
+              <p>Backend Hub: /reminderHub</p>
+              
+              {/* Test buttons */}
+              <div className="mt-3 space-x-2">
+                <button 
+                  onClick={() => addTestNotification('medication')}
+                  className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                >
+                  Test Medication
+                </button>
+                <button 
+                  onClick={() => addTestNotification('appointment')}
+                  className="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                >
+                  Test Appointment
+                </button>
+                <button 
+                  onClick={() => addTestNotification('treatment')}
+                  className="px-3 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"
+                >
+                  Test Treatment
+                </button>
+              </div>
+              
+              {/* Mark all as read button */}
+              <div className="mt-2">
+                <button 
+                  onClick={() => {
+                    notifications.forEach(notif => {
+                      if (!notif.isRead) {
+                        handleMarkAsRead(notif.id);
+                      }
+                    });
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
+                >
+                  Mark All as Read
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -454,11 +530,18 @@ export default function Notifications() {
                     {reminders.map((reminder, index) => {
                       const urgency = getUrgencyInfo(reminder.reminderTime || reminder.dateTime);
                       return (
-                      <div key={reminder.id || index} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors ${
+                      <div key={reminder.id || index} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                         urgency.level === 'urgent' ? 'border-red-200 bg-red-50' : 
                         urgency.level === 'important' ? 'border-orange-200 bg-orange-50' : 
                         'border-gray-200'
-                      }`}>
+                      } ${
+                        reminder.isRealTime && !reminder.isRead ? 'ring-2 ring-blue-300' : ''
+                      } ${
+                        reminder.isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
+                      }`}
+                      onClick={() => reminder.isRealTime && !reminder.isRead && handleMarkAsRead(reminder.id)}
+                      title={reminder.isRead ? 'Đã đọc' : 'Click để đánh dấu đã đọc'}
+                      >
                         <div className="flex items-start gap-4">
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                             urgency.level === 'urgent' ? 'bg-red-100' :
@@ -473,8 +556,20 @@ export default function Notifications() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-semibold text-gray-800 text-lg">
+                              <h3 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
                                 {reminder.displayTitle || reminder.medicineName || 'Nhắc uống thuốc'}
+                                {reminder.isRealTime && (
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    reminder.isRead ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {reminder.isRead ? 'Đã đọc' : 'Mới'}
+                                  </span>
+                                )}
+                                {!reminder.isRealTime && reminder.isRead && (
+                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                                    Đã đọc
+                                  </span>
+                                )}
                               </h3>
                               <div className="flex gap-2 ml-2">
                                 <span className={`${urgency.color} text-white text-xs px-2 py-1 rounded-full flex-shrink-0`}>

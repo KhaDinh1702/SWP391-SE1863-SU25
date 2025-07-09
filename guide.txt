@@ -18,3 +18,4 @@ SET [PaymentStatus] = 1
 WHERE [PaymentStatus] = 0;
 
 dotnet run --launch-profile https
+npm install @microsoft/signalr
