@@ -21,6 +21,8 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [signalRConnected, setSignalRConnected] = useState(false); // Trạng thái kết nối SignalR
   const [lastUpdateTime, setLastUpdateTime] = useState(new Date()); // Thời gian cập nhật cuối cùng
+  const [dateFilter, setDateFilter] = useState('today'); // Bộ lọc theo ngày: 'today', 'week', 'all'
+  const [typeFilter, setTypeFilter] = useState('all'); // Bộ lọc theo loại: 'all', 'medicine', 'appointment', 'general'
   const navigate = useNavigate();
   
   // Sử dụng SignalR context
@@ -575,6 +577,117 @@ export default function Notifications() {
     setLoading(false);
   };
 
+  // Function để lấy thời gian thực tế của thông báo (thời gian uống thuốc/hẹn)
+  const getNotificationScheduleTime = (notification) => {
+    const message = notification.message.toLowerCase();
+    
+    // Tìm thời gian trong message (format: thời gian: HH:MM:SS DD/MM/YYYY)
+    const timeRegex = /thời gian:\s*(\d{1,2}):(\d{2}):(\d{2})\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i;
+    const match = message.match(timeRegex);
+    
+    if (match) {
+      const [, hours, minutes, seconds, day, month, year] = match;
+      const scheduleTime = new Date(
+        parseInt(year),
+        parseInt(month) - 1, // Tháng bắt đầu từ 0
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes),
+        parseInt(seconds)
+      );
+      return scheduleTime;
+    }
+    
+    // Fallback về createdAt nếu không tìm thấy thời gian trong message
+    return new Date(notification.createdAt);
+  };
+
+  // Function để lọc thông báo theo ngày dựa trên thời gian thực tế
+  const filterNotificationsByDate = (notifications, filter) => {
+    if (!notifications || notifications.length === 0) return [];
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const weekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    switch (filter) {
+      case 'today':
+        return notifications.filter(notification => {
+          const scheduleTime = getNotificationScheduleTime(notification);
+          const scheduleDate = new Date(scheduleTime.getFullYear(), scheduleTime.getMonth(), scheduleTime.getDate());
+          return scheduleDate >= today && scheduleDate < tomorrow;
+        });
+      
+      case 'week':
+        return notifications.filter(notification => {
+          const scheduleTime = getNotificationScheduleTime(notification);
+          const scheduleDate = new Date(scheduleTime.getFullYear(), scheduleTime.getMonth(), scheduleTime.getDate());
+          return scheduleDate >= weekStart && scheduleDate < tomorrow;
+        });
+      
+      case 'all':
+        return notifications;
+      
+      default:
+        return notifications;
+    }
+  };
+
+  // Function để lấy thông báo đã lọc (theo cả ngày và loại)
+  const getFilteredNotifications = () => {
+    let filtered = filterNotificationsByDate(backendNotifications, dateFilter);
+    filtered = filterNotificationsByType(filtered, typeFilter);
+    return filtered;
+  };
+
+  // Function để lấy số lượng thông báo chưa xem theo filter
+  const getUnseenCount = (dateFilterParam, typeFilterParam) => {
+    let filtered = filterNotificationsByDate(backendNotifications, dateFilterParam);
+    filtered = filterNotificationsByType(filtered, typeFilterParam);
+    return filtered.filter(n => !n.isSeen).length;
+  };
+
+  // Function để nhóm thông báo theo ngày dựa trên thời gian thực tế
+  const groupNotificationsByDate = (notifications) => {
+    const grouped = {};
+    
+    notifications.forEach(notification => {
+      const scheduleTime = getNotificationScheduleTime(notification);
+      const dateKey = scheduleTime.toLocaleDateString('vi-VN');
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(notification);
+    });
+    
+    // Sắp xếp theo ngày mới nhất
+    const sortedDates = Object.keys(grouped).sort((a, b) => {
+      const dateA = new Date(a.split('/').reverse().join('-'));
+      const dateB = new Date(b.split('/').reverse().join('-'));
+      return dateB - dateA;
+    });
+    
+    const result = {};
+    sortedDates.forEach(date => {
+      result[date] = grouped[date];
+    });
+    
+    return result;
+  };
+
+  // Function để lấy tóm tắt thông báo theo ngày
+  const getNotificationsSummary = () => {
+    const grouped = groupNotificationsByDate(backendNotifications);
+    return Object.entries(grouped).map(([date, notifications]) => ({
+      date,
+      total: notifications.length,
+      unseen: notifications.filter(n => !n.isSeen).length,
+      isToday: date === new Date().toLocaleDateString('vi-VN')
+    }));
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Không xác định';
     const date = new Date(dateString);
@@ -659,7 +772,7 @@ export default function Notifications() {
   }, [notifications, handleMarkAsRead, showToastNotification]);
 
   // Function để phân tích message và trả về icon + title phù hợp
-  const getNotificationTypeFromMessage = (message) => {
+  const getNotificationDisplayInfo = (message) => {
     const lowerMessage = message.toLowerCase();
     
     if (lowerMessage.includes('nhắc nhở uống thuốc') || 
@@ -716,6 +829,67 @@ export default function Notifications() {
     };
   };
 
+  // Function để lấy loại thông báo từ message
+  const getNotificationTypeFromMessage = (message) => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
+        lowerMessage.includes('nhắc uống thuốc') || 
+        lowerMessage.includes('thuốc') ||
+        lowerMessage.includes('medication') ||
+        lowerMessage.includes('medicine')) {
+      return 'medicine';
+    }
+    
+    if (lowerMessage.includes('lịch hẹn') || 
+        lowerMessage.includes('cuộc hẹn') || 
+        lowerMessage.includes('appointment') ||
+        lowerMessage.includes('khám') ||
+        lowerMessage.includes('tái khám')) {
+      return 'appointment';
+    }
+    
+    return 'general';
+  };
+
+  // Function để lọc thông báo theo loại
+  const filterNotificationsByType = (notifications, typeFilter) => {
+    if (!notifications || notifications.length === 0) return [];
+    
+    if (typeFilter === 'all') return notifications;
+    
+    return notifications.filter(notification => {
+      const notificationType = getNotificationTypeFromMessage(notification.message);
+      return notificationType === typeFilter;
+    });
+  };
+
+  // Debug function để xem thời gian lọc
+  const debugNotificationTimes = () => {
+    console.log('🕐 DEBUG: Notification times analysis');
+    backendNotifications.forEach((notification, index) => {
+      const createdTime = new Date(notification.createdAt);
+      const scheduleTime = getNotificationScheduleTime(notification);
+      const isToday = scheduleTime.toLocaleDateString('vi-VN') === new Date().toLocaleDateString('vi-VN');
+      
+      console.log(`${index + 1}. Notification:`, {
+        message: notification.message.substring(0, 50) + '...',
+        createdAt: createdTime.toLocaleString('vi-VN'),
+        scheduleTime: scheduleTime.toLocaleString('vi-VN'),
+        isToday,
+        dateKey: scheduleTime.toLocaleDateString('vi-VN'),
+        today: new Date().toLocaleDateString('vi-VN')
+      });
+    });
+  };
+
+  // Gọi debug khi có thay đổi
+  useEffect(() => {
+    if (backendNotifications.length > 0) {
+      debugNotificationTimes();
+    }
+  }, [backendNotifications]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -762,7 +936,7 @@ export default function Notifications() {
             </div>
           </div>
           <p className="text-gray-600 mt-2">
-            Xem thông báo từ staff và lịch hẹn sắp tới
+            Xem thông báo từ staff và lịch hẹn sắp tới. Sử dụng bộ lọc theo ngày để dễ quản lý thông báo.
             {signalRConnected && <span className="text-green-600"> • Kết nối real-time</span>}
             {!signalRConnected && <span className="text-orange-600"> • Chỉ cập nhật định kỳ</span>}
           </p>
@@ -804,7 +978,7 @@ export default function Notifications() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full">
-                    {backendNotifications.filter(n => !n.isSeen).length} chưa xem
+                    {getFilteredNotifications().filter(n => !n.isSeen).length} chưa xem
                   </span>
                   <button
                     onClick={loadBackendNotifications}
@@ -818,20 +992,230 @@ export default function Notifications() {
                   </button>
                 </div>
               </div>
+              
+              {/* Bộ lọc theo ngày */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">🗓️ Lọc theo thời gian:</h4>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setDateFilter('today')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      dateFilter === 'today' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>📅 Hôm nay</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      dateFilter === 'today' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount('today', typeFilter)}/{filterNotificationsByType(filterNotificationsByDate(backendNotifications, 'today'), typeFilter).length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setDateFilter('week')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      dateFilter === 'week' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>📅 Tuần này</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      dateFilter === 'week' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount('week', typeFilter)}/{filterNotificationsByType(filterNotificationsByDate(backendNotifications, 'week'), typeFilter).length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setDateFilter('all')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      dateFilter === 'all' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>📋 Tất cả</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      dateFilter === 'all' 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount('all', typeFilter)}/{filterNotificationsByType(backendNotifications, typeFilter).length}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bộ lọc theo loại */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">🏷️ Lọc theo loại thông báo:</h4>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setTypeFilter('all')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      typeFilter === 'all' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>🔔 Tất cả</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      typeFilter === 'all' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount(dateFilter, 'all')}/{filterNotificationsByDate(backendNotifications, dateFilter).length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setTypeFilter('medicine')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      typeFilter === 'medicine' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>💊 Uống thuốc</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      typeFilter === 'medicine' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount(dateFilter, 'medicine')}/{filterNotificationsByType(filterNotificationsByDate(backendNotifications, dateFilter), 'medicine').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setTypeFilter('appointment')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      typeFilter === 'appointment' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>📅 Lịch hẹn</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      typeFilter === 'appointment' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount(dateFilter, 'appointment')}/{filterNotificationsByType(filterNotificationsByDate(backendNotifications, dateFilter), 'appointment').length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setTypeFilter('general')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                      typeFilter === 'general' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span>📢 Thông báo chung</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      typeFilter === 'general' 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {getUnseenCount(dateFilter, 'general')}/{filterNotificationsByType(filterNotificationsByDate(backendNotifications, dateFilter), 'general').length}
+                    </span>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Hiển thị mô tả filter hiện tại */}
+              <div className="mt-3 text-sm text-gray-600">
+                <div className="flex items-center gap-4">
+                  <div>
+                    {dateFilter === 'today' && (
+                      <span>📅 Thời gian: <strong>Hôm nay ({new Date().toLocaleDateString('vi-VN')})</strong></span>
+                    )}
+                    {dateFilter === 'week' && (
+                      <span>📅 Thời gian: <strong>7 ngày qua</strong></span>
+                    )}
+                    {dateFilter === 'all' && (
+                      <span>📅 Thời gian: <strong>Tất cả</strong></span>
+                    )}
+                  </div>
+                  <div>
+                    {typeFilter === 'all' && (
+                      <span>🏷️ Loại: <strong>Tất cả thông báo</strong></span>
+                    )}
+                    {typeFilter === 'medicine' && (
+                      <span>🏷️ Loại: <strong>Nhắc uống thuốc</strong></span>
+                    )}
+                    {typeFilter === 'appointment' && (
+                      <span>🏷️ Loại: <strong>Lịch hẹn</strong></span>
+                    )}
+                    {typeFilter === 'general' && (
+                      <span>🏷️ Loại: <strong>Thông báo chung</strong></span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Tóm tắt thông báo theo ngày */}
+              {dateFilter === 'all' && getNotificationsSummary().length > 0 && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-700 mb-3">📊 Tóm tắt thông báo theo ngày:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {getNotificationsSummary().map(({ date, total, unseen, isToday }) => (
+                      <div
+                        key={date}
+                        className={`p-3 rounded-lg border text-sm ${
+                          isToday 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium ${
+                            isToday ? 'text-green-700' : 'text-gray-700'
+                          }`}>
+                            {isToday ? '📅 Hôm nay' : date}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">{total}</span>
+                            {unseen > 0 && (
+                              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                                {unseen}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="p-6">
-              {backendNotifications.length === 0 ? (
+              {getFilteredNotifications().length === 0 ? (
                 <div className="text-center py-8">
                   <FaBell className="text-gray-300 text-4xl mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">Chưa có thông báo nào từ staff</p>
-                  <p className="text-sm text-gray-400">
-                    Thông báo từ staff sẽ xuất hiện ở đây khi có nhắc nhở điều trị hoặc thông báo quan trọng
+                  <p className="text-gray-500 mb-2">
+                    Không có thông báo nào phù hợp với bộ lọc hiện tại
                   </p>
+                  <div className="text-sm text-gray-400 space-y-1">
+                    <p>🗓️ Thời gian: {
+                      dateFilter === 'today' ? 'Hôm nay' : 
+                      dateFilter === 'week' ? 'Tuần này' : 'Tất cả'
+                    }</p>
+                    <p>🏷️ Loại: {
+                      typeFilter === 'all' ? 'Tất cả' :
+                      typeFilter === 'medicine' ? 'Uống thuốc' :
+                      typeFilter === 'appointment' ? 'Lịch hẹn' : 'Thông báo chung'
+                    }</p>
+                    <p className="mt-2 text-blue-600">Thử thay đổi bộ lọc để xem thêm thông báo</p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {backendNotifications.map((notification) => {
-                    const notificationType = getNotificationTypeFromMessage(notification.message);
+                  {getFilteredNotifications().map((notification) => {
+                    const notificationType = getNotificationDisplayInfo(notification.message);
                     
                     return (
                     <div 
@@ -872,12 +1256,29 @@ export default function Notifications() {
                           
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                             <FaClock />
-                            <span>{new Date(notification.createdAt).toLocaleString('vi-VN')}</span>
-                            {/* Hiển thị thời gian tương đối */}
-                            <span className="text-xs text-gray-500">
-                              ({formatDate(notification.createdAt)})
-                            </span>
+                            <span>Tạo: {new Date(notification.createdAt).toLocaleString('vi-VN')}</span>
                           </div>
+                          
+                          {/* Hiển thị thời gian thực tế nếu khác với thời gian tạo */}
+                          {(() => {
+                            const scheduleTime = getNotificationScheduleTime(notification);
+                            const createdTime = new Date(notification.createdAt);
+                            const timeDiff = Math.abs(scheduleTime.getTime() - createdTime.getTime());
+                            
+                            // Chỉ hiển thị nếu chênh lệch > 1 phút
+                            if (timeDiff > 60000) {
+                              return (
+                                <div className="flex items-center gap-2 text-sm text-blue-600 mb-2">
+                                  <FaClock />
+                                  <span className="font-medium">Thời gian: {scheduleTime.toLocaleString('vi-VN')}</span>
+                                  <span className="text-xs text-gray-500">
+                                    ({formatDate(scheduleTime)})
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           
                           <p className={`text-sm text-gray-700 p-2 rounded border-l-4 ${
                             !notification.isSeen ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-gray-400'
@@ -900,119 +1301,6 @@ export default function Notifications() {
               )}
             </div>
           </div>
-
-            {/* Lịch hẹn sắp tới */}
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaCalendarAlt className="text-[#3B9AB8] text-xl" />
-                    <h2 className="text-xl font-semibold text-gray-800">Lịch hẹn sắp tới</h2>
-                  </div>
-                  {appointments.length > 0 && (
-                    <span className="bg-[#3B9AB8] text-white text-sm px-3 py-1 rounded-full">
-                      {appointments.length} lịch hẹn
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="p-6">
-                {appointments.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FaCalendarAlt className="text-gray-300 text-4xl mx-auto mb-4" />
-                    <p className="text-gray-500">Không có lịch hẹn nào sắp tới</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {appointments.map((appointment, index) => {
-                      const appointmentId = appointment.appointmentId || appointment.id || `appointment-${index}`;
-                      // Tìm backend notification tương ứng
-                      const relatedBackendNotif = backendNotifications.find(bn => 
-                        bn.appointmentId === appointmentId
-                      );
-                      const isRead = appointment.isRead || (relatedBackendNotif && relatedBackendNotif.isSeen);
-                      return (
-                      <div 
-                        key={appointmentId} 
-                        className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                          appointment.isRealTime && !appointment.isRead ? 'ring-2 ring-green-300 border-green-200' : 'border-gray-200'
-                        } ${
-                          relatedBackendNotif && !relatedBackendNotif.isSeen ? 'ring-2 ring-blue-300' : ''
-                        } ${
-                          isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
-                        }`}
-                        onClick={() => {
-                          // Đánh dấu đã đọc cho real-time appointments
-                          if (appointment.isRealTime && !appointment.isRead) {
-                            handleMarkAsRead(appointment.appointmentId || appointment.id);
-                          }
-                          
-                          // Đánh dấu backend notification đã xem nếu có
-                          if (relatedBackendNotif && !relatedBackendNotif.isSeen) {
-                            handleMarkBackendNotificationAsSeen(relatedBackendNotif.notificationId);
-                          }
-                        }}
-                        title={isRead ? 'Đã xem' : 'Click để đánh dấu đã xem'}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-[#3B9AB8]/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <FaCalendarAlt className="text-[#3B9AB8]" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                                {appointment.reason || appointment.title || 'Cuộc hẹn khám'}
-                                {appointment.isRealTime && (
-                                  <span className={`text-xs px-2 py-1 rounded ${
-                                    appointment.isRead ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'
-                                  }`}>
-                                    {appointment.isRead ? 'Đã xem' : 'Mới'}
-                                  </span>
-                                )}
-                                {relatedBackendNotif && (
-                                  <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-                                    relatedBackendNotif.isSeen ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'
-                                  }`}>
-                                    {relatedBackendNotif.isSeen ? (
-                                      <>
-                                        <FaCheck className="text-xs" />
-                                        Đã xem
-                                      </>
-                                    ) : (
-                                      'Từ hệ thống'
-                                    )}
-                                  </span>
-                                )}
-                              </h3>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                              <FaClock />
-                              <span className="font-medium">{formatDate(appointment.appointmentDate || appointment.dateTime)}</span>
-                            </div>
-                            {appointment.doctorName && (
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium text-gray-700">👨‍⚕️ Bác sĩ:</span> {appointment.doctorName}
-                              </p>
-                            )}
-                            {appointment.location && (
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium text-gray-700">📍 Địa điểm:</span> {appointment.location}
-                              </p>
-                            )}
-                            {appointment.notes && (
-                              <p className="text-sm text-gray-600 mt-1 p-2 rounded border-l-4 bg-blue-50 border-[#3B9AB8]">
-                                <span className="font-medium text-gray-700">📝 Ghi chú:</span> {appointment.notes}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         )}
       </div>
