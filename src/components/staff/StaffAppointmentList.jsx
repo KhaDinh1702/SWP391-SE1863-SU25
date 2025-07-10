@@ -106,9 +106,14 @@ const StaffAppointmentList = () => {
 
     // Filter by status
     if (selectedStatus !== null) {
-      filtered = filtered.filter(appointment => 
-        (appointment.status !== undefined ? appointment.status : appointment.Status) === selectedStatus
-      );
+      filtered = filtered.filter(appointment => {
+        // Use PaymentStatus as the primary field name
+        const appointmentStatus = appointment.PaymentStatus !== undefined ? appointment.PaymentStatus :
+                                 appointment.paymentStatus !== undefined ? appointment.paymentStatus :
+                                 appointment.status !== undefined ? appointment.status : 
+                                 appointment.Status !== undefined ? appointment.Status : 0;
+        return appointmentStatus === selectedStatus;
+      });
     }
 
     // Filter by date range
@@ -210,7 +215,10 @@ const StaffAppointmentList = () => {
         if (aptId === currentAptId) return false;
         
         // Only check conflict with paid appointments (status = 1, 3, 4)
-        const status = apt.status || apt.Status;
+        const status = apt.PaymentStatus !== undefined ? apt.PaymentStatus :
+                      apt.paymentStatus !== undefined ? apt.paymentStatus :
+                      apt.status !== undefined ? apt.status : 
+                      apt.Status !== undefined ? apt.Status : 0;
         if (status !== 1 && status !== 3 && status !== 4) return false;
         
         const aptStart = new Date(apt.appointmentStartDate || apt.AppointmentStartDate);
@@ -393,11 +401,17 @@ const StaffAppointmentList = () => {
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const color = getAppointmentStatusColor(status);
-        const label = getAppointmentStatusLabel(status);
+      dataIndex: 'PaymentStatus',
+      key: 'PaymentStatus',
+      render: (status, record) => {
+        // Use PaymentStatus as the primary field name
+        const appointmentStatus = record.PaymentStatus !== undefined ? record.PaymentStatus :
+                                 record.paymentStatus !== undefined ? record.paymentStatus :
+                                 status !== undefined ? status : 
+                                 record.Status !== undefined ? record.Status : 0;
+        
+        const color = getAppointmentStatusColor(appointmentStatus);
+        const label = getAppointmentStatusLabel(appointmentStatus);
         return (
           <Tag color={color} style={{ fontWeight: 500 }}>
             {label}

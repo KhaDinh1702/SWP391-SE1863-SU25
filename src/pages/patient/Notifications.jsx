@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaBell, FaPills, FaCalendarAlt, FaClock, FaArrowLeft, FaWifi, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
+import { ReloadOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { authService } from "../../services/authService";
 import { appointmentService } from "../../services/appointmentService";
+import { notificationService } from "../../services/notificationService";
 import { useNotification } from '../../contexts/NotificationContext';
 
 // Trang thông báo cho bệnh nhân
@@ -13,109 +16,341 @@ import { useNotification } from '../../contexts/NotificationContext';
 // - Fallback về dữ liệu mẫu nếu API không có dữ liệu
 
 export default function Notifications() {
-  const [reminders, setReminders] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [backendNotifications, setBackendNotifications] = useState([]); // Thông báo từ backend
   const [loading, setLoading] = useState(true);
-  const [readReminders, setReadReminders] = useState(new Set()); // Track locally read reminders
-  const [readAppointments, setReadAppointments] = useState(new Set()); // Track locally read appointments
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Mặc định là 7 ngày tới
-    return '';
-  });
-  const [allReminders, setAllReminders] = useState([]); // Lưu tất cả reminders từ API
+  const [signalRConnected, setSignalRConnected] = useState(false); // Trạng thái kết nối SignalR
+  const [lastUpdateTime, setLastUpdateTime] = useState(new Date()); // Thời gian cập nhật cuối cùng
   const navigate = useNavigate();
   
   // Sử dụng SignalR context
-  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead, addTestNotification } = useNotification();
+  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead } = useNotification();
 
   useEffect(() => {
     fetchNotifications();
+    loadBackendNotifications();
     
     // Request notification permission
     if (Notification.permission === 'default') {
-      Notification.requestPermission();
+      notificationService.requestNotificationPermission();
     }
+    
+    // Set up interval để kiểm tra thông báo mới mỗi 10 giây (tăng tần suất)
+    const notificationInterval = setInterval(() => {
+      loadBackendNotifications();
+    }, 10000); // 10 giây thay vì 30 giây
+    
+    // Set up SignalR connection để nhận thông báo real-time
+    const setupSignalRConnection = () => {
+      try {
+        const connection = new window.signalR.HubConnectionBuilder()
+          .withUrl('https://localhost:7040/reminderHub', {
+            accessTokenFactory: () => authService.getCurrentUser()?.token
+          })
+          .build();
+
+        connection.start()
+          .then(() => {
+            console.log('SignalR Connected to ReminderHub');
+            setSignalRConnected(true); // Cập nhật trạng thái kết nối
+
+            // Lắng nghe thông báo mới
+            connection.on('ReceiveReminder', (data) => {
+              console.log('Received new notification via SignalR:', data);
+              setLastUpdateTime(new Date());
+              // Reload backend notifications khi có thông báo mới
+              loadBackendNotifications();
+            });
+
+            // Lắng nghe khi thông báo được đánh dấu đã xem
+            connection.on('NotificationSeen', (data) => {
+              console.log('Notification marked as seen via SignalR:', data);
+              setLastUpdateTime(new Date());
+              // Cập nhật local state
+              setBackendNotifications(prev => 
+                prev.map(notif => 
+                  notif.notificationId === data.notificationId 
+                    ? { ...notif, isSeen: true, seenAt: new Date().toISOString() }
+                    : notif
+                )
+              );
+            });
+
+          })
+          .catch(err => {
+            console.log('SignalR Connection Error:', err);
+            setSignalRConnected(false); // Cập nhật trạng thái kết nối
+          });
+
+        return connection;
+      } catch (error) {
+        console.log('SignalR not available:', error);
+        return null;
+      }
+    };
+
+    const signalRConnection = setupSignalRConnection();
+    
+    // Cleanup interval và SignalR connection khi component unmount
+    return () => {
+      clearInterval(notificationInterval);
+      if (signalRConnection) {
+        signalRConnection.stop();
+      }
+    };
   }, []);
 
-  // Effect để re-filter reminders khi selectedDate thay đổi
-  useEffect(() => {
-    if (allReminders.length > 0) {
-      filterRemindersByDate();
-    }
-  }, [selectedDate, allReminders]);
-
-  // Function để filter reminders theo ngày được chọn
-  const filterRemindersByDate = () => {
-    let filteredReminders = [];
+  // Function để load notifications từ backend
+  const loadBackendNotifications = async () => {
+    const currentUser = authService.getCurrentUser();
+    console.log('🔍 DEBUG loadBackendNotifications:');
+    console.log('- currentUser:', currentUser);
     
-    if (selectedDate) {
-      // Nếu có chọn ngày cụ thể, chỉ hiển thị reminders của ngày đó
-      const selectedDateObj = new Date(selectedDate);
-      const startOfDay = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate());
-      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-      
-      filteredReminders = allReminders.filter(reminder => {
-        const reminderDate = new Date(reminder.reminderTime);
-        return reminderDate >= startOfDay && reminderDate < endOfDay;
-      });
-      
-      console.log(`📅 Filtered ${filteredReminders.length} reminders for selected date: ${selectedDate}`);
-    } else {
-      // Nếu không chọn ngày, hiển thị 7 ngày tới (mặc định)
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const in7Days = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
-      filteredReminders = allReminders.filter(reminder => {
-        const reminderDate = new Date(reminder.reminderTime);
-        return reminderDate >= today && reminderDate < in7Days;
-      });
-      
-      console.log(`📅 Filtered ${filteredReminders.length} reminders for next 7 days`);
+    if (currentUser) {
+      try {
+        // Lấy thông tin user để có patientId
+        const userResponse = await fetch(`https://localhost:7040/api/User/get-by-id?userId=${currentUser.userId}`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('- userResponse.ok:', userResponse.ok);
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          // Ưu tiên sử dụng patientId từ token trước
+          let patientId = currentUser.patientId || userData.patientId || userData.patient?.id;
+          
+          // Nếu không tìm thấy patientId riêng, sử dụng userId làm fallback
+          if (!patientId) {
+            patientId = userData.id || currentUser.userId;
+          }
+          
+          console.log('- userData:', userData);
+          console.log('- userData.patientId:', userData.patientId);
+          console.log('- currentUser.patientId:', currentUser.patientId);
+          console.log('- Final patientId used:', patientId);
+          
+          if (patientId) {
+            // Sử dụng API có sẵn: get-notification-by-patientId
+            try {
+              console.log('- Calling API with patientId:', patientId);
+              console.log('- API URL:', `https://localhost:7040/api/Notification/get-notification-by-patientId?patientId=${patientId}`);
+              
+              const notifications = await notificationService.getNotificationsByPatientId(patientId);
+              
+              console.log('- notifications from API:', notifications);
+              console.log('- API response type:', typeof notifications);
+              console.log('- API response is array:', Array.isArray(notifications));
+              
+              // Sắp xếp theo thời gian tạo (mới nhất trước)
+              const sortedNotifications = (notifications || []).sort((a, b) => 
+                new Date(b.createdAt) - new Date(a.createdAt)
+              );
+              
+              console.log('- sortedNotifications:', sortedNotifications);
+              
+              setBackendNotifications(sortedNotifications);
+              setLastUpdateTime(new Date()); // Cập nhật thời gian load thành công
+              
+              // Hiển thị toast cho thông báo mới chưa xem (trong 5 phút gần đây)
+              const newNotifications = sortedNotifications.filter(n => 
+                !n.isSeen && 
+                new Date(n.createdAt) > Date.now() - 5 * 60 * 1000
+              );
+              
+              newNotifications.forEach(notification => {
+                // Phát âm thanh thông báo
+                try {
+                  const audio = new Audio('/notification-sound.mp3');
+                  audio.volume = 0.5;
+                  audio.play().catch(e => console.log('Cannot play notification sound:', e));
+                } catch (e) {
+                  console.log('Audio not available:', e);
+                }
+                
+                // Hiển thị browser notification
+                if (Notification.permission === 'granted') {
+                  const browserNotif = new Notification('🔔 Thông báo mới từ hệ thống!', {
+                    body: notification.message,
+                    icon: '/favicon.ico',
+                    tag: `backend-${notification.notificationId}`,
+                    requireInteraction: true
+                  });
+                  
+                  browserNotif.onclick = () => {
+                    window.focus();
+                    handleMarkBackendNotificationAsSeen(notification.notificationId);
+                    browserNotif.close();
+                  };
+                  
+                  setTimeout(() => browserNotif.close(), 15000);
+                }
+                
+                // Hiển thị toast notification trong app
+                showBackendNotificationToast(notification);
+              });
+              
+            } catch (error) {
+              console.log('📨 Backend notifications not available:', error.message);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading backend notifications:', error);
+      }
     }
-    
-    // Sắp xếp theo thời gian
-    filteredReminders.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
-    setReminders(filteredReminders);
   };
 
-  // Handler để xử lý thay đổi ngày
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
+  // Function để tạo notification trong backend cho medicine reminder
+  const createMedicineReminderNotification = async (reminder, patientId) => {
+    try {
+      // Tạo thông báo trong database với API đúng
+      const notificationData = {
+        patientId: patientId,
+        treatmentStageId: reminder.stageId,
+        message: `Nhắc nhở uống thuốc: ${reminder.medicine || reminder.stageName || 'Thuốc điều trị'} - ${reminder.displayDescription || 'Đã đến giờ uống thuốc'}`,
+        // Không gửi createdAt, để backend tự set
+        appointmentId: null // Rõ ràng set null cho appointmentId
+      };
+
+      const response = await fetch(`https://localhost:7040/api/Notification/create-notification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authService.getCurrentUser()?.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(notificationData)
+      });
+
+      if (response.ok) {
+        const createdNotification = await response.json();
+        return createdNotification;
+      } else {
+        console.error('Failed to create notification:', response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error creating notification in backend:', error);
+      return null;
+    }
   };
 
-  // Handler để reset về hiển thị 7 ngày tới
-  const handleResetToWeekView = () => {
-    setSelectedDate('');
+  // Function để tạo notification trong backend cho appointment
+  const createAppointmentNotification = async (appointment, patientId) => {
+    try {
+      // Tạo thông báo trong database với API đúng
+      const notificationData = {
+        patientId: patientId,
+        appointmentId: appointment.appointmentId || appointment.id,
+        message: `Lịch hẹn sắp tới: ${appointment.reason || 'Cuộc hẹn khám'} với ${appointment.doctorName || 'bác sĩ'}`,
+        // Không gửi createdAt, để backend tự set
+        treatmentStageId: null // Rõ ràng set null cho treatmentStageId
+      };
+
+      const response = await fetch(`https://localhost:7040/api/Notification/create-notification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authService.getCurrentUser()?.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(notificationData)
+      });
+
+      if (response.ok) {
+        const createdNotification = await response.json();
+        return createdNotification;
+      } else {
+        console.error('Failed to create notification:', response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error creating notification in backend:', error);
+      return null;
+    }
   };
 
-  // Kết hợp real-time notifications với static data
+  // Function để đánh dấu notification từ backend đã xem
+  const handleMarkBackendNotificationAsSeen = async (notificationId) => {
+    try {
+      await notificationService.markNotificationAsSeen(notificationId);
+      
+      // Cập nhật state local
+      setBackendNotifications(prev => 
+        prev.map(notif => 
+          notif.notificationId === notificationId 
+            ? { ...notif, isSeen: true, seenAt: new Date().toISOString() }
+            : notif
+        )
+      );
+      
+    } catch (error) {
+      console.error('Error marking backend notification as seen:', error);
+    }
+  };
+
+  // Function để tạo notification cho reminder khi đến thời gian
+  const handleReminderNotification = async (reminder, patientId) => {
+    const now = new Date();
+    const reminderTime = new Date(reminder.reminderTime || reminder.reminderDateTime);
+    const timeDiff = reminderTime.getTime() - now.getTime();
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+    // Chỉ tạo notification nếu trong vòng 2 giờ tới
+    if (hoursDiff >= 0 && hoursDiff <= 2) {
+      const backendNotification = await createMedicineReminderNotification(reminder, patientId);
+      
+      if (backendNotification) {
+        // Thêm vào danh sách backend notifications
+        setBackendNotifications(prev => [backendNotification, ...prev]);
+        
+        // Hiển thị browser notification
+        if (Notification.permission === 'granted') {
+          notificationService.showBrowserNotification({
+            title: `💊 Nhắc uống thuốc`,
+            message: backendNotification.message,
+            id: backendNotification.notificationId
+          });
+        }
+      }
+    }
+  };
+
+  // Function để tạo notification cho appointment khi đến thời gian
+  const handleAppointmentNotification = async (appointment, patientId) => {
+    const now = new Date();
+    const appointmentTime = new Date(appointment.appointmentDate || appointment.appointmentStartDate);
+    const timeDiff = appointmentTime.getTime() - now.getTime();
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+    // Chỉ tạo notification nếu trong vòng 24 giờ tới
+    if (hoursDiff >= 0 && hoursDiff <= 24) {
+      const backendNotification = await createAppointmentNotification(appointment, patientId);
+      
+      if (backendNotification) {
+        // Thêm vào danh sách backend notifications
+        setBackendNotifications(prev => [backendNotification, ...prev]);
+        
+        // Hiển thị browser notification
+        if (Notification.permission === 'granted') {
+          notificationService.showBrowserNotification({
+            title: `📅 Lịch hẹn sắp tới`,
+            message: backendNotification.message,
+            id: backendNotification.notificationId
+          });
+        }
+      }
+    }
+  };
+
+  // Kết hợp real-time notifications với static data (chỉ giữ lại cho SignalR)
   useEffect(() => {
     // Filter real-time notifications by type
-    const medicationNotifications = notifications.filter(n => n.type === 'medication');
     const appointmentNotifications = notifications.filter(n => n.type === 'appointment');
     
-    // Merge với dữ liệu hiện có
-    if (medicationNotifications.length > 0) {
-      const newReminders = medicationNotifications.map(notif => ({
-        id: notif.id,
-        medicineName: notif.data?.medicineName || notif.title,
-        reminderTime: notif.data?.reminderTime || notif.timestamp,
-        dosage: notif.data?.dosage || "Theo đơn thuốc của bác sĩ",
-        note: notif.message,
-        displayTitle: notif.title,
-        displayDescription: notif.message,
-        isRealTime: true,
-        isRead: notif.isRead
-      }));
-      
-      setReminders(prev => {
-        // Merge và remove duplicates
-        const merged = [...newReminders, ...prev.filter(r => !r.isRealTime)];
-        return merged.sort((a, b) => new Date(a.reminderTime) - new Date(b.reminderTime));
-      });
-    }
-
+    // Merge với dữ liệu hiện có cho appointments
     if (appointmentNotifications.length > 0) {
       const newAppointments = appointmentNotifications.map(notif => ({
         appointmentId: notif.id,
@@ -139,13 +374,52 @@ export default function Notifications() {
     await markAsRead(notificationId);
   }, [markAsRead]);
 
-  const handleMarkReminderAsRead = (reminderId) => {
-    setReadReminders(prev => new Set([...prev, reminderId]));
-  };
-
-  const handleMarkAppointmentAsRead = (appointmentId) => {
-    setReadAppointments(prev => new Set([...prev, appointmentId]));
-  };
+  const showBackendNotificationToast = useCallback((notification) => {
+    // Tạo toast element cho backend notification
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 z-50 bg-white border-l-4 border-green-500 rounded-lg shadow-lg p-4 max-w-sm transform translate-x-full transition-transform duration-300';
+    toast.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+            🔔
+          </div>
+        </div>
+        <div class="flex-1">
+          <h4 class="font-semibold text-gray-900 text-sm">Thông báo mới từ hệ thống!</h4>
+          <p class="text-gray-600 text-sm mt-1">${notification.message}</p>
+          <div class="mt-2 flex gap-2">
+            <button onclick="this.closest('.fixed').remove(); window.markBackendAsSeen('${notification.notificationId}')" 
+                    class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
+              Đã xem
+            </button>
+            <button onclick="this.closest('.fixed').remove()" 
+                    class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+    
+    // Auto remove after 15 seconds
+    setTimeout(() => {
+      toast.classList.add('translate-x-full');
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 300);
+    }, 15000);
+    
+    // Make markBackendAsSeen available globally for the toast
+    window.markBackendAsSeen = (id) => handleMarkBackendNotificationAsSeen(id);
+  }, [handleMarkBackendNotificationAsSeen]);
 
   const showToastNotification = useCallback((notification) => {
     // Tạo toast element
@@ -208,78 +482,6 @@ export default function Notifications() {
         }
         
         const userData = await userResponse.json();
-        console.log(`Starting to fetch notifications for user: ${currentUser.userId}`);
-        
-        // Lấy nhắc nhở uống thuốc từ API thật
-        let treatmentReminders = [];
-        try {
-          const reminderResponse = await fetch(`https://localhost:7040/api/Reminder/upcomingReminderForDrinkMedicine?userId=${currentUser.userId}`, {
-            headers: {
-              'Authorization': `Bearer ${currentUser.token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          console.log(`📞 API Call: https://localhost:7040/api/Reminder/upcomingReminderForDrinkMedicine?userId=${currentUser.userId}`);
-          console.log(`📞 API Response Status: ${reminderResponse.status} ${reminderResponse.statusText}`);
-          
-          if (reminderResponse.ok) {
-            const remindersData = await reminderResponse.json();
-            console.log(`📋 API trả về ${remindersData?.length || 0} medicine reminders from API`);
-            console.log('🔍 Raw reminder data (FULL):', JSON.stringify(remindersData, null, 2));
-            
-            treatmentReminders = (remindersData || []).map((reminder, index) => {
-              // Tạo unique ID bằng cách kết hợp stageId, protocolId và reminderDateTime
-              const uniqueId = `${reminder.stageId || 'unknown'}-${reminder.patientTreatmentProtocolId || 'no-protocol'}-${reminder.reminderDateTime || index}`;
-              
-              // Xử lý tên thuốc
-              let medicineName = reminder.medicine || reminder.stageName || 'Điều trị HIV';
-              if (reminder.medicine && reminder.stageName) {
-                medicineName = `${reminder.medicine} (${reminder.stageName})`;
-              }
-              
-              console.log(`📍 Processing reminder ${index + 1}:`, {
-                reminderDateTime: reminder.reminderDateTime,
-                medicine: reminder.medicine,
-                stageName: reminder.stageName,
-                parsed: reminder.reminderDateTime ? new Date(reminder.reminderDateTime) : null
-              });
-              
-              return {
-                id: uniqueId,
-                medicineName: medicineName,
-                reminderTime: reminder.reminderDateTime,
-                dosage: "Theo đơn thuốc của bác sĩ",
-                note: reminder.description || 'Giai đoạn điều trị',
-                stageInfo: `Giai đoạn ${reminder.stageNumber || 1}`,
-                stageId: reminder.stageId,
-                protocolId: reminder.patientTreatmentProtocolId,
-                medicine: reminder.medicine, // Lưu riêng field medicine
-                // Thêm thông tin để hiển thị
-                displayTitle: reminder.medicine ? 
-                  `${reminder.medicine} - ${reminder.stageName || `Giai đoạn ${reminder.stageNumber || 1}`}` :
-                  `${reminder.stageName || 'Điều trị HIV'} - Giai đoạn ${reminder.stageNumber || 1}`,
-                displayDescription: reminder.description || 'Nhắc nhở uống thuốc theo đúng lịch trình điều trị',
-                // Debug info
-                originalData: reminder
-              };
-            });
-            
-            console.log(`� Processed ${treatmentReminders.length} reminders before date filter`);
-            
-            // Lưu tất cả reminders từ API để có thể filter sau
-            setAllReminders(treatmentReminders);
-            // Không cần filter ở đây, sẽ được filter trong useEffect
-            
-            console.log(`✅ Stored ${treatmentReminders.length} treatment reminders from API`);
-          } else {
-            console.error(`❌ API Error: ${reminderResponse.status} ${reminderResponse.statusText}`);
-            const errorText = await reminderResponse.text();
-            console.error(`❌ API Error Response:`, errorText);
-          }
-        } catch (reminderError) {
-          console.error('Error fetching medicine reminders:', reminderError);
-        }
         
         // Lấy lịch hẹn sắp tới từ API thật
         let upcomingAppointments = [];
@@ -305,13 +507,6 @@ export default function Notifications() {
                            
             return isMatch;
           });
-          
-          console.log(`📋 Found ${userAppointments.length} appointments for current user`);
-          
-          // Nếu không có appointments nào match, log để debug
-          if (userAppointments.length === 0) {
-            console.log('⚠️ No appointments matched current user');
-          }
           
           // Lọc lịch hẹn sắp tới (trong vòng 30 ngày)
           const now = new Date();
@@ -339,8 +534,6 @@ export default function Notifications() {
               status: appointment.status
             }));
             
-          console.log(`✅ Found ${upcomingAppointments.length} upcoming appointments`);
-          
         } catch (appointmentError) {
           console.error('Error fetching appointments:', appointmentError);
           
@@ -355,7 +548,6 @@ export default function Notifications() {
             
             if (appointmentResponse.ok) {
               const appointmentsData = await appointmentResponse.json();
-              console.log(`📅 Fallback: Found ${appointmentsData?.length || 0} appointments`);
               
               upcomingAppointments = (appointmentsData || []).map(appointment => ({
                 reason: appointment.appointmentTitle || 'Cuộc hẹn khám',
@@ -372,27 +564,11 @@ export default function Notifications() {
           }
         }
         
-        // Debug trước khi set state
-        console.log('🔧 Setting reminders state with data:', treatmentReminders);
-        console.log('🔧 Setting appointments state with data:', upcomingAppointments);
-        
-        setReminders(treatmentReminders);
         setAppointments(upcomingAppointments);
-        
-        console.log(`✅ Notifications loaded successfully:`);
-        console.log(`📋 Medicine reminders: ${treatmentReminders.length} items`);
-        console.log(`📅 Upcoming appointments: ${upcomingAppointments.length} items`);
-        
-        // Debug sau khi set state (sẽ hiển thị trong render tiếp theo)
-        setTimeout(() => {
-          console.log('🔍 Current reminders state after setState:', treatmentReminders);
-          console.log('🔍 Current appointments state after setState:', upcomingAppointments);
-        }, 100);
         
       } catch (error) {
         console.error('Error fetching notifications:', error);
         // Nếu có lỗi, để trống
-        setReminders([]);
         setAppointments([]);
       }
     }
@@ -482,19 +658,66 @@ export default function Notifications() {
     });
   }, [notifications, handleMarkAsRead, showToastNotification]);
 
+  // Function để phân tích message và trả về icon + title phù hợp
+  const getNotificationTypeFromMessage = (message) => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
+        lowerMessage.includes('nhắc uống thuốc') || 
+        lowerMessage.includes('thuốc') ||
+        lowerMessage.includes('medication') ||
+        lowerMessage.includes('medicine')) {
+      return {
+        icon: <FaPills className="text-green-600" />,
+        title: '💊 Nhắc nhở uống thuốc',
+        bgColor: 'bg-green-100'
+      };
+    }
+    
+    if (lowerMessage.includes('lịch hẹn') || 
+        lowerMessage.includes('cuộc hẹn') || 
+        lowerMessage.includes('appointment') ||
+        lowerMessage.includes('khám') ||
+        lowerMessage.includes('tái khám')) {
+      return {
+        icon: <FaCalendarAlt className="text-blue-600" />,
+        title: '📅 Thông báo lịch hẹn',
+        bgColor: 'bg-blue-100'
+      };
+    }
+    
+    if (lowerMessage.includes('điều trị') || 
+        lowerMessage.includes('treatment') ||
+        lowerMessage.includes('protocol') ||
+        lowerMessage.includes('arv')) {
+      return {
+        icon: <FaPills className="text-purple-600" />,
+        title: '🩺 Thông báo điều trị',
+        bgColor: 'bg-purple-100'
+      };
+    }
+    
+    if (lowerMessage.includes('xét nghiệm') || 
+        lowerMessage.includes('test') ||
+        lowerMessage.includes('lab') ||
+        lowerMessage.includes('kết quả')) {
+      return {
+        icon: <FaCalendarAlt className="text-orange-600" />,
+        title: '🔬 Thông báo xét nghiệm',
+        bgColor: 'bg-orange-100'
+      };
+    }
+    
+    // Mặc định
+    return {
+      icon: <FaBell className="text-green-600" />,
+      title: '🔔 Thông báo chung',
+      bgColor: 'bg-green-100'
+    };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      {/* Debug log ở đầu render */}
-      {console.log('🎯 RENDER DEBUG:', {
-        remindersLength: reminders.length,
-        appointmentsLength: appointments.length,
-        remindersData: reminders,
-        appointmentsData: appointments,
-        loading: loading,
-        currentUserExists: !!authService.getCurrentUser(),
-        currentUserId: authService.getCurrentUser()?.userId
-      })}
-      
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -531,17 +754,28 @@ export default function Notifications() {
               
               {/* Connection status indicator */}
               <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                isConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                signalRConnected ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
               }`}>
-                {isConnected ? <FaWifi /> : <FaExclamationTriangle />}
-                <span>{isConnected ? 'Kết nối' : 'Mất kết nối'}</span>
+                {signalRConnected ? <FaWifi /> : <FaExclamationTriangle />}
+                <span>{signalRConnected ? 'Real-time' : 'Định kỳ'}</span>
               </div>
             </div>
           </div>
           <p className="text-gray-600 mt-2">
-            Xem các nhắc nhở uống thuốc trong 7 ngày tới và lịch hẹn sắp tới
-            {isConnected && <span className="text-green-600"> • Cập nhật trực tiếp</span>}
+            Xem thông báo từ staff và lịch hẹn sắp tới
+            {signalRConnected && <span className="text-green-600"> • Kết nối real-time</span>}
+            {!signalRConnected && <span className="text-orange-600"> • Chỉ cập nhật định kỳ</span>}
           </p>
+          
+          {/* Hiển thị thời gian cập nhật cuối */}
+          <div className="mt-3 text-sm text-gray-500">
+            Cập nhật lần cuối: {lastUpdateTime.toLocaleString('vi-VN')}
+            {signalRConnected && (
+              <span className="ml-2 text-green-600">
+                • Đang lắng nghe thông báo mới
+              </span>
+            )}
+          </div>
           
           {/* Success message when no unread notifications */}
           {unreadCount === 0 && notifications.length > 0 && (
@@ -552,98 +786,6 @@ export default function Notifications() {
               </div>
             </div>
           )}
-          
-          {/* Debug info - chỉ hiển thị khi đang development */}
-          {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-            <div className="mt-4 p-3 bg-gray-100 rounded-lg text-sm">
-              <p><strong>Debug Info:</strong></p>
-              <p>SignalR Connected: {isConnected ? '✅' : '❌'}</p>
-              <p>Real-time Notifications: {notifications.length}</p>
-              <p>Unread Count: {unreadCount}</p>
-              <p>Read Notifications: {notifications.filter(n => n.isRead).length}</p>
-              <p>Unread Notifications: {notifications.filter(n => !n.isRead).length}</p>
-              <p>Backend Hub: /reminderHub</p>
-              
-              {/* Test buttons */}
-              <div className="mt-3 space-x-2">
-                <button 
-                  onClick={() => addTestNotification('medication')}
-                  className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                >
-                  Test Medication
-                </button>
-                <button 
-                  onClick={() => addTestNotification('appointment')}
-                  className="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                >
-                  Test Appointment
-                </button>
-                <button 
-                  onClick={() => addTestNotification('treatment')}
-                  className="px-3 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"
-                >
-                  Test Treatment
-                </button>
-              </div>
-              
-              {/* Mark all as read button */}
-              <div className="mt-2">
-                <button 
-                  onClick={() => {
-                    notifications.forEach(notif => {
-                      if (!notif.isRead) {
-                        handleMarkAsRead(notif.id);
-                      }
-                    });
-                  }}
-                  className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
-                >
-                  Mark All as Read
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Date Filter Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <FaCalendarAlt className="text-[#3B9AB8] text-lg" />
-              <h3 className="text-lg font-semibold text-gray-800">Lọc nhắc nhở theo ngày</h3>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="dateFilter" className="text-sm font-medium text-gray-600">
-                  Chọn ngày:
-                </label>
-                <input
-                  id="dateFilter"
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  min={new Date().toISOString().split('T')[0]} // Không cho chọn ngày quá khứ
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B9AB8] focus:border-transparent text-sm"
-                />
-              </div>
-              
-              <button
-                onClick={handleResetToWeekView}
-                className="px-4 py-2 bg-[#3B9AB8] text-white rounded-lg hover:bg-[#2d7a94] transition-colors duration-200 text-sm font-medium"
-              >
-                Xem 7 ngày tới
-              </button>
-            </div>
-          </div>
-          
-          <div className="mt-3 text-sm text-gray-600">
-            {selectedDate ? (
-              <span>Hiển thị nhắc nhở cho ngày: <strong>{new Date(selectedDate).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></span>
-            ) : (
-              <span>Hiển thị nhắc nhở trong <strong>7 ngày tới</strong></span>
-            )}
-          </div>
         </div>
 
         {loading ? (
@@ -652,163 +794,112 @@ export default function Notifications() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Nhắc uống thuốc */}
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaPills className="text-[#3B9AB8] text-xl" />
-                    <h2 className="text-xl font-semibold text-gray-800">Nhắc uống thuốc</h2>
-                  </div>
-                  {reminders.length > 0 && (
-                    <span className="bg-[#3B9AB8] text-white text-sm px-3 py-1 rounded-full">
-                      {reminders.length} nhắc nhở
-                    </span>
-                  )}
+          {/* Thông báo hệ thống từ Backend */}
+          <div className="bg-white rounded-lg shadow-md">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FaBell className="text-green-600 text-xl" />
+                  <h2 className="text-xl font-semibold text-gray-800">Thông báo từ staff</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full">
+                    {backendNotifications.filter(n => !n.isSeen).length} chưa xem
+                  </span>
+                  <button
+                    onClick={loadBackendNotifications}
+                    className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm"
+                    title="Kiểm tra thông báo mới"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Làm mới
+                  </button>
                 </div>
               </div>
-              <div className="p-6">
-                {reminders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FaPills className="text-gray-300 text-4xl mx-auto mb-4" />
-                    <p className="text-gray-500 mb-2">
-                      {selectedDate 
-                        ? `Không có nhắc nhở uống thuốc nào cho ngày ${new Date(selectedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
-                        : 'Không có nhắc nhở uống thuốc nào trong 7 ngày tới'
-                      }
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {selectedDate 
-                        ? 'Hãy chọn ngày khác hoặc xem 7 ngày tới để tìm nhắc nhở'
-                        : 'Hãy kiểm tra lại lịch điều trị của bạn'
-                      }
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {reminders.map((reminder, index) => {
-                      const urgency = getUrgencyInfo(reminder.reminderTime || reminder.dateTime);
-                      return (
-                      <div key={reminder.id || index} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                        urgency.level === 'urgent' ? 'border-red-200 bg-red-50' : 
-                        urgency.level === 'important' ? 'border-orange-200 bg-orange-50' : 
-                        'border-gray-200'
-                      } ${
-                        reminder.isRealTime && !reminder.isRead ? 'ring-2 ring-blue-300' : ''
-                      } ${
-                        reminder.isRead || readReminders.has(reminder.id) ? 'opacity-60 bg-gray-50' : 'bg-white'
+            </div>
+            <div className="p-6">
+              {backendNotifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <FaBell className="text-gray-300 text-4xl mx-auto mb-4" />
+                  <p className="text-gray-500 mb-2">Chưa có thông báo nào từ staff</p>
+                  <p className="text-sm text-gray-400">
+                    Thông báo từ staff sẽ xuất hiện ở đây khi có nhắc nhở điều trị hoặc thông báo quan trọng
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {backendNotifications.map((notification) => {
+                    const notificationType = getNotificationTypeFromMessage(notification.message);
+                    
+                    return (
+                    <div 
+                      key={notification.notificationId} 
+                      className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                        !notification.isSeen ? 'border-green-200 bg-green-50 ring-2 ring-green-300 shadow-lg' : 'border-gray-200 bg-gray-50 opacity-70'
                       }`}
                       onClick={() => {
-                        // Đánh dấu đã đọc cho tất cả loại reminders
-                        if (reminder.isRealTime && !reminder.isRead) {
-                          handleMarkAsRead(reminder.id);
-                        } else if (!readReminders.has(reminder.id)) {
-                          handleMarkReminderAsRead(reminder.id);
+                        if (!notification.isSeen) {
+                          handleMarkBackendNotificationAsSeen(notification.notificationId);
                         }
                       }}
-                      title={reminder.isRead || readReminders.has(reminder.id) ? 'Đã đọc' : 'Click để đánh dấu đã đọc'}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            urgency.level === 'urgent' ? 'bg-red-100' :
-                            urgency.level === 'important' ? 'bg-orange-100' :
-                            'bg-[#3B9AB8]/20'
-                          }`}>
-                            <FaPills className={`text-lg ${
-                              urgency.level === 'urgent' ? 'text-red-600' :
-                              urgency.level === 'important' ? 'text-orange-600' :
-                              'text-[#3B9AB8]'
-                            }`} />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
-                                {reminder.displayTitle || reminder.medicineName || 'Nhắc uống thuốc'}
-                                {reminder.isRealTime && (
-                                  <span className={`text-xs px-2 py-1 rounded ${
-                                    reminder.isRead ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'
-                                  }`}>
-                                    {reminder.isRead ? 'Đã đọc' : 'Mới'}
-                                  </span>
-                                )}
-                                {(!reminder.isRealTime && readReminders.has(reminder.id)) && (
-                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                                    Đã đọc
-                                  </span>
-                                )}
-                                {(!reminder.isRealTime && reminder.isRead) && (
-                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                                    Đã đọc
-                                  </span>
-                                )}
-                              </h3>
-                              <div className="flex gap-2 ml-2">
-                                <span className={`${urgency.color} text-white text-xs px-2 py-1 rounded-full flex-shrink-0`}>
-                                  {urgency.text}
+                      title={notification.isSeen ? 'Đã xem' : 'Click để đánh dấu đã xem'}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          !notification.isSeen ? notificationType.bgColor : 'bg-gray-100'
+                        }`}>
+                          {!notification.isSeen ? notificationType.icon : 
+                           <FaBell className="text-gray-500" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                              {notificationType.title}
+                              {!notification.isSeen && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded animate-pulse">
+                                  Mới
                                 </span>
-                                {reminder.stageInfo && (
-                                  <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full flex-shrink-0">
-                                    {reminder.stageInfo}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                              <FaClock className={urgency.level === 'urgent' ? 'text-red-500' : urgency.level === 'important' ? 'text-orange-500' : 'text-[#3B9AB8]'} />
-                              <span className="font-medium">{formatDate(reminder.reminderTime || reminder.dateTime)}</span>
-                            </div>
-                            
-                            {reminder.displayDescription && (
-                              <p className={`text-sm text-gray-700 mb-2 p-2 rounded border-l-4 ${
-                                urgency.level === 'urgent' ? 'bg-red-50 border-red-500' :
-                                urgency.level === 'important' ? 'bg-orange-50 border-orange-500' :
-                                'bg-blue-50 border-[#3B9AB8]'
-                              }`}>
-                                {reminder.displayDescription}
-                              </p>
-                            )}
-                            
-                            {/* Hiển thị thông tin về số lần uống trong ngày */}
-                            {reminder.dailyCount && reminder.dailyCount > 1 && (
-                              <div className="mb-2">
-                                <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
-                                  📋 Có {reminder.dailyCount} lần uống thuốc trong ngày này
-                                </p>
-                              </div>
-                            )}
-                            
-                            <div className="flex flex-col gap-1">
-                              {reminder.medicine && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="font-medium text-gray-700">💊 Thuốc:</span> {reminder.medicine}
-                                </p>
                               )}
-                              {reminder.dosage && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="font-medium text-gray-700">� Liều lượng:</span> {reminder.dosage}
-                                </p>
+                              {notification.isSeen && (
+                                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                                  Đã xem
+                                </span>
                               )}
-                              {reminder.note && reminder.note !== reminder.displayDescription && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="font-medium text-gray-700">📝 Ghi chú:</span> {reminder.note}
-                                </p>
-                              )}
-                              {reminder.dailyCount && reminder.dailyCount > 1 && (
-                                <p className="text-sm text-gray-500">
-                                  <span className="font-medium text-gray-700">⏰ Lịch uống:</span> Xem chi tiết {reminder.dailyCount} lần trong ngày
-                                </p>
-                              )}
-                            </div>
+                            </h3>
                           </div>
+                          
+                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <FaClock />
+                            <span>{new Date(notification.createdAt).toLocaleString('vi-VN')}</span>
+                            {/* Hiển thị thời gian tương đối */}
+                            <span className="text-xs text-gray-500">
+                              ({formatDate(notification.createdAt)})
+                            </span>
+                          </div>
+                          
+                          <p className={`text-sm text-gray-700 p-2 rounded border-l-4 ${
+                            !notification.isSeen ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-gray-400'
+                          }`}>
+                            {notification.message}
+                          </p>
+                          
+                          {notification.seenAt && (
+                            <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                              <FaCheck className="text-green-500" />
+                              Đã xem lúc: {new Date(notification.seenAt).toLocaleString('vi-VN')}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                    </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+          </div>
 
             {/* Lịch hẹn sắp tới */}
             <div className="bg-white rounded-lg shadow-md">
@@ -835,21 +926,30 @@ export default function Notifications() {
                   <div className="space-y-4">
                     {appointments.map((appointment, index) => {
                       const appointmentId = appointment.appointmentId || appointment.id || `appointment-${index}`;
-                      const isRead = appointment.isRead || readAppointments.has(appointmentId);
+                      // Tìm backend notification tương ứng
+                      const relatedBackendNotif = backendNotifications.find(bn => 
+                        bn.appointmentId === appointmentId
+                      );
+                      const isRead = appointment.isRead || (relatedBackendNotif && relatedBackendNotif.isSeen);
                       return (
                       <div 
                         key={appointmentId} 
                         className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                           appointment.isRealTime && !appointment.isRead ? 'ring-2 ring-green-300 border-green-200' : 'border-gray-200'
                         } ${
+                          relatedBackendNotif && !relatedBackendNotif.isSeen ? 'ring-2 ring-blue-300' : ''
+                        } ${
                           isRead ? 'opacity-60 bg-gray-50' : 'bg-white'
                         }`}
                         onClick={() => {
-                          // Đánh dấu đã đọc cho appointments
+                          // Đánh dấu đã đọc cho real-time appointments
                           if (appointment.isRealTime && !appointment.isRead) {
                             handleMarkAsRead(appointment.appointmentId || appointment.id);
-                          } else if (!readAppointments.has(appointmentId)) {
-                            handleMarkAppointmentAsRead(appointmentId);
+                          }
+                          
+                          // Đánh dấu backend notification đã xem nếu có
+                          if (relatedBackendNotif && !relatedBackendNotif.isSeen) {
+                            handleMarkBackendNotificationAsSeen(relatedBackendNotif.notificationId);
                           }
                         }}
                         title={isRead ? 'Đã xem' : 'Click để đánh dấu đã xem'}
@@ -869,9 +969,18 @@ export default function Notifications() {
                                     {appointment.isRead ? 'Đã xem' : 'Mới'}
                                   </span>
                                 )}
-                                {(!appointment.isRealTime && readAppointments.has(appointmentId)) && (
-                                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                                    Đã xem
+                                {relatedBackendNotif && (
+                                  <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
+                                    relatedBackendNotif.isSeen ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {relatedBackendNotif.isSeen ? (
+                                      <>
+                                        <FaCheck className="text-xs" />
+                                        Đã xem
+                                      </>
+                                    ) : (
+                                      'Từ hệ thống'
+                                    )}
                                   </span>
                                 )}
                               </h3>

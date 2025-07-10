@@ -5,6 +5,7 @@ import StaffHeader from '../components/staff/StaffHeader';
 import StaffAppointmentList from '../components/staff/StaffAppointmentList';
 import StaffDoctorSchedule from '../components/staff/StaffDoctorSchedule';
 import StaffProfile from '../components/staff/StaffProfile';
+import StaffNotificationManager from '../components/staff/StaffNotificationManager';
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -28,6 +29,8 @@ const StaffDashboard = () => {
         return 'Xem lịch hẹn';
       case 'doctor-schedule':
         return 'Lịch làm việc Bác sĩ';
+      case 'notifications':
+        return 'Quản lý thông báo';
       case 'profile':
         return 'Hồ sơ';
       default:
@@ -55,6 +58,7 @@ const StaffDashboard = () => {
               {activeTab === 'dashboard' && 'Tổng quan về hoạt động của nhân viên'}
               {activeTab === 'appointments' && 'Xác nhận, hủy, hoặc sắp xếp lại các lịch hẹn của bệnh nhân'}
               {activeTab === 'doctor-schedule' && 'Kiểm tra lịch trống của các bác sĩ'}
+              {activeTab === 'notifications' && 'Tạo và quản lý thông báo cho bệnh nhân'}
               {activeTab === 'profile' && 'Thông tin cá nhân của nhân viên'}
             </Text>
           </div>
@@ -62,6 +66,7 @@ const StaffDashboard = () => {
             {activeTab === 'dashboard' && <div>Chào mừng đến với trang nhân viên!</div>}
             {activeTab === 'appointments' && <StaffAppointmentList />}
             {activeTab === 'doctor-schedule' && <StaffDoctorSchedule />}
+            {activeTab === 'notifications' && <StaffNotificationManager />}
             {activeTab === 'profile' && <StaffProfile staff={staff} />}
           </div>
         </Content>

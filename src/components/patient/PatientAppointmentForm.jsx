@@ -71,10 +71,24 @@ const PatientAppointmentForm = ({ patientId }) => {
 
     // Kiểm tra các cuộc hẹn đã có
     for (const appointment of existingAppointments) {
-      // Chỉ kiểm tra các cuộc hẹn đã thanh toán và đang hoạt động
-      // Status: 0 = Pending, 1 = Confirmed/Paid, 2 = Cancelled, 3 = Completed, 4 = Rescheduled
-      if (appointment.status === 2) continue; // Skip cancelled appointments
-      if (appointment.status === 0) continue; // Skip pending/unpaid appointments
+      // Check for cancelled appointments - could be string or number
+      const isCancelled = appointment.status === 2 || 
+                         appointment.Status === 2 || 
+                         appointment.status === 'Cancelled' || 
+                         appointment.Status === 'Cancelled';
+      
+      if (isCancelled) {
+        continue;
+      }
+      
+      // Check payment status - try different possible property names
+      const paymentStatus = appointment.paymentStatus || 
+                           appointment.PaymentStatus || 
+                           appointment.paymentTransactionStatus;
+      
+      if (paymentStatus !== 1) {
+        continue;
+      }
       
       const existingDateTime = new Date(appointment.appointmentStartDate);
       
@@ -182,11 +196,25 @@ const PatientAppointmentForm = ({ patientId }) => {
     const fetchExistingAppointments = async () => {
       setLoadingAppointments(true);
       try {
-        // Use get-paid-appointments endpoint and filter by patientId
+        // Use get-list-appointments endpoint and filter by patientId
         const allAppointments = await appointmentService.getAllAppointments();
         
-        // Filter appointments for this patient
-        const patientAppointments = allAppointments.filter(app => app.patientId === patientId);
+        // Filter appointments for this specific patient
+        // Try different possible property names for patientId
+        const patientAppointments = allAppointments.filter(app => {
+          const possiblePatientIds = [
+            app.patientId,
+            app.PatientId,
+            app.patient?.id,
+            app.Patient?.id,
+            app.userId,
+            app.UserId
+          ];
+          
+          const matches = possiblePatientIds.some(id => id === patientId);
+          
+          return matches;
+        });
         
         setExistingAppointments(patientAppointments || []);
       } catch (error) {
@@ -207,11 +235,23 @@ const PatientAppointmentForm = ({ patientId }) => {
     
     setLoadingAppointments(true);
     try {
-      // Use get-paid-appointments endpoint and filter by patientId
+      // Use get-list-appointments endpoint and filter by patientId
       const allAppointments = await appointmentService.getAllAppointments();
       
-      // Filter appointments for this patient
-      const patientAppointments = allAppointments.filter(app => app.patientId === patientId);
+      // Filter appointments for this specific patient
+      // Try different possible property names for patientId
+      const patientAppointments = allAppointments.filter(app => {
+        const possiblePatientIds = [
+          app.patientId,
+          app.PatientId,
+          app.patient?.id,
+          app.Patient?.id,
+          app.userId,
+          app.UserId
+        ];
+        
+        return possiblePatientIds.some(id => id === patientId);
+      });
       
       setExistingAppointments(patientAppointments || []);
     } catch (error) {
@@ -326,19 +366,11 @@ const PatientAppointmentForm = ({ patientId }) => {
       return;
     }
     
-    console.log('Selected date and time:', formData.appointmentDate, formData.appointmentTime);
-    console.log('Appointment DateTime (local):', appointmentDateTime);
-    console.log('Meeting Format:', formData.meetingFormat); // Debug meeting format
-    console.log('Appointment Type:', formData.appointmentType); // Debug appointment type
-    
     // Tính toán appointmentEndDate - mỗi cuộc hẹn kéo dài 1 tiếng 30 phút
     const endDateTime = new Date(appointmentDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + 90); // Thêm 90 phút (1 tiếng 30)
     
     const appointmentEndDate = `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')}T${String(endDateTime.getHours()).padStart(2, '0')}:${String(endDateTime.getMinutes()).padStart(2, '0')}:00`;
-    
-    console.log('Appointment Start DateTime:', `${formData.appointmentDate}T${formData.appointmentTime}:00`);
-    console.log('Appointment End DateTime:', appointmentEndDate);
     
     // Determine appointment title based on type
     const getAppointmentTitle = (type) => {
@@ -365,9 +397,6 @@ const PatientAppointmentForm = ({ patientId }) => {
     };
     
     console.log('Request payload:', requestPayload);
-    console.log('Backend AppointmentType (0=Online, 1=Offline):', requestPayload.appointmentType);
-    console.log('Frontend Service Type (0=Test, 1=Treatment, 2=Consultation):', parseInt(formData.appointmentType));
-    console.log('Frontend Meeting Format (0=Online, 1=Offline):', parseInt(formData.meetingFormat));
     try {
       const res = await appointmentService.createAppointmentWithMomo(requestPayload);
       // Lấy link từ cả PaymentRedirectUrl (chữ hoa) và paymentRedirectUrl (chữ thường)
@@ -383,12 +412,6 @@ const PatientAppointmentForm = ({ patientId }) => {
       setLoading(false);
     }
   };
-
-  // Debug meetingFormat changes
-  useEffect(() => {
-    console.log('📊 MeetingFormat changed to:', formData.meetingFormat);
-    console.log('📊 Current formData:', formData);
-  }, [formData.meetingFormat]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -475,9 +498,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log('💊 User clicked Treatment button');
-                      console.log('Previous appointmentType:', formData.appointmentType);
-                      console.log('Previous meetingFormat:', formData.meetingFormat);
                       setFormData(prev => ({ 
                         ...prev, 
                         appointmentType: 1,
@@ -485,7 +505,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                         // Only set meetingFormat to default if user is switching from testing (0)
                         meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
                       }));
-                      console.log('Set appointmentType to 1 (Treatment)');
                     }}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.appointmentType === 1
@@ -500,9 +519,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log('💬 User clicked Consultation button');
-                      console.log('Previous appointmentType:', formData.appointmentType);
-                      console.log('Previous meetingFormat:', formData.meetingFormat);
                       setFormData(prev => ({ 
                         ...prev, 
                         appointmentType: 2,
@@ -510,7 +526,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                         // Only set meetingFormat to default if user is switching from testing (0)
                         meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
                       }));
-                      console.log('Set appointmentType to 2 (Consultation)');
                     }}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.appointmentType === 2
@@ -549,10 +564,7 @@ const PatientAppointmentForm = ({ patientId }) => {
                       <button
                         type="button"
                         onClick={() => {
-                          console.log('🖥️ User clicked Online button');
-                          console.log('Previous meetingFormat:', formData.meetingFormat);
                           setFormData(prev => ({ ...prev, meetingFormat: 0 }));
-                          console.log('Setting meeting format to Online (0)');
                         }}
                         className={`p-4 rounded-lg border-2 transition-all ${
                           formData.meetingFormat === 0
@@ -567,10 +579,7 @@ const PatientAppointmentForm = ({ patientId }) => {
                       <button
                         type="button"
                         onClick={() => {
-                          console.log('🏥 User clicked Offline button');
-                          console.log('Previous meetingFormat:', formData.meetingFormat);
                           setFormData(prev => ({ ...prev, meetingFormat: 1 }));
-                          console.log('Setting meeting format to Offline (1)');
                         }}
                         className={`p-4 rounded-lg border-2 transition-all ${
                           formData.meetingFormat === 1

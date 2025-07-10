@@ -23,17 +23,26 @@ export default function AppointmentBooking() {
 
           // Kiểm tra và lấy patientId
           if (userData) {
+            console.log("👤 Checking userData for patientId:", userData);
+            
             // Nếu userData có patientId trực tiếp
             if (userData.patientId) {
+              console.log("✅ Found patientId directly:", userData.patientId);
               setPatientId(userData.patientId);
             }
             // Nếu userData có patient object
             else if (userData.patient && userData.patient.id) {
+              console.log("✅ Found patientId in patient object:", userData.patient.id);
               setPatientId(userData.patient.id);
             }
             // Nếu userData có id và role là Patient
             else if (userData.id && userData.role === "Patient") {
+              console.log("✅ Using userData.id as patientId:", userData.id);
               setPatientId(userData.id);
+            }
+            else {
+              console.log("❌ Could not find patientId in userData");
+              console.log("Available keys:", Object.keys(userData));
             }
           }
         } catch (error) {

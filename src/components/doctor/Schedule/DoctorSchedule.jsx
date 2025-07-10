@@ -77,16 +77,37 @@ const DoctorSchedule = () => {
       
       // Lọc chỉ lấy các appointment đã thanh toán (status = 1, 3, 4)
       // Loại bỏ những appointment chờ thanh toán (status = 0)
-      filteredAppointments = filteredAppointments.filter(apt => {
-        const status = apt.status || apt.Status;
-        return status === 1 || status === 3 || status === 4;
-      });
+      // TẠM THỜI BỎ FILTER STATUS ĐỂ HIỂN THỊ TẤT CẢ APPOINTMENTS
+      console.log('All appointments before status filter:', allAppointmentsResponse?.map(apt => ({
+        id: apt.id,
+        status: apt.status || apt.Status,
+        title: apt.appointmentTitle || apt.AppointmentTitle,
+        doctorId: apt.doctorId
+      })));
+      
+      // filteredAppointments = filteredAppointments.filter(apt => {
+      //   const status = apt.status || apt.Status;
+      //   const passesStatusFilter = status === 1 || status === 3 || status === 4;
+      //   console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}`);
+      //   return passesStatusFilter;
+      // });
+      
+      console.log('Appointments after status filter (skipped):', filteredAppointments.length);
       
       // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
       if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
         filteredAppointments = filteredAppointments.filter(apt => {
           const title = (apt.appointmentTitle || apt.AppointmentTitle || '').toLowerCase();
           const notes = (apt.notes || apt.Notes || '').toLowerCase();
+          
+          // Debug log để kiểm tra appointment data
+          console.log('Checking appointment:', {
+            id: apt.id,
+            title: apt.appointmentTitle || apt.AppointmentTitle,
+            notes: apt.notes || apt.Notes,
+            doctorId: apt.doctorId,
+            currentDoctorId: doctorId
+          });
           
           // Lọc theo bác sĩ xét nghiệm
           if (doctorType.isTestDoctor) {
@@ -99,7 +120,7 @@ const DoctorSchedule = () => {
                    apt.doctorId === doctorId;
           }
           
-          // Lọc theo bác sĩ điều trị
+          // Lọc theo bác sĩ điều trị - RELAXED FILTERING
           if (doctorType.isTreatmentDoctor) {
             return title.includes('điều trị') || 
                    title.includes('treatment') || 
@@ -109,7 +130,9 @@ const DoctorSchedule = () => {
                    notes.includes('treatment') || 
                    notes.includes('therapy') ||
                    notes.includes('chữa trị') ||
-                   apt.doctorId === doctorId;
+                   apt.doctorId === doctorId ||
+                   // Thêm logic: nếu không có title/notes cụ thể, cho phép tất cả appointments của bác sĩ này
+                   (apt.doctorId === doctorId && (!title || !notes));
           }
           
           // Lọc theo bác sĩ tư vấn
@@ -407,7 +430,14 @@ const DoctorSchedule = () => {
               // So khớp giờ trong khung 1h30
               const slotStart = day.clone().set({ hour: record.hour, minute: record.minute, second: 0, millisecond: 0 });
               const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
-              return aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
+              const isInSlot = aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
+              
+              // Debug log
+              if (aptMoment.format('HH:mm') === '14:00') {
+                console.log(`Appointment 14:00 check - Day: ${day.format('DD/MM')}, Slot: ${record.hour}:${record.minute}-${slotEnd.format('HH:mm')}, In slot: ${isInSlot}`);
+              }
+              
+              return isInSlot;
             });
           }
           if (schedules.length === 0 && !appointmentInfo) {
@@ -506,7 +536,7 @@ const DoctorSchedule = () => {
                 const appointmentMinute = appointmentDate.minute();
                 const appointmentSlotMinutes = appointmentHour * 60 + appointmentMinute;
                 const currentSlotMinutes = record.hour * 60 + record.minute;
-                const nextSlotMinutes = currentSlotMinutes + 30;
+                const nextSlotMinutes = currentSlotMinutes + 90; // Sửa từ 30 thành 90 phút (1h30)
                 
                 // Kiểm tra xem appointment có nằm trong slot hiện tại không
                 showAppointment = appointmentSlotMinutes >= currentSlotMinutes && appointmentSlotMinutes < nextSlotMinutes;
@@ -517,31 +547,32 @@ const DoctorSchedule = () => {
               }
             }
             
-            return (
-              <div 
-                style={{ 
-                  padding: '4px 6px',
-                  borderRadius: '4px',
-                  backgroundColor: schedule.isAvailable ? '#e6f7ff' : (showAppointment && isOnlineAppointment ? '#f6ffed' : '#fffbe6'),
-                  border: schedule.isAvailable ? '1px solid #91d5ff' : (showAppointment && isOnlineAppointment ? '1px solid #b7eb8f' : '1px solid #ffe58f'),
-                  fontSize: '11px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  minHeight: '30px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center'
-                }}
-                title={`Lịch ID: ${schedule.originalId || schedule.id}${showAppointment ? '\nCuộc hẹn: ' + appointmentInfo.title + ' - ' + getPatientDisplayName(appointmentInfo) + ' lúc ' + appointmentTime + (isOnlineAppointment ? ' (Trực tuyến)' : '') : ''}`}
-              >
-                <div style={{ 
-                  fontWeight: 'bold', 
-                  color: schedule.isAvailable ? '#1890ff' : (showAppointment && isOnlineAppointment ? '#389e0d' : '#d48806'),
-                  marginBottom: '1px'
-                }}>
-                  {schedule.isAvailable ? 'Sẵn sàng' : `Đã tiếp nhận lịch ${doctorTypeInfo.appointmentType}`}
-                </div>
-                {showAppointment && (
+            // CHỈ HIỂN THỊ NẾU CÓ APPOINTMENT, KHÔNG HIỂN THỊ CHỈ SCHEDULE TRỐNG
+            if (showAppointment && appointmentInfo) {
+              return (
+                <div 
+                  style={{ 
+                    padding: '4px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: isOnlineAppointment ? '#f6ffed' : '#fffbe6',
+                    border: isOnlineAppointment ? '1px solid #b7eb8f' : '1px solid #ffe58f',
+                    fontSize: '11px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    minHeight: '30px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}
+                  title={`Lịch ID: ${schedule.originalId || schedule.id}\nCuộc hẹn: ${appointmentInfo.title} - ${getPatientDisplayName(appointmentInfo)} lúc ${appointmentTime}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
+                >
+                  <div style={{ 
+                    fontWeight: 'bold', 
+                    color: isOnlineAppointment ? '#389e0d' : '#d48806',
+                    marginBottom: '1px'
+                  }}>
+                    {`Đã tiếp nhận lịch ${doctorTypeInfo.appointmentType}`}
+                  </div>
                   <div style={{ 
                     fontSize: '9px', 
                     color: '#52c41a',
@@ -549,46 +580,86 @@ const DoctorSchedule = () => {
                   }}>
                     {isOnlineAppointment ? '💻' : '📅'} {appointmentTime}
                   </div>
-                )}
-                {showAppointment && isOnlineAppointment && onlineLink && (
-                  <a 
-                    href={onlineLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ 
-                      color: '#1890ff', 
+                  {isOnlineAppointment && onlineLink && (
+                    <a 
+                      href={onlineLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        color: '#1890ff', 
+                        fontSize: '8px', 
+                        marginTop: 2,
+                        textDecoration: 'underline'
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      🔗 Tham gia
+                    </a>
+                  )}
+                  {isOnlineAppointment && !onlineLink && (
+                    <div style={{ 
                       fontSize: '8px', 
-                      marginTop: 2,
-                      textDecoration: 'underline'
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    🔗 Tham gia
-                  </a>
-                )}
-                {showAppointment && isOnlineAppointment && !onlineLink && (
+                      color: '#ff4d4f',
+                      marginTop: 2
+                    }}>
+                      Chưa có link
+                    </div>
+                  )}
+                  {schedule.notes && (
+                    <div style={{ 
+                      fontSize: '8px', 
+                      color: '#666',
+                      marginTop: '1px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {schedule.notes}
+                    </div>
+                  )}
+                </div>
+              );
+            } else {
+              // Nếu chỉ có schedule nhưng không có appointment, hiển thị "Sẵn sàng"
+              return (
+                <div 
+                  style={{ 
+                    padding: '4px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: '#e6f7ff',
+                    border: '1px solid #91d5ff',
+                    fontSize: '11px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    minHeight: '30px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center'
+                  }}
+                  title={`Lịch ID: ${schedule.originalId || schedule.id} - Sẵn sàng tiếp nhận lịch hẹn`}
+                >
                   <div style={{ 
-                    fontSize: '8px', 
-                    color: '#ff4d4f',
-                    marginTop: 2
+                    fontWeight: 'bold', 
+                    color: '#1890ff',
+                    marginBottom: '1px'
                   }}>
-                    Chưa có link
+                    Sẵn sàng
                   </div>
-                )}
-                {schedule.notes && (
-                  <div style={{ 
-                    fontSize: '8px', 
-                    color: '#666',
-                    marginTop: '1px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {schedule.notes}
-                  </div>
-                )}
-              </div>
-            );
+                  {schedule.notes && (
+                    <div style={{ 
+                      fontSize: '8px', 
+                      color: '#666',
+                      marginTop: '1px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {schedule.notes}
+                    </div>
+                  )}
+                </div>
+              );
+            }
           }
 
           // Multiple schedules: show summary view
@@ -750,7 +821,7 @@ const DoctorSchedule = () => {
         {renderTimetableView()}
       </Spin>
 
-      <style jsx>{`
+      <style>{`
         .even-row {
           background-color: #fafafa;
         }
