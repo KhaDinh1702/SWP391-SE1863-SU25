@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, message, Card, Row, Col, Select, DatePicker, Button, Space, Modal, Descriptions, Tooltip, Input } from 'antd';
-import { EyeOutlined, ReloadOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { EyeOutlined, ReloadOutlined, CalendarOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../services/appointmentService';
 import { doctorService } from '../../services/doctorService';
 import { patientService } from '../../services/patientService';
+import MedicalRecordModal from './MedicalRecordModal';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -30,6 +31,10 @@ const StaffAppointmentList = () => {
   const [reschedulingAppointment, setReschedulingAppointment] = useState(null);
   const [newStartDate, setNewStartDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  
+  // States for medical record modal
+  const [medicalRecordModalVisible, setMedicalRecordModalVisible] = useState(false);
+  const [selectedPatientForMedical, setSelectedPatientForMedical] = useState(null);
 
   // Generate fixed time slots (8h, 10h, 12h, 14h, 16h)
   const generateTimeSlots = () => {
@@ -166,12 +171,18 @@ const StaffAppointmentList = () => {
     }
   };
 
-  // Reschedule functionality
   const handleReschedule = (appointment) => {
     setReschedulingAppointment(appointment);
     setNewStartDate(null);
     setSelectedTimeSlot(null);
     setRescheduleModalVisible(true);
+  };
+
+  const handleViewMedicalRecord = (appointment) => {
+    const patientId = appointment.patientId || appointment.PatientId;
+    const patientName = getPatientName(appointment);
+    setSelectedPatientForMedical({ id: patientId, name: patientName });
+    setMedicalRecordModalVisible(true);
   };
 
   const handleConfirmReschedule = async () => {

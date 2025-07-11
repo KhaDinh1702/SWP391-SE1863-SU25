@@ -6,6 +6,7 @@ import StaffAppointmentList from '../components/staff/StaffAppointmentList';
 import StaffDoctorSchedule from '../components/staff/StaffDoctorSchedule';
 import StaffProfile from '../components/staff/StaffProfile';
 import StaffNotificationManager from '../components/staff/StaffNotificationManager';
+import StaffMedicalRecordView from '../components/staff/StaffMedicalRecordView';
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -29,6 +30,8 @@ const StaffDashboard = () => {
         return 'Xem lịch hẹn';
       case 'doctor-schedule':
         return 'Lịch làm việc Bác sĩ';
+      case 'medical-records':
+        return 'Hồ sơ bệnh án';
       case 'notifications':
         return 'Quản lý thông báo';
       case 'profile':
@@ -58,6 +61,7 @@ const StaffDashboard = () => {
               {activeTab === 'dashboard' && 'Tổng quan về hoạt động của nhân viên'}
               {activeTab === 'appointments' && 'Xác nhận, hủy, hoặc sắp xếp lại các lịch hẹn của bệnh nhân'}
               {activeTab === 'doctor-schedule' && 'Kiểm tra lịch trống của các bác sĩ'}
+              {activeTab === 'medical-records' && 'Xem và quản lý hồ sơ bệnh án của bệnh nhân'}
               {activeTab === 'notifications' && 'Tạo và quản lý thông báo cho bệnh nhân'}
               {activeTab === 'profile' && 'Thông tin cá nhân của nhân viên'}
             </Text>
@@ -66,6 +70,7 @@ const StaffDashboard = () => {
             {activeTab === 'dashboard' && <div>Chào mừng đến với trang nhân viên!</div>}
             {activeTab === 'appointments' && <StaffAppointmentList />}
             {activeTab === 'doctor-schedule' && <StaffDoctorSchedule />}
+            {activeTab === 'medical-records' && <StaffMedicalRecordView />}
             {activeTab === 'notifications' && <StaffNotificationManager />}
             {activeTab === 'profile' && <StaffProfile staff={staff} />}
           </div>

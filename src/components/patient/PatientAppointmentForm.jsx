@@ -69,9 +69,14 @@ const PatientAppointmentForm = ({ patientId }) => {
       };
     }
 
-    // Kiểm tra các cuộc hẹn đã có
-    for (const appointment of existingAppointments) {
-      // Check for cancelled appointments - could be string or number
+    // Nếu chưa chọn bác sĩ, chỉ check basic validation
+    if (!formData.doctorId) {
+      return { isValid: true };
+    }
+
+    // Check tất cả appointments của bác sĩ được chọn (không chỉ của bệnh nhân hiện tại)
+    for (const appointment of allDoctorAppointments) {
+      // Check for cancelled appointments
       const isCancelled = appointment.status === 2 || 
                          appointment.Status === 2 || 
                          appointment.status === 'Cancelled' || 
@@ -81,7 +86,7 @@ const PatientAppointmentForm = ({ patientId }) => {
         continue;
       }
       
-      // Check payment status - try different possible property names
+      // Check payment status - chỉ check những appointment đã thanh toán
       const paymentStatus = appointment.paymentStatus || 
                            appointment.PaymentStatus || 
                            appointment.paymentTransactionStatus;
@@ -90,7 +95,13 @@ const PatientAppointmentForm = ({ patientId }) => {
         continue;
       }
       
-      const existingDateTime = new Date(appointment.appointmentStartDate);
+      // Check if appointment is for the selected doctor
+      const appointmentDoctorId = appointment.doctorId || appointment.DoctorId;
+      if (appointmentDoctorId !== formData.doctorId) {
+        continue;
+      }
+      
+      const existingDateTime = new Date(appointment.appointmentStartDate || appointment.AppointmentStartDate);
       
       // Kiểm tra bằng timestamp để chắc chắn
       const selectedTimestamp = selectedDateTime.getTime();
@@ -101,11 +112,53 @@ const PatientAppointmentForm = ({ patientId }) => {
       if (timeDiffMinutes < 30) {
         return {
           isValid: false,
-          message: `Khung giờ ${selectedTime} ngày ${new Date(selectedDate).toLocaleDateString('vi-VN')} đã được đặt lịch. Vui lòng chọn khung giờ khác.`
+          message: `Khung giờ ${selectedTime} ngày ${new Date(selectedDate).toLocaleDateString('vi-VN')} đã có bệnh nhân khác đặt lịch với bác sĩ này. Vui lòng chọn khung giờ khác.`
         };
       }
       
-      // Kiểm tra khoảng cách 2 tiếng với các cuộc hẹn khác
+      // Kiểm tra khoảng cách 90 phút (1.5 tiếng) với các cuộc hẹn khác của cùng bác sĩ
+      const timeDifference = Math.abs(selectedDateTime - existingDateTime);
+      const minutesDifference = timeDifference / (1000 * 60);
+      
+      if (minutesDifference < 90 && minutesDifference > 0) {
+        const existingTimeStr = existingDateTime.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return {
+          isValid: false,
+          message: `Bác sĩ đã có lịch hẹn vào ${existingTimeStr}. Các lịch hẹn phải cách nhau ít nhất 1 tiếng 30 phút.`
+        };
+      }
+    }
+
+    // Kiểm tra với lịch hẹn của chính bệnh nhân hiện tại
+    for (const appointment of existingAppointments) {
+      // Check for cancelled appointments
+      const isCancelled = appointment.status === 2 || 
+                         appointment.Status === 2 || 
+                         appointment.status === 'Cancelled' || 
+                         appointment.Status === 'Cancelled';
+      
+      if (isCancelled) {
+        continue;
+      }
+      
+      // Check payment status
+      const paymentStatus = appointment.paymentStatus || 
+                           appointment.PaymentStatus || 
+                           appointment.paymentTransactionStatus;
+      
+      if (paymentStatus !== 1) {
+        continue;
+      }
+      
+      const existingDateTime = new Date(appointment.appointmentStartDate || appointment.AppointmentStartDate);
+      
+      // Kiểm tra khoảng cách 2 tiếng với các cuộc hẹn khác của cùng bệnh nhân
       const timeDifference = Math.abs(selectedDateTime - existingDateTime);
       const hoursDifference = timeDifference / (1000 * 60 * 60);
       
@@ -119,7 +172,7 @@ const PatientAppointmentForm = ({ patientId }) => {
         });
         return {
           isValid: false,
-          message: `Bạn đã có lịch hẹn vào ${existingTimeStr}. Các lịch hẹn phải cách nhau ít nhất 2 tiếng.`
+          message: `Bạn đã có lịch hẹn vào ${existingTimeStr}. Các lịch hẹn của bạn phải cách nhau ít nhất 2 tiếng.`
         };
       }
     }
@@ -181,6 +234,7 @@ const PatientAppointmentForm = ({ patientId }) => {
   const [success, setSuccess] = useState(false);
   const [payUrl, setPayUrl] = useState(null);
   const [existingAppointments, setExistingAppointments] = useState([]);
+  const [allDoctorAppointments, setAllDoctorAppointments] = useState([]); // Thêm state cho appointments của bác sĩ
   const [loadingAppointments, setLoadingAppointments] = useState(false);
   const navigate = useNavigate();
 
@@ -235,11 +289,10 @@ const PatientAppointmentForm = ({ patientId }) => {
     
     setLoadingAppointments(true);
     try {
-      // Use get-list-appointments endpoint and filter by patientId
+      // Fetch tất cả appointments
       const allAppointments = await appointmentService.getAllAppointments();
       
-      // Filter appointments for this specific patient
-      // Try different possible property names for patientId
+      // Filter appointments cho bệnh nhân hiện tại
       const patientAppointments = allAppointments.filter(app => {
         const possiblePatientIds = [
           app.patientId,
@@ -254,12 +307,46 @@ const PatientAppointmentForm = ({ patientId }) => {
       });
       
       setExistingAppointments(patientAppointments || []);
+      
+      // Nếu đã chọn bác sĩ, lấy appointments của bác sĩ đó
+      if (formData.doctorId) {
+        const doctorAppointments = allAppointments.filter(app => {
+          const appointmentDoctorId = app.doctorId || app.DoctorId;
+          return appointmentDoctorId === formData.doctorId;
+        });
+        
+        setAllDoctorAppointments(doctorAppointments || []);
+      } else {
+        setAllDoctorAppointments([]);
+      }
+      
     } catch (error) {
       console.error("Error refreshing appointments:", error);
-      // Set empty array if method fails
       setExistingAppointments([]);
+      setAllDoctorAppointments([]);
     } finally {
       setLoadingAppointments(false);
+    }
+  };
+
+  // Function to fetch doctor's appointments when doctor is selected
+  const fetchDoctorAppointments = async (doctorId) => {
+    if (!doctorId) {
+      setAllDoctorAppointments([]);
+      return;
+    }
+    
+    try {
+      const allAppointments = await appointmentService.getAllAppointments();
+      const doctorAppointments = allAppointments.filter(app => {
+        const appointmentDoctorId = app.doctorId || app.DoctorId;
+        return appointmentDoctorId === doctorId;
+      });
+      
+      setAllDoctorAppointments(doctorAppointments || []);
+    } catch (error) {
+      console.error("Error fetching doctor appointments:", error);
+      setAllDoctorAppointments([]);
     }
   };
 
@@ -300,6 +387,23 @@ const PatientAppointmentForm = ({ patientId }) => {
       
       // Refresh appointments data để có thông tin mới nhất
       refreshAppointments();
+      return;
+    }
+    
+    // Kiểm tra nếu đang chọn bác sĩ
+    if (name === 'doctorId') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        appointmentTime: "", // Reset time selection khi chọn bác sĩ mới
+      }));
+      
+      // Fetch appointments của bác sĩ được chọn
+      if (value) {
+        fetchDoctorAppointments(value);
+      } else {
+        setAllDoctorAppointments([]);
+      }
       return;
     }
     
@@ -479,12 +583,16 @@ const PatientAppointmentForm = ({ patientId }) => {
                 <div className="grid grid-cols-3 gap-4">
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      appointmentType: 0,
-                      doctorId: "", // Reset doctor selection when appointment type changes
-                      meetingFormat: 1 // Force offline for testing
-                    }))}
+                    onClick={() => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        appointmentType: 0,
+                        doctorId: "", // Reset doctor selection when appointment type changes
+                        appointmentTime: "", // Reset time selection
+                        meetingFormat: 1 // Force offline for testing
+                      }));
+                      setAllDoctorAppointments([]); // Reset doctor appointments
+                    }}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.appointmentType === 0
                         ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
@@ -502,9 +610,11 @@ const PatientAppointmentForm = ({ patientId }) => {
                         ...prev, 
                         appointmentType: 1,
                         doctorId: "", // Reset doctor selection when appointment type changes
+                        appointmentTime: "", // Reset time selection
                         // Only set meetingFormat to default if user is switching from testing (0)
                         meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
                       }));
+                      setAllDoctorAppointments([]); // Reset doctor appointments
                     }}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.appointmentType === 1
@@ -523,9 +633,11 @@ const PatientAppointmentForm = ({ patientId }) => {
                         ...prev, 
                         appointmentType: 2,
                         doctorId: "", // Reset doctor selection when appointment type changes
+                        appointmentTime: "", // Reset time selection
                         // Only set meetingFormat to default if user is switching from testing (0)
                         meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
                       }));
+                      setAllDoctorAppointments([]); // Reset doctor appointments
                     }}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       formData.appointmentType === 2

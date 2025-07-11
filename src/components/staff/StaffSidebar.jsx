@@ -6,6 +6,7 @@ import {
   ProfileOutlined,
   LogoutOutlined,
   BellOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,6 +43,14 @@ const StaffSidebar = ({ activeTab, setActiveTab }) => {
         onClick={() => setActiveTab('doctor-schedule')}
       >
         Lịch làm việc Bác sĩ
+      </Button>
+      <Button
+        type={activeTab === 'medical-records' ? 'primary' : 'text'}
+        icon={<FileTextOutlined />}
+        className="w-full text-left flex items-center h-7 px-4 border-0"
+        onClick={() => setActiveTab('medical-records')}
+      >
+        Hồ sơ bệnh án
       </Button>
       <Button
         type={activeTab === 'notifications' ? 'primary' : 'text'}

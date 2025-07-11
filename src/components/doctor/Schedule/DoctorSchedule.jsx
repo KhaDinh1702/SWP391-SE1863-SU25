@@ -77,7 +77,6 @@ const DoctorSchedule = () => {
       
       // Lọc chỉ lấy các appointment đã thanh toán (status = 1, 3, 4)
       // Loại bỏ những appointment chờ thanh toán (status = 0)
-      // TẠM THỜI BỎ FILTER STATUS ĐỂ HIỂN THỊ TẤT CẢ APPOINTMENTS
       console.log('All appointments before status filter:', allAppointmentsResponse?.map(apt => ({
         id: apt.id,
         status: apt.status || apt.Status,
@@ -85,14 +84,14 @@ const DoctorSchedule = () => {
         doctorId: apt.doctorId
       })));
       
-      // filteredAppointments = filteredAppointments.filter(apt => {
-      //   const status = apt.status || apt.Status;
-      //   const passesStatusFilter = status === 1 || status === 3 || status === 4;
-      //   console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}`);
-      //   return passesStatusFilter;
-      // });
+      filteredAppointments = filteredAppointments.filter(apt => {
+        const status = apt.status || apt.Status || apt.paymentStatus || apt.PaymentStatus;
+        const passesStatusFilter = status === 1 || status === 3 || status === 4;
+        console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}`);
+        return passesStatusFilter;
+      });
       
-      console.log('Appointments after status filter (skipped):', filteredAppointments.length);
+      console.log('Appointments after status filter:', filteredAppointments.length);
       
       // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
       if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
