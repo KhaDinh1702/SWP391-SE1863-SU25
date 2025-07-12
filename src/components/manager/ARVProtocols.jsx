@@ -5,7 +5,7 @@ import { arvProtocolService } from '../../services/arvProtocolService';
 import CreateARVProtocolForm from './CreateARVProtocolForm';
 import UpdateARVProtocolForm from './UpdateARVProtocolForm';
 
-const PROTOCOL_TYPE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+const PROTOCOL_TYPE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
 const ARVProtocols = () => {
   const [protocols, setProtocols] = useState([]);

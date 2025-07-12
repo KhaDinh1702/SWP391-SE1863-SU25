@@ -12,6 +12,8 @@ const PROTOCOL_TYPE_OPTIONS = [
   { value: 5, label: 'F - Tenofovir + Lamivudine + Lopinavir/Ritonavir (Phác đồ bậc 2)' },
   { value: 6, label: 'G - Darunavir + Ritonavir + Raltegravir (Phác đồ kháng thuốc)' },
   { value: 7, label: 'H - Emtricitabine + Tenofovir + Rilpivirine (Phác đồ mới)' },
+  { value: 8, label: 'I - Atazanavir + Ritonavir + Emtricitabine + Tenofovir (Phác đồ bậc 2 cải tiến)' },
+  { value: 9, label: 'J - Bictegravir + Tenofovir + Emtricitabine (Phác đồ thế hệ mới)' },
 ];
 
 const CreateARVProtocolForm = ({ onSuccess, form }) => {
