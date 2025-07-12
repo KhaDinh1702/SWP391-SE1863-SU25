@@ -34,7 +34,6 @@ import DoctorSidebar from '../components/doctor/DoctorSidebar';
 import DoctorSchedule from '../components/doctor/Schedule/DoctorSchedule';
 import PatientProfiles from '../components/doctor/Patient/PatientProfiles';
 import LabResults from '../components/doctor/Lab/LabResults';
-import MedicalHistory from '../components/doctor/History/MedicalHistory';
 import TreatmentProtocol from '../components/doctor/Treatment/TreatmentProtocol';
 import OnlineConsultation from '../components/doctor/Consultation/OnlineConsultation';
 import DoctorProfile from '../components/doctor/Profile/DoctorProfile';
@@ -191,7 +190,6 @@ const DoctorDashboard = () => {
       case 'schedule': return 'Lịch làm việc';
       case 'patients': return 'Hồ sơ Bệnh nhân';
       case 'lab': return 'Xét nghiệm';
-      case 'history': return 'Lịch sử khám';
       case 'treatment': return 'Quy trình điều trị';
       case 'consultation': return 'Tư vấn trực tuyến';
       case 'profile': return 'Hồ sơ cá nhân';
@@ -205,7 +203,6 @@ const DoctorDashboard = () => {
       case 'schedule': return 'Xem lịch làm việc của bản thân';
       case 'patients': return 'Xem thông tin chi tiết về bệnh nhân';
       case 'lab': return 'Xem kết quả xét nghiệm của bệnh nhân';
-      case 'history': return 'Xem lại lịch sử điều trị của bệnh nhân';
       case 'treatment': return 'Tạo quy trình khám bệnh cho bệnh nhân';
       case 'consultation': return 'Thực hiện tư vấn trực tuyến';
       case 'profile': return 'Thông tin cá nhân của bác sĩ';
@@ -567,7 +564,6 @@ const DoctorDashboard = () => {
             {activeTab === 'schedule' && <DoctorSchedule />}
             {activeTab === 'patients' && <PatientProfiles />}
             {activeTab === 'lab' && <LabResults />}
-            {activeTab === 'history' && <MedicalHistory />}
             {activeTab === 'treatment' && <TreatmentProtocol />}
             {activeTab === 'consultation' && <OnlineConsultation />}
             {activeTab === 'profile' && <DoctorProfile />}

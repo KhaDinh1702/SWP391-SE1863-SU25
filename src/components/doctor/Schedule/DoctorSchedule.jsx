@@ -768,13 +768,6 @@ const DoctorSchedule = () => {
       </Row>
       
       <div style={{ marginBottom: 16 }}>
-        <Alert 
-          message={doctorTypeInfo.title} 
-          description={doctorTypeInfo.description}
-          type="info" 
-          showIcon 
-          style={{ marginBottom: 16 }} 
-        />
         <Row gutter={16}>
           <Col>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

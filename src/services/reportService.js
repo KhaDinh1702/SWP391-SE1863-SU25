@@ -88,10 +88,7 @@ export const reportService = {
           acc[apt.status] = (acc[apt.status] || 0) + 1;
           return acc;
         }, {}),
-        byMonth: this.groupByMonth(appointments, 'appointmentDate'),
-        revenue: appointments
-          .filter(apt => apt.isPaid)
-          .reduce((sum, apt) => sum + (apt.price || 0), 0)
+        byMonth: this.groupByMonth(appointments, 'appointmentDate')
       };
 
       return statistics;
@@ -267,6 +264,112 @@ export const reportService = {
         byMonth: {}
       };
     }
+  },
+
+  // Lấy thống kê doanh thu chi tiết
+  async getRevenueStatistics() {
+    try {
+      // Lấy cả paid appointments và danh sách bác sĩ
+      const [paidResponse, doctorsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/Appointment/get-paid-appointments`, {
+          headers: getAuthHeaders()
+        }),
+        fetch(`${API_BASE_URL}/Doctor/get-list-doctor`, {
+          headers: getAuthHeaders()
+        })
+      ]);
+      
+      if (!paidResponse.ok) throw new Error('Failed to fetch paid appointments for revenue');
+      
+      const paidAppointments = await paidResponse.json();
+      const validPaidAppointments = Array.isArray(paidAppointments) ? paidAppointments : [];
+      
+      // Lấy danh sách bác sĩ để map tên
+      let doctors = [];
+      if (doctorsResponse.ok) {
+        doctors = await doctorsResponse.json();
+      }
+      
+      const doctorMap = doctors.reduce((acc, doctor) => {
+        acc[doctor.id] = doctor.fullName || `Bác sĩ ${doctor.id}`;
+        return acc;
+      }, {});
+      
+      // Tính doanh thu theo tháng
+      const revenueByMonth = validPaidAppointments.reduce((acc, apt) => {
+        try {
+          const date = new Date(apt.appointmentDate);
+          if (isNaN(date.getTime())) return acc;
+          
+          const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          const price = parseFloat(apt.price) || 0;
+          acc[monthYear] = (acc[monthYear] || 0) + price;
+          return acc;
+        } catch (error) {
+          return acc;
+        }
+      }, {});
+
+      // Tính doanh thu theo bác sĩ với tên thật
+      const revenueByDoctor = validPaidAppointments.reduce((acc, apt) => {
+        const doctorId = apt.doctorId;
+        const doctorName = doctorMap[doctorId] || `Bác sĩ ${doctorId}` || 'Không xác định';
+        const price = parseFloat(apt.price) || 0;
+        acc[doctorName] = (acc[doctorName] || 0) + price;
+        return acc;
+      }, {});
+
+      // Tính doanh thu theo ngày trong tuần
+      const revenueByDayOfWeek = validPaidAppointments.reduce((acc, apt) => {
+        try {
+          const date = new Date(apt.appointmentDate);
+          if (isNaN(date.getTime())) return acc;
+          
+          const dayNames = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+          const dayName = dayNames[date.getDay()];
+          const price = parseFloat(apt.price) || 0;
+          acc[dayName] = (acc[dayName] || 0) + price;
+          return acc;
+        } catch (error) {
+          return acc;
+        }
+      }, {});
+
+      // Tính tổng doanh thu
+      const totalRevenue = validPaidAppointments.reduce((sum, apt) => {
+        const price = parseFloat(apt.price) || 0;
+        return sum + price;
+      }, 0);
+
+      const statistics = {
+        totalRevenue,
+        totalPaidAppointments: validPaidAppointments.length,
+        averageRevenuePerAppointment: validPaidAppointments.length > 0 
+          ? totalRevenue / validPaidAppointments.length 
+          : 0,
+        revenueByMonth,
+        revenueByDoctor,
+        revenueByDayOfWeek,
+        monthlyGrowth: this.calculateMonthlyGrowth(revenueByMonth)
+      };
+
+      return statistics;
+    } catch (error) {
+      console.error('Error fetching revenue statistics:', error);
+      throw error;
+    }
+  },
+
+  // Tính tăng trưởng doanh thu theo tháng
+  calculateMonthlyGrowth(revenueByMonth) {
+    const sortedMonths = Object.keys(revenueByMonth).sort();
+    if (sortedMonths.length < 2) return 0;
+
+    const currentMonth = revenueByMonth[sortedMonths[sortedMonths.length - 1]];
+    const previousMonth = revenueByMonth[sortedMonths[sortedMonths.length - 2]];
+    
+    if (previousMonth === 0) return 100;
+    return ((currentMonth - previousMonth) / previousMonth * 100).toFixed(2);
   },
 
   // Helper methods

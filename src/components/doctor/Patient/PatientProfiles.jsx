@@ -309,6 +309,7 @@ const PatientProfiles = () => {
       title: 'Bệnh nhân',
       dataIndex: 'patientId',
       key: 'patientId',
+      width: 150,
       render: (patientId) => {
         const patient = patients.find(p => (p.id || p.Id) === patientId);
         return patient ? (patient.fullName || patient.FullName) : 'N/A';
@@ -318,6 +319,7 @@ const PatientProfiles = () => {
       title: 'Ngày khám',
       dataIndex: 'examinationDate',
       key: 'examinationDate',
+      width: 120,
       render: (date, record) => {
         const d = date || record.ExaminationDate;
         return d ? moment(d).format('DD/MM/YYYY') : '-';
@@ -327,13 +329,33 @@ const PatientProfiles = () => {
       title: 'Chẩn đoán',
       dataIndex: 'diagnosis',
       key: 'diagnosis',
+      width: 200,
+      ellipsis: true,
       render: (text, record) => text || record.Diagnosis || '-',
     },
     {
       title: 'Triệu chứng',
       dataIndex: 'symptoms',
       key: 'symptoms',
+      width: 200,
+      ellipsis: true,
       render: (text, record) => text || record.Symptoms || '-',
+    },
+    {
+      title: 'Đơn thuốc',
+      dataIndex: 'prescription',
+      key: 'prescription',
+      width: 200,
+      ellipsis: true,
+      render: (text, record) => text || record.Prescription || '-',
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'notes',
+      key: 'notes',
+      width: 200,
+      ellipsis: true,
+      render: (text, record) => text || record.Notes || '-',
     },
   ];
 
@@ -511,6 +533,8 @@ const PatientProfiles = () => {
             rowKey={record => record.id || record.Id || Math.random()}
             pagination={{ pageSize: 10 }}
             locale={{ emptyText: 'Không có hồ sơ bệnh án nào' }}
+            scroll={{ x: 1200 }}
+            size="middle"
           />
         </Spin>
       </div>

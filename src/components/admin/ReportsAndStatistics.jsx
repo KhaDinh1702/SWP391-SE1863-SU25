@@ -26,7 +26,8 @@ import {
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  Legend
 } from 'recharts';
 import {
   UserOutlined,
@@ -48,6 +49,15 @@ const { Option } = Select;
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+// Map user role numbers to names based on UserRole.cs enum
+const USER_ROLE_NAMES = {
+  0: 'Bệnh nhân',
+  1: 'Nhân viên', 
+  2: 'Bác sĩ',
+  3: 'Quản lý',
+  4: 'Admin'
+};
+
 const ReportsAndStatistics = () => {
   const [loading, setLoading] = useState(false);
   const [overallStats, setOverallStats] = useState({});
@@ -58,6 +68,7 @@ const ReportsAndStatistics = () => {
   const [labResultStats, setLabResultStats] = useState({});
   const [medicalRecordStats, setMedicalRecordStats] = useState({});
   const [blogStats, setBlogStats] = useState({});
+  const [revenueStats, setRevenueStats] = useState({});
   const [dateRange, setDateRange] = useState([]);
 
   useEffect(() => {
@@ -75,7 +86,8 @@ const ReportsAndStatistics = () => {
         patients,
         labResults,
         medicalRecords,
-        blogs
+        blogs,
+        revenue
       ] = await Promise.all([
         reportService.getOverallStatistics(),
         reportService.getUserStatistics(),
@@ -84,7 +96,8 @@ const ReportsAndStatistics = () => {
         reportService.getPatientStatistics(),
         reportService.getLabResultStatistics(),
         reportService.getMedicalRecordStatistics(),
-        reportService.getBlogStatistics()
+        reportService.getBlogStatistics(),
+        reportService.getRevenueStatistics()
       ]);
 
       setOverallStats(overall);
@@ -95,6 +108,7 @@ const ReportsAndStatistics = () => {
       setLabResultStats(labResults);
       setMedicalRecordStats(medicalRecords);
       setBlogStats(blogs);
+      setRevenueStats(revenue);
     } catch (error) {
       console.error('Error fetching statistics:', error);
       message.error('Không thể tải dữ liệu thống kê');
@@ -108,6 +122,7 @@ const ReportsAndStatistics = () => {
       <StatisticsOverview 
         overallStats={overallStats}
         appointmentStats={appointmentStats}
+        revenueStats={revenueStats}
       />
       
       <Row gutter={[16, 16]}>
@@ -161,13 +176,13 @@ const ReportsAndStatistics = () => {
               <PieChart>
                 <Pie
                   data={Object.entries(userStats.byRole || {}).map(([role, count]) => ({
-                    name: role,
+                    name: USER_ROLE_NAMES[role] || `Role ${role}`,
                     value: count
                   }))}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -176,7 +191,8 @@ const ReportsAndStatistics = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value, name) => [value, name]} />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </Card>
@@ -231,11 +247,12 @@ const ReportsAndStatistics = () => {
         <Col xs={24} sm={6}>
           <Card>
             <Statistic
-              title="Doanh thu"
-              value={appointmentStats.revenue || 0}
+              title="Tổng doanh thu"
+              value={revenueStats.totalRevenue || 0}
               prefix={<DollarOutlined />}
               suffix="đ"
               valueStyle={{ color: '#fa541c' }}
+              formatter={(value) => value.toLocaleString('vi-VN')}
             />
           </Card>
         </Col>
@@ -256,15 +273,17 @@ const ReportsAndStatistics = () => {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Cuộc hẹn theo tháng">
+          <Card title="Doanh thu theo tháng">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={getChartData(appointmentStats.byMonth)}>
+              <BarChart data={getChartData(revenueStats.revenueByMonth)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="count" stroke="#1890ff" />
-              </LineChart>
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                <Tooltip 
+                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
+                />
+                <Bar dataKey="value" fill="#52c41a" />
+              </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
@@ -317,7 +336,7 @@ const ReportsAndStatistics = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -327,6 +346,7 @@ const ReportsAndStatistics = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </Card>
@@ -385,6 +405,7 @@ const ReportsAndStatistics = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </Card>
@@ -464,7 +485,7 @@ const ReportsAndStatistics = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -474,6 +495,7 @@ const ReportsAndStatistics = () => {
                   ))}
                 </Pie>
                 <Tooltip />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </Card>
@@ -488,6 +510,121 @@ const ReportsAndStatistics = () => {
                 <Tooltip />
                 <Line type="monotone" dataKey="count" stroke="#fa8c16" />
               </LineChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+
+  const RevenueStatisticsTab = () => (
+    <div>
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Tổng doanh thu"
+              value={revenueStats.totalRevenue || 0}
+              prefix={<DollarOutlined />}
+              suffix="đ"
+              valueStyle={{ color: '#3f8600' }}
+              formatter={(value) => value.toLocaleString('vi-VN')}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Lịch hẹn đã thanh toán"
+              value={revenueStats.totalPaidAppointments || 0}
+              prefix={<CalendarOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Doanh thu trung bình/lịch hẹn"
+              value={Math.round(revenueStats.averageRevenuePerAppointment || 0)}
+              suffix="đ"
+              valueStyle={{ color: '#fa541c' }}
+              formatter={(value) => value.toLocaleString('vi-VN')}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card>
+            <Statistic
+              title="Tăng trưởng tháng"
+              value={revenueStats.monthlyGrowth || 0}
+              suffix="%"
+              valueStyle={{ 
+                color: (revenueStats.monthlyGrowth || 0) >= 0 ? '#3f8600' : '#cf1322'
+              }}
+              prefix={
+                (revenueStats.monthlyGrowth || 0) >= 0 ? '↑' : '↓'
+              }
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <Card title="Doanh thu theo tháng">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={getChartData(revenueStats.revenueByMonth)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                <Tooltip 
+                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
+                />
+                <Bar dataKey="value" fill="#52c41a" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title="Doanh thu theo ngày trong tuần">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={getChartData(revenueStats.revenueByDayOfWeek)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                <Tooltip 
+                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
+                />
+                <Bar dataKey="value" fill="#1890ff" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Card title="Doanh thu theo bác sĩ (Top 10)">
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart 
+                data={Object.entries(revenueStats.revenueByDoctor || {})
+                  .sort(([,a], [,b]) => b - a)
+                  .slice(0, 10)
+                  .map(([doctor, revenue]) => ({
+                    name: doctor,
+                    value: revenue
+                  }))}
+                layout="horizontal"
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                <YAxis type="category" dataKey="name" width={150} />
+                <Tooltip 
+                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
+                />
+                <Bar dataKey="value" fill="#722ed1" />
+              </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
@@ -542,6 +679,11 @@ const ReportsAndStatistics = () => {
             key: 'overview',
             label: 'Tổng quan',
             children: <OverviewTab />
+          },
+          {
+            key: 'revenue',
+            label: 'Doanh thu',
+            children: <RevenueStatisticsTab />
           },
           {
             key: 'users',
