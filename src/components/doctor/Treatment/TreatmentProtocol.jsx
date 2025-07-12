@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col } from 'antd';
+import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, TimePicker } from 'antd';
 import { PlusOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
 import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
@@ -211,7 +211,6 @@ const TreatmentProtocol = () => {
         patientId: values.patientId,
         doctorId: currentDoctor?.id,
         arvProtocolId: values.arvProtocolId,
-        appointmentId: values.appointmentId || null, // Make it optional
         startDate: values.dateRange ? values.dateRange[0].toISOString() : null,
         endDate: values.dateRange ? values.dateRange[1].toISOString() : null,
         status: statusMap[values.status] ?? 0
@@ -219,30 +218,9 @@ const TreatmentProtocol = () => {
 
       console.log('Creating patient treatment protocol with data:', requestData);
       console.log('Current doctor:', currentDoctor);
-      console.log('All appointments for this doctor:', appointmentsData?.filter(app => {
-        const appDoctorId = app.doctorId || app.DoctorId;
-        return appDoctorId === currentDoctor?.id;
-      }));
-      console.log('Valid appointments with doctor schedule:', validAppointments);
-
-      // Nếu có appointmentId, cảnh báo user về rủi ro
-      if (values.appointmentId) {
-        const selectedAppointment = validAppointments.find(app => app.id === values.appointmentId);
-        if (!selectedAppointment) {
-          const confirmCreate = window.confirm(
-            'Lịch hẹn được chọn có thể không có lịch làm việc hợp lệ. ' +
-            'Điều này có thể gây lỗi khi tạo phác đồ. ' +
-            'Bạn có muốn tiếp tục không?\n\n' +
-            'Khuyến nghị: Chọn "Hủy" và tạo phác đồ không liên kết lịch hẹn.'
-          );
-          if (!confirmCreate) {
-            return;
-          }
-        }
-      }
       
       await patientTreatmentProtocolService.createPatientTreatmentProtocol(requestData);
-      message.success('Tạo phác đồ điều trị thành công');
+      message.success('Tạo quy trình điều trị thành công');
       setIsModalVisible(false);
       form.resetFields();
       fetchData();
@@ -254,28 +232,24 @@ const TreatmentProtocol = () => {
           patientId: values.patientId,
           doctorId: currentDoctor?.id,
           arvProtocolId: values.arvProtocolId,
-          appointmentId: values.appointmentId || null,
           startDate: values.dateRange ? values.dateRange[0].toISOString() : null,
           endDate: values.dateRange ? values.dateRange[1].toISOString() : null,
           status: statusMap[values.status] ?? 0
         }
       });
 
-      // Cung cấp thông báo lỗi rõ ràng hơn
-      if (error.message.includes('Doctor schedule not found')) {
-        message.error(
-          'Không thể tạo phác đồ: Lịch hẹn được chọn không có lịch làm việc hợp lệ. ' +
-          'Vui lòng thử lại mà không chọn lịch hẹn hoặc chọn lịch hẹn khác.',
-          10 // Hiển thị lâu hơn
-        );
-      } else {
-        message.error(error.message || 'Không thể tạo phác đồ điều trị');
-      }
+      message.error(error.message || 'Không thể tạo quy trình điều trị');
     }
   };
 
   const handleCreateStage = async (values) => {
     try {
+      // Format reminder time if provided (single time picker)
+      let reminderTimesString = '';
+      if (values.reminderTimes) {
+        reminderTimesString = values.reminderTimes.format('HH:mm');
+      }
+
       const requestData = {
         StageName: values.stageName,
         StageNumber: values.orderNumber,
@@ -283,7 +257,7 @@ const TreatmentProtocol = () => {
         PatientTreatmentProtocolId: values.patientTreatmentProtocolId,
         StartDate: values.startDate.toISOString(),
         EndDate: values.endDate ? values.endDate.toISOString() : null,
-        ReminderTimes: values.reminderTimes || '',
+        ReminderTimes: reminderTimesString,
         Medicine: values.medicine || '',
         Status: values.status || 'Active',
         PatientId: values.patientId,
@@ -318,7 +292,7 @@ const TreatmentProtocol = () => {
       setSelectedProtocol(protocol);
       setIsModalVisible(true);
     } catch (error) {
-      message.error('Không thể xem chi tiết phác đồ');
+      message.error('Không thể xem chi tiết quy trình');
     }
   };
 
@@ -330,7 +304,7 @@ const TreatmentProtocol = () => {
     setIsStageModalVisible(true);
   };
 
-  // Chú thích các trạng thái phác đồ điều trị:
+  // Chú thích các trạng thái quy trình điều trị:
   // Active: Đang điều trị
   // Completed: Hoàn thành
   // Discontinued: Dừng điều trị
@@ -496,7 +470,7 @@ const TreatmentProtocol = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card
-            title="Phác đồ điều trị bệnh nhân"
+            title="Quy trình điều trị bệnh nhân"
             extra={
               <Space>
                 <Button
@@ -514,7 +488,7 @@ const TreatmentProtocol = () => {
                     setIsModalVisible(true);
                   }}
                 >
-                  Thêm phác đồ mới
+                  Thêm quy trình mới
                 </Button>
               </Space>
             }
@@ -538,7 +512,7 @@ const TreatmentProtocol = () => {
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} phác đồ`,
+                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quy trình`,
               }}
             />
           </Card>
@@ -580,7 +554,7 @@ const TreatmentProtocol = () => {
 
       {/* Modal cho phác đồ điều trị */}
       <Modal
-        title={selectedProtocol ? 'Chi tiết phác đồ điều trị' : 'Thêm phác đồ điều trị mới'}
+        title={selectedProtocol ? 'Chi tiết quy trình điều trị' : 'Thêm quy trình điều trị mới'}
         open={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
@@ -603,7 +577,7 @@ const TreatmentProtocol = () => {
             Hủy
           </Button>,
           <Button key="submit" type="primary" onClick={() => form.submit()}>
-            Tạo phác đồ
+            Tạo quy trình
           </Button>
         ]}
         width={600}
@@ -614,7 +588,6 @@ const TreatmentProtocol = () => {
             <p><strong>ARV Protocol:</strong> {selectedProtocol.arvProtocolName || selectedProtocol.arvProtocolId || '-'}</p>
             <p><strong>Ngày bắt đầu:</strong> {selectedProtocol.startDate ? new Date(selectedProtocol.startDate).toLocaleDateString('vi-VN') : '-'}</p>
             <p><strong>Ngày kết thúc:</strong> {selectedProtocol.endDate ? new Date(selectedProtocol.endDate).toLocaleDateString('vi-VN') : '-'}</p>
-            <p><strong>Lịch hẹn:</strong> {selectedProtocol.appointmentId || 'Không liên kết'}</p>
             <p><strong>Trạng thái:</strong> 
               <Tag color={getStatusColor(selectedProtocol.status)} style={{ marginLeft: 8 }}>
                 {getStatusText(selectedProtocol.status)}
@@ -633,12 +606,12 @@ const TreatmentProtocol = () => {
           >
             <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#e6f7ff', borderRadius: 6, border: '1px solid #91d5ff' }}>
               <div style={{ fontSize: '14px', color: '#0958d9', marginBottom: 8 }}>
-                <strong>📋 Hướng dẫn tạo phác đồ điều trị:</strong>
+                <strong>📋 Hướng dẫn tạo quy trình điều trị:</strong>
               </div>
               <ul style={{ fontSize: '13px', color: '#1890ff', margin: 0, paddingLeft: 20 }}>
-                <li><strong>Khuyến nghị:</strong> Tạo phác đồ độc lập (không liên kết lịch hẹn) để tránh lỗi.</li>
-                <li>Chỉ chọn lịch hẹn có dấu ✓ (đã xác minh có lịch làm việc hợp lệ).</li>
-                <li>Nếu không có lịch hẹn hợp lệ, hãy bỏ trống trường "Lịch hẹn".</li>
+                <li>Chọn bệnh nhân đã có lịch hẹn trong hệ thống</li>
+                <li>Chọn phác đồ ARV phù hợp với tình trạng bệnh nhân</li>
+                <li>Thiết lập thời gian điều trị từ ngày hiện tại trở đi</li>
               </ul>
             </div>
             <Form.Item
@@ -682,73 +655,17 @@ const TreatmentProtocol = () => {
             </Form.Item>
 
             <Form.Item
-              name="appointmentId"
-              label="Lịch hẹn (tùy chọn)"
-              help={
-                <div>
-                  {validAppointments.length === 0 ? (
-                    <div className="text-orange-600">
-                      ⚠️ Không có lịch hẹn hợp lệ (cần có lịch làm việc bác sĩ). 
-                      <strong> Khuyến nghị: Bỏ trống để tạo phác đồ độc lập.</strong>
-                    </div>
-                  ) : (
-                    <div className="text-green-600">
-                      ✓ Có {validAppointments.length} lịch hẹn hợp lệ. Chọn một lịch hẹn hoặc bỏ trống để tạo phác đồ độc lập.
-                    </div>
-                  )}
-                </div>
-              }
-            >
-              <Select 
-                placeholder={validAppointments.length === 0 ? 
-                  "Không có lịch hẹn hợp lệ - khuyến nghị bỏ trống" : 
-                  "Chọn lịch hẹn hoặc bỏ trống..."
-                }
-                allowClear
-                showSearch
-                optionFilterProp="children"
-                filterOption={(input, option) => {
-                  const children = option?.children;
-                  if (typeof children === 'string') {
-                    return children.toLowerCase().includes(input.toLowerCase());
-                  }
-                  return false;
-                }}
-                notFoundContent={
-                  <div className="p-2 text-center text-gray-500">
-                    <div>Không có lịch hẹn hợp lệ</div>
-                    <div className="text-xs mt-1">Có thể tạo phác đồ không liên kết lịch hẹn</div>
-                  </div>
-                }
-              >
-                {validAppointments.map(app => {
-                    const appointmentDate = app.appointmentStartDate ? 
-                      new Date(app.appointmentStartDate).toLocaleDateString('vi-VN', {
-                        day: '2-digit',
-                        month: '2-digit', 
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) : 'Chưa có thời gian';
-                    
-                    const patientName = app.patientName || app.PatientName || 'Không rõ';
-                    const displayText = `${appointmentDate} - ${patientName} ✓`;
-                    
-                    return (
-                      <Option key={app.id} value={app.id} title={displayText}>
-                        {displayText}
-                      </Option>
-                    );
-                  })}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
               name="dateRange"
               label="Thời gian điều trị"
               rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
             >
-              <RangePicker style={{ width: '100%' }} />
+              <RangePicker 
+                style={{ width: '100%' }} 
+                disabledDate={(current) => {
+                  // Không cho chọn ngày trong quá khứ (trước hôm nay)
+                  return current && current < new Date().setHours(0, 0, 0, 0);
+                }}
+              />
             </Form.Item>
 
             <Form.Item
@@ -809,7 +726,12 @@ const TreatmentProtocol = () => {
             <p><strong>Mô tả:</strong> {selectedStage.description || selectedStage.Description || '-'}</p>
             <p><strong>Ngày bắt đầu:</strong> {selectedStage.startDate ? new Date(selectedStage.startDate).toLocaleDateString('vi-VN') : (selectedStage.StartDate ? new Date(selectedStage.StartDate).toLocaleDateString('vi-VN') : '-')}</p>
             <p><strong>Ngày kết thúc:</strong> {selectedStage.endDate ? new Date(selectedStage.endDate).toLocaleDateString('vi-VN') : (selectedStage.EndDate ? new Date(selectedStage.EndDate).toLocaleDateString('vi-VN') : '-')}</p>
-            <p><strong>Thời gian nhắc nhở:</strong> {selectedStage.reminderTimes || selectedStage.ReminderTimes || '-'}</p>
+            <p><strong>Thời gian nhắc nhở:</strong> {
+              (() => {
+                const reminderTime = selectedStage.reminderTimes || selectedStage.ReminderTimes;
+                return reminderTime || 'Không có';
+              })()
+            }</p>
             <p><strong>Thuốc:</strong> {selectedStage.medicine || selectedStage.Medicine || '-'}</p>
             <p><strong>Trạng thái:</strong> {selectedStage.status || selectedStage.Status || '-'}</p>
             <p><strong>Bệnh nhân:</strong> {selectedStage.patientName || selectedStage.PatientName || selectedStage.patientId || selectedStage.PatientId || '-'}</p>
@@ -873,10 +795,9 @@ const TreatmentProtocol = () => {
               <Col span={12}>
                 <Form.Item
                   name="patientTreatmentProtocolId"
-                  label="Phác đồ điều trị"
-                  rules={[{ required: true, message: 'Vui lòng chọn phác đồ điều trị' }]}
-                >
-                  <Select placeholder="Chọn phác đồ điều trị">
+                  label="Quy trình điều trị"
+                  rules={[{ required: true, message: 'Vui lòng chọn quy trình điều trị' }]}
+                >                    <Select placeholder="Chọn quy trình điều trị">
                     {patientProtocols.map(protocol => {
                       // Lấy 3 số đầu của id phác đồ (UUID)
                       const shortId = protocol.id ? protocol.id.substring(0, 4) : '';
@@ -898,7 +819,13 @@ const TreatmentProtocol = () => {
                   label="Ngày bắt đầu"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} />
+                  <DatePicker 
+                    style={{ width: '100%' }} 
+                    disabledDate={(current) => {
+                      // Không cho chọn ngày trong quá khứ (trước hôm nay)
+                      return current && current < new Date().setHours(0, 0, 0, 0);
+                    }}
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -906,7 +833,13 @@ const TreatmentProtocol = () => {
                   name="endDate"
                   label="Ngày kết thúc"
                 >
-                  <DatePicker style={{ width: '100%' }} />
+                  <DatePicker 
+                    style={{ width: '100%' }} 
+                    disabledDate={(current) => {
+                      // Không cho chọn ngày trong quá khứ (trước hôm nay)
+                      return current && current < new Date().setHours(0, 0, 0, 0);
+                    }}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -916,8 +849,13 @@ const TreatmentProtocol = () => {
                 <Form.Item
                   name="reminderTimes"
                   label="Thời gian nhắc nhở"
+                  help="Chọn thời gian trong ngày để nhắc nhở uống thuốc"
                 >
-                  <Input placeholder="VD: 08:00,20:00" />
+                  <TimePicker 
+                    format="HH:mm"
+                    placeholder="Chọn thời gian nhắc nhở"
+                    style={{ width: '100%' }}
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -968,7 +906,13 @@ const TreatmentProtocol = () => {
                 label="Ngày khám"
                 rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker 
+                  style={{ width: '100%' }} 
+                  disabledDate={(current) => {
+                    // Không cho chọn ngày trong quá khứ (trước hôm nay)
+                    return current && current < new Date().setHours(0, 0, 0, 0);
+                  }}
+                />
               </Form.Item>
 
               <Form.Item
