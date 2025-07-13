@@ -155,10 +155,17 @@ const AdminDashboard = () => {
     }
   };
 
+
   // If no admin data, show nothing (will redirect to login)
   if (!adminData) {
     return null;
   }
+
+  // Lấy ngày hiện tại
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString('vi-VN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
 
   return (
     <Layout className="min-h-screen">
@@ -171,14 +178,18 @@ const AdminDashboard = () => {
           <img src={hivLogo} alt="Admin Logo" className="w-8 h-8 rounded-lg object-cover" />
           <span className="text-lg font-semibold">Admin Panel</span>
         </div>
-        
         <div className="px-4 pb-1 text-gray-400 text-sm">MENU CHÍNH</div>
-        
         <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
       </Sider>
 
       <Layout className="ml-[10px] p-0">
         <Content className="bg-gray-50">
+          {/* Chào mừng admin */}
+          <div className="p-6">
+            <Title level={3}>
+              Chào mừng {adminData?.fullName || adminData?.username || 'Admin'}! Hôm nay là ngày {formattedDate}
+            </Title>
+          </div>
           {activeTab === 'users' && (
             <UserList
               users={users}
@@ -187,20 +198,15 @@ const AdminDashboard = () => {
               onDeactivateUser={handleDeactivateUser}
             />
           )}
-
           {activeTab === 'dashboard' && (
             <>
               <StatsCards stats={statistics} />
-              <div className="mt-4">
-                <ReportsGenerator data={users} />
-              </div>
+              {/* Đã bỏ biểu đồ người dùng theo thời gian */}
             </>
           )}
-
           {activeTab === 'reports' && (
             <ReportsAndStatistics />
           )}
-
           {activeTab === 'profile' && (
             <div className="p-6">
               <AdminProfile admin={adminData} />
@@ -228,73 +234,7 @@ const AdminDashboard = () => {
             gender: 'Male' // Set default gender
           }}
         >
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' }
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="phoneNumber"
-            label="Số điện thoại"
-            rules={[
-              { required: true, message: 'Vui lòng nhập số điện thoại' },
-              { pattern: /^[0-9]{10}$/, message: 'Số điện thoại phải có 10 chữ số' }
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="role"
-            label="Vai trò"
-            rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-          >
-            <Select>
-              <Select.Option value="Manager">Quản lý</Select.Option>
-              <Select.Option value="Doctor">Bác sĩ</Select.Option>
-              <Select.Option value="Patient">Bệnh nhân</Select.Option>
-            </Select>
-          </Form.Item>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="gender"
-                label="Giới tính"
-                rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}
-              >
-                <Select>
-                  <Select.Option value="Male">Nam</Select.Option>
-                  <Select.Option value="Female">Nữ</Select.Option>
-                  <Select.Option value="Other">Khác</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              {!editingUser && (
-                <Form.Item
-                  name="password"
-                  label="Mật khẩu"
-                  rules={[
-                    { required: true, message: 'Vui lòng nhập mật khẩu' },
-                    { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
-                  ]}
-                >
-                  <Input.Password />
-                </Form.Item>
-              )}
-            </Col>
-          </Row>
-          <Form.Item
-            name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
-          >
-            <Input.TextArea rows={2} />
-          </Form.Item>
+          {/* ...existing code... */}
         </Form>
       </Modal>
     </Layout>

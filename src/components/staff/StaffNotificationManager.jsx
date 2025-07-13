@@ -392,28 +392,6 @@ const StaffNotificationManager = () => {
 
   return (
     <div className="p-6">
-      {/* Thông báo hướng dẫn */}
-      <Card className="mb-4 border-blue-200 bg-blue-50">
-        <div className="text-blue-700">
-          <div>
-            <h4 className="font-medium mb-1">Hướng dẫn sử dụng:</h4>
-            <p className="text-sm">
-              Có 3 loại thông báo:
-            </p>
-            <ul className="text-sm mt-2 ml-4 list-disc">
-              <li><strong>Thông báo chung:</strong> Chỉ cần chọn bệnh nhân và nhập nội dung</li>
-              <li><strong>Thông báo lịch hẹn:</strong> Chọn lịch hẹn đã thanh toán + giai đoạn điều trị (tùy chọn)</li>
-              <li><strong>Thông báo uống thuốc:</strong> Chọn giai đoạn điều trị + thông tin thuốc + lịch nhắc (có thể lặp lại hàng ngày/tuần)</li>
-            </ul>
-            <p className="text-sm mt-2 text-orange-600">
-              <strong>Lưu ý:</strong> Bệnh nhân phải có giai đoạn điều trị được tạo trước khi có thể chọn giai đoạn điều trị.
-            </p>
-            <p className="text-sm mt-2">
-              <strong>Trạng thái Backend:</strong>  Tạo thông báo,  Xem danh sách,  Đánh dấu đã đọc
-            </p>
-          </div>
-        </div>
-      </Card>
 
       <Card 
         title={

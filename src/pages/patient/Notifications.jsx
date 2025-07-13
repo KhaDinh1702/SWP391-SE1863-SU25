@@ -214,7 +214,6 @@ export default function Notifications() {
         patientId: patientId,
         treatmentStageId: reminder.stageId,
         message: `Nhắc nhở uống thuốc: ${reminder.medicine || reminder.stageName || 'Thuốc điều trị'} - ${reminder.displayDescription || 'Đã đến giờ uống thuốc'}`,
-        // Không gửi createdAt, để backend tự set
         appointmentId: null // Rõ ràng set null cho appointmentId
       };
 
@@ -311,7 +310,7 @@ export default function Notifications() {
         // Hiển thị browser notification
         if (Notification.permission === 'granted') {
           notificationService.showBrowserNotification({
-            title: `💊 Nhắc uống thuốc`,
+            title: ` Nhắc uống thuốc`,
             message: backendNotification.message,
             id: backendNotification.notificationId
           });
@@ -338,7 +337,7 @@ export default function Notifications() {
         // Hiển thị browser notification
         if (Notification.permission === 'granted') {
           notificationService.showBrowserNotification({
-            title: `📅 Lịch hẹn sắp tới`,
+            title: ` Lịch hẹn sắp tới`,
             message: backendNotification.message,
             id: backendNotification.notificationId
           });
@@ -782,7 +781,7 @@ export default function Notifications() {
         lowerMessage.includes('medicine')) {
       return {
         icon: <FaPills className="text-green-600" />,
-        title: '💊 Nhắc nhở uống thuốc',
+        title: 'Nhắc nhở uống thuốc',
         bgColor: 'bg-green-100'
       };
     }
@@ -794,7 +793,7 @@ export default function Notifications() {
         lowerMessage.includes('tái khám')) {
       return {
         icon: <FaCalendarAlt className="text-blue-600" />,
-        title: '📅 Thông báo lịch hẹn',
+        title: 'Thông báo lịch hẹn',
         bgColor: 'bg-blue-100'
       };
     }
@@ -805,7 +804,7 @@ export default function Notifications() {
         lowerMessage.includes('arv')) {
       return {
         icon: <FaPills className="text-purple-600" />,
-        title: '🩺 Thông báo điều trị',
+        title: 'Thông báo điều trị',
         bgColor: 'bg-purple-100'
       };
     }
@@ -816,7 +815,7 @@ export default function Notifications() {
         lowerMessage.includes('kết quả')) {
       return {
         icon: <FaCalendarAlt className="text-orange-600" />,
-        title: '🔬 Thông báo xét nghiệm',
+        title: 'Thông báo xét nghiệm',
         bgColor: 'bg-orange-100'
       };
     }
@@ -824,7 +823,7 @@ export default function Notifications() {
     // Mặc định
     return {
       icon: <FaBell className="text-green-600" />,
-      title: '🔔 Thông báo chung',
+      title: 'Thông báo chung',
       bgColor: 'bg-green-100'
     };
   };
@@ -864,31 +863,7 @@ export default function Notifications() {
     });
   };
 
-  // Debug function để xem thời gian lọc
-  const debugNotificationTimes = () => {
-    console.log('🕐 DEBUG: Notification times analysis');
-    backendNotifications.forEach((notification, index) => {
-      const createdTime = new Date(notification.createdAt);
-      const scheduleTime = getNotificationScheduleTime(notification);
-      const isToday = scheduleTime.toLocaleDateString('vi-VN') === new Date().toLocaleDateString('vi-VN');
-      
-      console.log(`${index + 1}. Notification:`, {
-        message: notification.message.substring(0, 50) + '...',
-        createdAt: createdTime.toLocaleString('vi-VN'),
-        scheduleTime: scheduleTime.toLocaleString('vi-VN'),
-        isToday,
-        dateKey: scheduleTime.toLocaleDateString('vi-VN'),
-        today: new Date().toLocaleDateString('vi-VN')
-      });
-    });
-  };
-
-  // Gọi debug khi có thay đổi
-  useEffect(() => {
-    if (backendNotifications.length > 0) {
-      debugNotificationTimes();
-    }
-  }, [backendNotifications]);
+  // ...existing code...
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -912,7 +887,6 @@ export default function Notifications() {
                 </span>
               )}
             </div>
-            
             <div className="flex items-center gap-3">
               {/* Mark All as Read Button */}
               {unreadCount > 0 && (
@@ -925,21 +899,8 @@ export default function Notifications() {
                   <span>Đánh dấu tất cả đã đọc</span>
                 </button>
               )}
-              
-              {/* Connection status indicator */}
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                signalRConnected ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-              }`}>
-                {signalRConnected ? <FaWifi /> : <FaExclamationTriangle />}
-                <span>{signalRConnected ? 'Real-time' : 'Định kỳ'}</span>
-              </div>
             </div>
           </div>
-          <p className="text-gray-600 mt-2">
-            Xem thông báo từ nhân viên và lịch hẹn sắp tới. Sử dụng bộ lọc theo ngày để dễ quản lý thông báo.
-            {signalRConnected && <span className="text-green-600"> • Kết nối real-time</span>}
-            {!signalRConnected && <span className="text-orange-600"> • Chỉ cập nhật định kỳ</span>}
-          </p>
           
           {/* Hiển thị thời gian cập nhật cuối */}
           <div className="mt-3 text-sm text-gray-500">
@@ -1005,7 +966,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>📅 Hôm nay</span>
+                    <span>Hôm nay</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       dateFilter === 'today' 
                         ? 'bg-green-500 text-white' 
@@ -1022,7 +983,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>📅 Tuần này</span>
+                    <span>Tuần này</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       dateFilter === 'week' 
                         ? 'bg-green-500 text-white' 
@@ -1039,7 +1000,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>📋 Tất cả</span>
+                    <span>Tất cả</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       dateFilter === 'all' 
                         ? 'bg-green-500 text-white' 
@@ -1063,7 +1024,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>🔔 Tất cả</span>
+                    <span>Tất cả</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       typeFilter === 'all' 
                         ? 'bg-blue-500 text-white' 
@@ -1080,7 +1041,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>💊 Uống thuốc</span>
+                    <span>Uống thuốc</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       typeFilter === 'medicine' 
                         ? 'bg-blue-500 text-white' 
@@ -1097,7 +1058,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>📅 Lịch hẹn</span>
+                    <span>Lịch hẹn</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       typeFilter === 'appointment' 
                         ? 'bg-blue-500 text-white' 
@@ -1114,7 +1075,7 @@ export default function Notifications() {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    <span>📢 Thông báo chung</span>
+                    <span>Thông báo chung</span>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       typeFilter === 'general' 
                         ? 'bg-blue-500 text-white' 
@@ -1131,27 +1092,27 @@ export default function Notifications() {
                 <div className="flex items-center gap-4">
                   <div>
                     {dateFilter === 'today' && (
-                      <span>📅 Thời gian: <strong>Hôm nay ({new Date().toLocaleDateString('vi-VN')})</strong></span>
+                      <span>Thời gian: <strong>Hôm nay ({new Date().toLocaleDateString('vi-VN')})</strong></span>
                     )}
                     {dateFilter === 'week' && (
-                      <span>📅 Thời gian: <strong>7 ngày qua</strong></span>
+                      <span>Thời gian: <strong>7 ngày qua</strong></span>
                     )}
                     {dateFilter === 'all' && (
-                      <span>📅 Thời gian: <strong>Tất cả</strong></span>
+                      <span>Thời gian: <strong>Tất cả</strong></span>
                     )}
                   </div>
                   <div>
                     {typeFilter === 'all' && (
-                      <span>🏷️ Loại: <strong>Tất cả thông báo</strong></span>
+                      <span>Loại: <strong>Tất cả thông báo</strong></span>
                     )}
                     {typeFilter === 'medicine' && (
-                      <span>🏷️ Loại: <strong>Nhắc uống thuốc</strong></span>
+                      <span>Loại: <strong>Nhắc uống thuốc</strong></span>
                     )}
                     {typeFilter === 'appointment' && (
-                      <span>🏷️ Loại: <strong>Lịch hẹn</strong></span>
+                      <span>Loại: <strong>Lịch hẹn</strong></span>
                     )}
                     {typeFilter === 'general' && (
-                      <span>🏷️ Loại: <strong>Thông báo chung</strong></span>
+                      <span>Loại: <strong>Thông báo chung</strong></span>
                     )}
                   </div>
                 </div>
@@ -1160,7 +1121,7 @@ export default function Notifications() {
               {/* Tóm tắt thông báo theo ngày */}
               {dateFilter === 'all' && getNotificationsSummary().length > 0 && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium text-gray-700 mb-3">📊 Tóm tắt thông báo theo ngày:</h4>
+                  <h4 className="font-medium text-gray-700 mb-3">Tóm tắt thông báo theo ngày:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {getNotificationsSummary().map(({ date, total, unseen, isToday }) => (
                       <div
@@ -1175,7 +1136,7 @@ export default function Notifications() {
                           <span className={`font-medium ${
                             isToday ? 'text-green-700' : 'text-gray-700'
                           }`}>
-                            {isToday ? '📅 Hôm nay' : date}
+                            {isToday ? 'Hôm nay' : date}
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600">{total}</span>
@@ -1200,11 +1161,11 @@ export default function Notifications() {
                     Không có thông báo nào phù hợp với bộ lọc hiện tại
                   </p>
                   <div className="text-sm text-gray-400 space-y-1">
-                    <p>🗓️ Thời gian: {
+                    <p>Thời gian: {
                       dateFilter === 'today' ? 'Hôm nay' : 
                       dateFilter === 'week' ? 'Tuần này' : 'Tất cả'
                     }</p>
-                    <p>🏷️ Loại: {
+                    <p>Loại: {
                       typeFilter === 'all' ? 'Tất cả' :
                       typeFilter === 'medicine' ? 'Uống thuốc' :
                       typeFilter === 'appointment' ? 'Lịch hẹn' : 'Thông báo chung'
@@ -1254,22 +1215,12 @@ export default function Notifications() {
                             </h3>
                           </div>
                           
-                          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                            <FaClock />
-                            <span>Tạo: {new Date(notification.createdAt).toLocaleString('vi-VN')}</span>
-                          </div>
-                          
                           {/* Hiển thị thời gian thực tế nếu khác với thời gian tạo */}
                           {(() => {
                             const scheduleTime = getNotificationScheduleTime(notification);
-                            const createdTime = new Date(notification.createdAt);
-                            const timeDiff = Math.abs(scheduleTime.getTime() - createdTime.getTime());
-                            
-                            // Chỉ hiển thị nếu chênh lệch > 1 phút
-                            if (timeDiff > 60000) {
+                            if (scheduleTime) {
                               return (
                                 <div className="flex items-center gap-2 text-sm text-blue-600 mb-2">
-                                  <FaClock />
                                   <span className="font-medium">Thời gian: {scheduleTime.toLocaleString('vi-VN')}</span>
                                   <span className="text-xs text-gray-500">
                                     ({formatDate(scheduleTime)})

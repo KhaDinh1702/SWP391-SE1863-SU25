@@ -21,6 +21,7 @@ import StatsCards from '../components/manager/DashboardStatus/StatsCards';
 import ARVProtocols from '../components/manager/ARVProtocols';
 
 import { userService } from "../services/userService";
+import axios from "axios";
 import { doctorService } from "../services/doctorService";
 import { authService } from "../services/authService";
 import hivLogo from '../assets/hiv.png';
@@ -39,8 +40,7 @@ const ManagerDashboard = () => {
   const [stats, setStats] = useState({
     totalDoctors: 0,
     totalAppointments: 0,
-    totalPatients: 0,
-    totalRevenue: 0
+    totalPatients: 0
   });
 
   // Manager info
@@ -95,11 +95,28 @@ const ManagerDashboard = () => {
         if (activeTab === 'dashboard') {
           // Fetch stats
           const doctorData = await doctorService.getAllDoctors();
+          // Get paid appointments from backend
+          let paidAppointments = [];
+          try {
+            const res = await axios.get("https://localhost:7040/api/Appointment/get-paid-appointments");
+            paidAppointments = Array.isArray(res.data) ? res.data : [];
+          } catch (err) {
+            console.error('Error fetching paid appointments from backend:', err);
+            paidAppointments = [];
+          }
+          // Get all patients from backend
+          let patients = [];
+          try {
+            const res = await axios.get("https://localhost:7040/api/Patient/get-list-patient");
+            patients = Array.isArray(res.data) ? res.data : [];
+          } catch (err) {
+            console.error('Error fetching patients from backend:', err);
+            patients = [];
+          }
           setStats({
             totalDoctors: doctorData.length,
-            totalAppointments: 0, // TODO: Implement appointment service
-            totalPatients: 0, // TODO: Implement patient service
-            totalRevenue: 0 // TODO: Implement revenue calculation
+            totalAppointments: paidAppointments.length,
+            totalPatients: patients.length
           });
         } else if (activeTab === 'doctors') {
           const doctorData = await doctorService.getAllDoctors();
@@ -274,7 +291,28 @@ const ManagerDashboard = () => {
               </div>
             ) : (
               <>
-                {renderContent()}
+                {/* Custom dashboard card styling for dashboard tab, without revenue */}
+                {activeTab === 'dashboard' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="rounded-xl shadow-md hover:shadow-lg transition flex flex-col items-center py-6 border-0" style={{ borderColor: 'transparent' }}>
+                      <TeamOutlined style={{ fontSize: 36, color: '#22c55e' }} />
+                      <div className="mt-2 text-lg text-gray-500">Tổng số bác sĩ</div>
+                      <div className="mt-1 text-2xl font-bold text-green-600">{stats.totalDoctors}</div>
+                    </Card>
+                    <Card className="rounded-xl shadow-md hover:shadow-lg transition flex flex-col items-center py-6 border-0" style={{ borderColor: 'transparent' }}>
+                      <CalendarOutlined style={{ fontSize: 36, color: '#2563eb' }} />
+                      <div className="mt-2 text-lg text-gray-500">Tổng số lịch hẹn</div>
+                      <div className="mt-1 text-2xl font-bold text-blue-600">{stats.totalAppointments}</div>
+                    </Card>
+                    <Card className="rounded-xl shadow-md hover:shadow-lg transition flex flex-col items-center py-6 border-0" style={{ borderColor: 'transparent' }}>
+                      <ProfileOutlined style={{ fontSize: 36, color: '#a21caf' }} />
+                      <div className="mt-2 text-lg text-gray-500">Tổng số bệnh nhân</div>
+                      <div className="mt-1 text-2xl font-bold text-purple-600">{stats.totalPatients}</div>
+                    </Card>
+                  </div>
+                ) : (
+                  renderContent()
+                )}
               </>
             )}
           </div>
