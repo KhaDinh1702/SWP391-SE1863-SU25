@@ -30,8 +30,6 @@ const StaffNotificationManager = () => {
 
   useEffect(() => {
     fetchPatients();
-    fetchAppointments();
-    fetchTreatmentStages();
   }, []);
 
   useEffect(() => {
@@ -53,14 +51,23 @@ const StaffNotificationManager = () => {
     }
   };
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (patientId = null) => {
     try {
+      if (!patientId) {
+        setAppointments([]);
+        return;
+      }
+      
       const response = await fetch(`https://localhost:7040/api/Appointment/get-paid-appointments`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
-        const appointments = await response.json();
-        setAppointments(appointments || []);
+        const allAppointments = await response.json();
+        // Lọc appointments theo patientId đã chọn
+        const patientAppointments = allAppointments.filter(appointment => 
+          appointment.patientId === patientId
+        );
+        setAppointments(patientAppointments || []);
       } else {
         console.warn('Could not fetch appointments:', response.status);
         setAppointments([]);
@@ -71,21 +78,61 @@ const StaffNotificationManager = () => {
     }
   };
 
-  const fetchTreatmentStages = async () => {
+  const fetchTreatmentStages = async (patientId = null) => {
     try {
-      const response = await fetch(`https://localhost:7040/api/TreatmentStage/get-list-treatment-stage`, {
-        headers: getAuthHeaders()
-      });
-      if (response.ok) {
-        const stages = await response.json();
-        setTreatmentStages(stages || []);
-      } else {
-        console.warn('Could not fetch treatment stages:', response.status);
+      if (!patientId) {
         setTreatmentStages([]);
+        return;
       }
+      
+      setLoading(true);
+      
+      // Thử lấy PatientTreatmentProtocol và filter treatment stages
+      try {
+        // Thử endpoint get-list-patient-treatment-protocol
+        const protocolResponse = await fetch(`https://localhost:7040/api/PatientTreatmentProtocol/get-list-patient-treatment-protocol`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (protocolResponse.ok) {
+          const allProtocols = await protocolResponse.json();
+          // Filter protocols theo patientId
+          const patientProtocols = allProtocols.filter(p => 
+            p.patientId === patientId || p.PatientId === patientId
+          );
+          
+          if (patientProtocols && patientProtocols.length > 0) {
+            // Lấy treatment stages dựa trên protocol IDs
+            const allStagesResponse = await fetch(`https://localhost:7040/api/TreatmentStage/get-list-treatment-stage`, {
+              headers: getAuthHeaders()
+            });
+            
+            if (allStagesResponse.ok) {
+              const allStages = await allStagesResponse.json();
+              const protocolIds = patientProtocols.map(p => p.id || p.protocolId || p.patientTreatmentProtocolId);
+              
+              const patientStages = allStages.filter(stage =>
+                protocolIds.includes(stage.patientTreatmentProtocolId)
+              );
+              
+              setTreatmentStages(patientStages || []);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Could not fetch patient treatment protocols');
+      }
+      
+      // Nếu không tìm được protocol hoặc stages, hiển thị mảng rỗng
+      // (bệnh nhân chưa có giai đoạn điều trị)
+      setTreatmentStages([]);
+      
     } catch (error) {
       console.error('Lỗi khi tải treatment stages:', error);
       setTreatmentStages([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -215,10 +262,20 @@ const StaffNotificationManager = () => {
         }
       } else if (notificationType === 'appointment') {
         finalMessage = `Thông báo lịch hẹn: ${messageText}`;
+        
+        // Tạo thông báo cho appointment
+        const notificationData = {
+          patientId: selectedPatient,
+          message: finalMessage,
+          treatmentStageId: selectedTreatmentStage || null,
+          appointmentId: selectedAppointment
+        };
+        
+        await notificationService.createNotification(notificationData);
       } else if (notificationType === 'general') {
         finalMessage = `Thông báo chung: ${messageText}`;
         
-        // Tạo thông báo cho appointment và general
+        // Tạo thông báo cho general
         const notificationData = {
           patientId: selectedPatient,
           message: finalMessage,
@@ -337,8 +394,7 @@ const StaffNotificationManager = () => {
     <div className="p-6">
       {/* Thông báo hướng dẫn */}
       <Card className="mb-4 border-blue-200 bg-blue-50">
-        <div className="flex items-center gap-2 text-blue-700">
-          <BellOutlined />
+        <div className="text-blue-700">
           <div>
             <h4 className="font-medium mb-1">Hướng dẫn sử dụng:</h4>
             <p className="text-sm">
@@ -349,8 +405,11 @@ const StaffNotificationManager = () => {
               <li><strong>Thông báo lịch hẹn:</strong> Chọn lịch hẹn đã thanh toán + giai đoạn điều trị (tùy chọn)</li>
               <li><strong>Thông báo uống thuốc:</strong> Chọn giai đoạn điều trị + thông tin thuốc + lịch nhắc (có thể lặp lại hàng ngày/tuần)</li>
             </ul>
+            <p className="text-sm mt-2 text-orange-600">
+              <strong>Lưu ý:</strong> Bệnh nhân phải có giai đoạn điều trị được tạo trước khi có thể chọn giai đoạn điều trị.
+            </p>
             <p className="text-sm mt-2">
-              <strong>Trạng thái Backend:</strong> ✅ Tạo thông báo, ✅ Xem danh sách, ✅ Đánh dấu đã đọc
+              <strong>Trạng thái Backend:</strong>  Tạo thông báo,  Xem danh sách,  Đánh dấu đã đọc
             </p>
           </div>
         </div>
@@ -372,7 +431,26 @@ const StaffNotificationManager = () => {
             <Select
               placeholder="Chọn bệnh nhân để gửi thông báo"
               value={selectedPatient || undefined}
-              onChange={setSelectedPatient}
+              onChange={(value) => {
+                setSelectedPatient(value);
+                // Reset appointment và treatment stage khi đổi bệnh nhân
+                setSelectedAppointment(null);
+                setSelectedTreatmentStage(null);
+                
+                // Clear ngay lập tức để tránh hiển thị dữ liệu cũ
+                setAppointments([]);
+                setTreatmentStages([]);
+                
+                // Fetch dữ liệu của bệnh nhân mới
+                if (value) {
+                  // Luôn fetch treatment stages cho bệnh nhân được chọn
+                  fetchTreatmentStages(value);
+                  // Chỉ fetch appointments khi đang ở loại appointment
+                  if (notificationType === 'appointment') {
+                    fetchAppointments(value);
+                  }
+                }
+              }}
               className="w-full"
               showSearch
               filterOption={(input, option) => 
@@ -421,6 +499,23 @@ const StaffNotificationManager = () => {
                 setRepeatDays([]);
                 setReminderTimes(['']);
                 setEndDate('');
+                
+                // Fetch dữ liệu theo loại thông báo và patient đã chọn
+                if (selectedPatient) {
+                  if (value === 'appointment') {
+                    fetchAppointments(selectedPatient);
+                    fetchTreatmentStages(selectedPatient);
+                  } else if (value === 'medicine') {
+                    fetchTreatmentStages(selectedPatient);
+                    setAppointments([]);
+                  } else {
+                    setAppointments([]);
+                    setTreatmentStages([]);
+                  }
+                } else {
+                  setAppointments([]);
+                  setTreatmentStages([]);
+                }
               }}
               className="w-full"
             >
@@ -434,14 +529,19 @@ const StaffNotificationManager = () => {
           {notificationType === 'appointment' && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                Chọn lịch hẹn <span className="text-red-500">*</span>: {appointments.length > 0 ? `(${appointments.length} lịch hẹn)` : '(Không có dữ liệu)'}
+                Chọn lịch hẹn <span className="text-red-500">*</span>: 
+                {!selectedPatient ? 
+                  '(Vui lòng chọn bệnh nhân trước)' : 
+                  appointments.length > 0 ? `(${appointments.length} lịch hẹn)` : '(Không có lịch hẹn nào)'
+                }
               </label>
               <Select
-                placeholder="Chọn lịch hẹn đã thanh toán"
+                placeholder={!selectedPatient ? "Vui lòng chọn bệnh nhân trước" : "Chọn lịch hẹn đã thanh toán"}
                 value={selectedAppointment || undefined}
                 onChange={setSelectedAppointment}
                 className="w-full"
                 loading={loading}
+                disabled={!selectedPatient}
                 notFoundContent={loading ? <Spin size="small" /> : 'Không có lịch hẹn nào'}
               >
                 {appointments.map((appointment, index) => {
@@ -469,15 +569,30 @@ const StaffNotificationManager = () => {
           {(notificationType === 'appointment' || notificationType === 'medicine') && (
             <div>
               <label className="block text-sm font-medium mb-2">
-                Chọn giai đoạn điều trị {notificationType === 'medicine' ? <span className="text-red-500">*</span> : '(tùy chọn)'}: {treatmentStages.length > 0 ? `(${treatmentStages.length} giai đoạn)` : '(Không có dữ liệu)'}
+                Chọn giai đoạn điều trị {notificationType === 'medicine' ? <span className="text-red-500">*</span> : '(tùy chọn)'}: 
+                {!selectedPatient ? 
+                  '(Vui lòng chọn bệnh nhân trước)' : 
+                  treatmentStages.length > 0 ? `(${treatmentStages.length} giai đoạn)` : '(Bệnh nhân chưa có giai đoạn điều trị)'
+                }
               </label>
+              {!selectedPatient && (
+                <p className="text-xs text-gray-500 mb-2">
+                   Chọn bệnh nhân trước để xem giai đoạn điều trị của họ
+                </p>
+              )}
+              {selectedPatient && treatmentStages.length === 0 && (
+                <p className="text-xs text-orange-600 mb-2">
+                   Bệnh nhân này chưa có giai đoạn điều trị. Vui lòng tạo giai đoạn điều trị cho bệnh nhân trước.
+                </p>
+              )}
               <Select
-                placeholder={notificationType === 'medicine' ? "Chọn giai đoạn điều trị" : "Chọn giai đoạn điều trị liên quan (không bắt buộc)"}
+                placeholder={!selectedPatient ? "Vui lòng chọn bệnh nhân trước" : notificationType === 'medicine' ? "Chọn giai đoạn điều trị" : "Chọn giai đoạn điều trị liên quan (không bắt buộc)"}
                 value={selectedTreatmentStage || undefined}
                 onChange={setSelectedTreatmentStage}
                 className="w-full"
                 allowClear={notificationType === 'appointment'}
                 loading={loading}
+                disabled={!selectedPatient}
                 notFoundContent={loading ? <Spin size="small" /> : 'Không có giai đoạn điều trị nào'}
               >
                 {treatmentStages.map((stage, index) => {
