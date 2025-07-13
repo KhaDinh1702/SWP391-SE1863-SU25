@@ -199,10 +199,9 @@ const TreatmentProtocol = () => {
   };
 
   const statusMap = {
-    'Pending': 0,
-    'Active': 1,
-    'Completed': 2,
-    'Inactive': 3
+    'Active': 0,
+    'Completed': 1,
+    'Discontinued': 2
   };
 
   const handleCreateProtocol = async (values) => {
@@ -307,19 +306,16 @@ const TreatmentProtocol = () => {
   // Chú thích các trạng thái quy trình điều trị:
   // Active: Đang điều trị
   // Completed: Hoàn thành
-  // Discontinued: Dừng điều trị
-  // Pending: Chờ bắt đầu (nếu có)
+  // Discontinued: Ngừng điều trị
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': 
-      case 1: return 'green';
-      case 'Inactive': 
-      case 3: return 'red';
-      case 'Pending': 
-      case 0: return 'orange';
+      case 0: return 'green';
       case 'Completed': 
-      case 2: return 'blue';
+      case 1: return 'blue';
+      case 'Discontinued': 
+      case 2: return 'red';
       default: return 'default';
     }
   };
@@ -327,13 +323,11 @@ const TreatmentProtocol = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'Active': return 'Đang điều trị';
-      case 'Inactive': return 'Dừng điều trị';
-      case 'Pending': return 'Chờ bắt đầu';
       case 'Completed': return 'Hoàn thành';
-      case 0: return 'Chờ bắt đầu';
-      case 1: return 'Đang điều trị';
-      case 2: return 'Hoàn thành';
-      case 3: return 'Dừng điều trị';
+      case 'Discontinued': return 'Ngừng điều trị';
+      case 0: return 'Đang điều trị';
+      case 1: return 'Hoàn thành';
+      case 2: return 'Ngừng điều trị';
       default: return status || 'Không rõ';
     }
   };
@@ -496,11 +490,9 @@ const TreatmentProtocol = () => {
             <div style={{ marginBottom: 16 }}>
               <strong>Chú thích trạng thái:</strong>
               <ul style={{ margin: 0, paddingLeft: 20 }}>
-                <li><Tag color="orange">Chờ bắt đầu</Tag>: 0</li>
-                <li><Tag color="green">Đang điều trị</Tag>: 1</li>
-                <li><Tag color="blue">Hoàn thành</Tag>: 2</li>
-                <li><Tag color="red">Dừng điều trị</Tag>: 3</li>
-                
+                <li><Tag color="green">Đang điều trị</Tag>: 0</li>
+                <li><Tag color="blue">Hoàn thành</Tag>: 1</li>
+                <li><Tag color="red">Ngừng điều trị</Tag>: 2</li>
               </ul>
             </div>
             <Table
@@ -601,7 +593,7 @@ const TreatmentProtocol = () => {
             layout="vertical"
             onFinish={handleCreateProtocol}
             initialValues={{
-              status: 'Pending'
+              status: 'Active'
             }}
           >
             <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#e6f7ff', borderRadius: 6, border: '1px solid #91d5ff' }}>
@@ -673,10 +665,9 @@ const TreatmentProtocol = () => {
               label="Trạng thái"
             >
               <Select>
-                <Option value="Pending">Chờ bắt đầu</Option>
                 <Option value="Active">Đang điều trị</Option>
                 <Option value="Completed">Hoàn thành</Option>
-                <Option value="Inactive">Dừng điều trị</Option>
+                <Option value="Discontinued">Ngừng điều trị</Option>
               </Select>
             </Form.Item>
 

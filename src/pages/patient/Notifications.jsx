@@ -936,7 +936,7 @@ export default function Notifications() {
             </div>
           </div>
           <p className="text-gray-600 mt-2">
-            Xem thông báo từ staff và lịch hẹn sắp tới. Sử dụng bộ lọc theo ngày để dễ quản lý thông báo.
+            Xem thông báo từ nhân viên và lịch hẹn sắp tới. Sử dụng bộ lọc theo ngày để dễ quản lý thông báo.
             {signalRConnected && <span className="text-green-600"> • Kết nối real-time</span>}
             {!signalRConnected && <span className="text-orange-600"> • Chỉ cập nhật định kỳ</span>}
           </p>
@@ -974,7 +974,7 @@ export default function Notifications() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FaBell className="text-green-600 text-xl" />
-                  <h2 className="text-xl font-semibold text-gray-800">Thông báo từ staff</h2>
+                  <h2 className="text-xl font-semibold text-gray-800">Thông báo từ nhân viên</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full">
