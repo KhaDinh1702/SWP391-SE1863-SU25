@@ -193,23 +193,17 @@ const LabResults = () => {
   // Sửa lại hàm handleCreateResult để lấy file đúng chuẩn cho FormData
   const handleCreateResult = async (values) => {
     try {
-      console.log('Current doctor:', currentDoctor);
-      console.log('Form values:', values);
-
       // Kiểm tra currentDoctor có tồn tại không
       if (!currentDoctor?.id) {
         message.error('Không thể xác định bác sĩ hiện tại. Vui lòng thử lại.');
         return;
       }
 
-      // Note: Removed doctor ID validation for treatment stages
-      // Lab doctors should be able to create results for any treatment stage
-
       // Chuẩn hóa dữ liệu gửi lên
       const requestData = {
         PatientId: values.patientId,
         TreatmentStageId: values.treatmentStageId || null,
-        DoctorId: values.doctorId || currentDoctor.id || null, // Ưu tiên values.doctorId từ form
+        DoctorId: values.doctorId || currentDoctor.id || null,
         TestName: values.testName,
         TestType: values.testType || '',
         TestDate: values.testDate.toISOString(),
@@ -218,24 +212,24 @@ const LabResults = () => {
         Notes: values.notes || ''
       };
 
-      console.log('Final request data:', requestData);
-      console.log('DoctorId being sent:', requestData.DoctorId);
-
       // Lấy file từ input (nếu có)
       const fileInput = document.querySelector('input[type="file"][name="labPictures"]');
       if (fileInput && fileInput.files && fileInput.files.length > 0) {
         requestData.LabResultPictures = Array.from(fileInput.files);
       }
 
-      console.log('Creating lab result with data:', requestData);
       await labResultService.createLabResult(requestData);
       message.success('Tạo kết quả xét nghiệm thành công');
       setIsModalVisible(false);
       form.resetFields();
       fetchLabResults();
     } catch (error) {
-      console.error('Create lab result error:', error);
-      message.error(error.message || 'Không thể tạo kết quả xét nghiệm');
+      // Nếu lỗi liên quan đến không khớp PatientId, chỉ hiển thị thông báo chung
+      if (error?.message && error.message.includes('does not match the TreatmentStage')) {
+        message.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin bệnh nhân và giai đoạn điều trị.');
+      } else {
+        message.error('Không thể tạo kết quả xét nghiệm. Vui lòng thử lại hoặc liên hệ quản trị viên.');
+      }
     }
   };
 
