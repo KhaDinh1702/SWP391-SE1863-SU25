@@ -91,8 +91,13 @@ export const medicalRecordService = {
         body: formData
       });
       
+      console.log('Update response status:', response.status);
+      console.log('Update response headers:', response.headers);
+      
       if (!response.ok) {
-        throw new Error('Failed to update medical record');
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`Failed to update medical record: ${response.status} - ${errorText}`);
       }
       
       return await response.json();

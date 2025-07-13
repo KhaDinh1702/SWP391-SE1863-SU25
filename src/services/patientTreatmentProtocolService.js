@@ -58,5 +58,40 @@ export const patientTreatmentProtocolService = {
       console.error('Error creating patient treatment protocol:', error);
       throw error;
     }
+  },
+
+  // Cập nhật trạng thái quy trình điều trị
+  updateTreatmentProtocolStatus: async (protocolId, status) => {
+    try {
+      // Map string status to enum value
+      const statusMap = {
+        'Active': 0,
+        'Completed': 1,
+        'Discontinued': 2
+      };
+
+      const requestData = {
+        ProtocolId: protocolId,
+        Status: statusMap[status] ?? 0
+      };
+
+      console.log('Updating protocol status with data:', requestData);
+
+      const response = await fetch(`${API_BASE_URL}/PatientTreatmentProtocol/update-treatment-protocol-status`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(requestData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update treatment protocol status: ${response.status} - ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating treatment protocol status:', error);
+      throw error;
+    }
   }
 }; 

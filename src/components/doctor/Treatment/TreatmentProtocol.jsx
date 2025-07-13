@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, TimePicker } from 'antd';
-import { PlusOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
 import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
 import { appointmentService } from '../../../services/appointmentService';
@@ -26,10 +26,12 @@ const TreatmentProtocol = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
+  const [isUpdateStatusModalVisible, setIsUpdateStatusModalVisible] = useState(false);
   const [selectedProtocol, setSelectedProtocol] = useState(null);
   const [selectedStage, setSelectedStage] = useState(null);
   const [form] = Form.useForm();
   const [stageForm] = Form.useForm();
+  const [updateStatusForm] = Form.useForm();
 
   useEffect(() => {
     fetchData();
@@ -303,6 +305,31 @@ const TreatmentProtocol = () => {
     setIsStageModalVisible(true);
   };
 
+  const handleUpdateStatus = (protocol) => {
+    setSelectedProtocol(protocol);
+    updateStatusForm.setFieldsValue({
+      status: protocol.status
+    });
+    setIsUpdateStatusModalVisible(true);
+  };
+
+  const handleUpdateStatusSubmit = async (values) => {
+    try {
+      await patientTreatmentProtocolService.updateTreatmentProtocolStatus(
+        selectedProtocol.id,
+        values.status
+      );
+      message.success('Cập nhật trạng thái quy trình điều trị thành công!');
+      setIsUpdateStatusModalVisible(false);
+      updateStatusForm.resetFields();
+      setSelectedProtocol(null);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error('Error updating protocol status:', error);
+      message.error('Không thể cập nhật trạng thái: ' + (error.message || 'Lỗi không xác định'));
+    }
+  };
+
   // Chú thích các trạng thái quy trình điều trị:
   // Active: Đang điều trị
   // Completed: Hoàn thành
@@ -376,7 +403,7 @@ const TreatmentProtocol = () => {
       ),
     },
     {
-      title: 'Chi tiết',
+      title: 'Thao tác',
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -386,6 +413,14 @@ const TreatmentProtocol = () => {
               icon={<EyeOutlined />}
               size="small"
               onClick={() => handleViewProtocol(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Cập nhật trạng thái">
+            <Button
+              type="default"
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handleUpdateStatus(record)}
             />
           </Tooltip>
         </Space>
@@ -935,6 +970,58 @@ const TreatmentProtocol = () => {
             </div>
           </Form>
         )}
+      </Modal>
+
+      {/* Modal cập nhật trạng thái quy trình điều trị */}
+      <Modal
+        title="Cập nhật trạng thái quy trình điều trị"
+        open={isUpdateStatusModalVisible}
+        onCancel={() => {
+          setIsUpdateStatusModalVisible(false);
+          setSelectedProtocol(null);
+          updateStatusForm.resetFields();
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => {
+            setIsUpdateStatusModalVisible(false);
+            setSelectedProtocol(null);
+            updateStatusForm.resetFields();
+          }}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => updateStatusForm.submit()}>
+            Cập nhật trạng thái
+          </Button>
+        ]}
+        width={500}
+      >
+        <Form
+          form={updateStatusForm}
+          layout="vertical"
+          onFinish={handleUpdateStatusSubmit}
+        >
+          <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f0f0', borderRadius: 6 }}>
+            <p><strong>Bệnh nhân:</strong> {selectedProtocol?.patientName}</p>
+            <p><strong>ARV Protocol:</strong> {selectedProtocol?.arvProtocolName || selectedProtocol?.arvProtocolId || '-'}</p>
+            <p><strong>Trạng thái hiện tại:</strong> 
+              <Tag color={getStatusColor(selectedProtocol?.status)} style={{ marginLeft: 8 }}>
+                {getStatusText(selectedProtocol?.status)}
+              </Tag>
+            </p>
+          </div>
+
+          <Form.Item
+            name="status"
+            label="Trạng thái mới"
+            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+          >
+            <Select placeholder="Chọn trạng thái mới">
+              <Option value="Active">Đang điều trị</Option>
+              <Option value="Completed">Hoàn thành</Option>
+              <Option value="Discontinued">Ngừng điều trị</Option>
+            </Select>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
