@@ -724,7 +724,6 @@ const TreatmentProtocol = () => {
               })()
             }</p>
             <p><strong>Thuốc:</strong> {selectedStage.medicine || selectedStage.Medicine || '-'}</p>
-            <p><strong>Trạng thái:</strong> {selectedStage.status || selectedStage.Status || '-'}</p>
             <p><strong>Bệnh nhân:</strong> {selectedStage.patientName || selectedStage.PatientName || selectedStage.patientId || selectedStage.PatientId || '-'}</p>
           </div>
         ) : (
