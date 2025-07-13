@@ -81,17 +81,26 @@ const DoctorSchedule = () => {
         id: apt.id,
         status: apt.status || apt.Status,
         title: apt.appointmentTitle || apt.AppointmentTitle,
-        doctorId: apt.doctorId
+        doctorId: apt.doctorId,
+        isAnonymous: apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous
       })));
       
       filteredAppointments = filteredAppointments.filter(apt => {
         const status = apt.status || apt.Status || apt.paymentStatus || apt.PaymentStatus;
         const passesStatusFilter = status === 1 || status === 3 || status === 4;
-        console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}`);
+        const isAnonymous = apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous;
+        console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}, Anonymous: ${isAnonymous}`);
         return passesStatusFilter;
       });
       
       console.log('Appointments after status filter:', filteredAppointments.length);
+      console.log('Filtered appointments with anonymous info:', filteredAppointments.map(apt => ({
+        id: apt.id,
+        title: apt.appointmentTitle || apt.AppointmentTitle,
+        patientId: apt.patientId,
+        isAnonymous: apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous,
+        appointmentDate: apt.appointmentStartDate || apt.AppointmentStartDate
+      })));
       
       // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
       if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
@@ -307,8 +316,16 @@ const DoctorSchedule = () => {
   const getPatientDisplayName = (appointmentInfo) => {
     if (!appointmentInfo) return 'Bệnh nhân';
     
-    // Kiểm tra nếu là anonymous
-    if (appointmentInfo.isAnonymousAppointment || appointmentInfo.anonymous) {
+    // Kiểm tra nếu là anonymous - kiểm tra tất cả các biến thể có thể
+    const isAnonymous = appointmentInfo.isAnonymousAppointment || 
+                       appointmentInfo.IsAnonymousAppointment || 
+                       appointmentInfo.anonymous || 
+                       appointmentInfo.Anonymous ||
+                       appointmentInfo.isAnonymous ||
+                       appointmentInfo.IsAnonymous;
+    
+    if (isAnonymous) {
+      console.log('Anonymous appointment detected:', appointmentInfo);
       return 'Ẩn danh';
     }
     
@@ -460,6 +477,7 @@ const DoctorSchedule = () => {
           if (appointmentInfo) {
             const aptMoment = moment(appointmentInfo.appointmentStartDate || appointmentInfo.AppointmentStartDate || appointmentInfo.appointmentDate);
             const patientDisplayName = getPatientDisplayName(appointmentInfo);
+            const isAnonymous = appointmentInfo.isAnonymousAppointment || appointmentInfo.IsAnonymousAppointment || appointmentInfo.anonymous || appointmentInfo.Anonymous;
             const isOnlineAppointment = appointmentInfo.appointmentType === 0 || appointmentInfo.AppointmentType === 0 || 
                                       appointmentInfo.appointmentType === 'Online' || appointmentInfo.AppointmentType === 'Online';
             const onlineLink = appointmentInfo.onlineLink || appointmentInfo.OnlineLink;
@@ -479,12 +497,18 @@ const DoctorSchedule = () => {
                 color: isOnlineAppointment ? '#389e0d' : '#d48806',
                 fontWeight: 'bold'
               }}
-                title={`Cuộc hẹn ${doctorTypeInfo.appointmentType}: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || doctorTypeInfo.appointmentType} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
+                title={`Cuộc hẹn ${doctorTypeInfo.appointmentType}: ${appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || doctorTypeInfo.appointmentType} - ${patientDisplayName} lúc ${aptMoment.format('HH:mm')}${isOnlineAppointment ? ' (Trực tuyến)' : ''}${isAnonymous ? ' (Ẩn danh)' : ''}`}
               >
                 <span>{isOnlineAppointment ? '💻' : '📅'} {aptMoment.format('HH:mm')}</span>
                 <span>{appointmentInfo.appointmentTitle || appointmentInfo.AppointmentTitle || doctorTypeInfo.appointmentType}</span>
-                <span style={{ color: '#722ed1', fontWeight: 600, fontSize: '12px', marginTop: 2 }}>
-                  {patientDisplayName}
+                <span style={{ 
+                  color: isAnonymous ? '#ff4d4f' : '#722ed1', 
+                  fontWeight: 600, 
+                  fontSize: '12px', 
+                  marginTop: 2,
+                  fontStyle: isAnonymous ? 'italic' : 'normal'
+                }}>
+                  {isAnonymous ? '🔒 ' : ''}{patientDisplayName}
                 </span>
                 {isOnlineAppointment && onlineLink && (
                   <a 
@@ -548,6 +572,9 @@ const DoctorSchedule = () => {
             
             // CHỈ HIỂN THỊ NẾU CÓ APPOINTMENT, KHÔNG HIỂN THỊ CHỈ SCHEDULE TRỐNG
             if (showAppointment && appointmentInfo) {
+              const patientName = getPatientDisplayName(appointmentInfo);
+              const isAnonymous = appointmentInfo.isAnonymousAppointment || appointmentInfo.IsAnonymousAppointment || appointmentInfo.anonymous || appointmentInfo.Anonymous;
+              
               return (
                 <div 
                   style={{ 
@@ -563,7 +590,7 @@ const DoctorSchedule = () => {
                     flexDirection: 'column',
                     justifyContent: 'center'
                   }}
-                  title={`Lịch ID: ${schedule.originalId || schedule.id}\nCuộc hẹn: ${appointmentInfo.title} - ${getPatientDisplayName(appointmentInfo)} lúc ${appointmentTime}${isOnlineAppointment ? ' (Trực tuyến)' : ''}`}
+                  title={`Lịch ID: ${schedule.originalId || schedule.id}\nCuộc hẹn: ${appointmentInfo.title} - ${patientName} lúc ${appointmentTime}${isOnlineAppointment ? ' (Trực tuyến)' : ''}${isAnonymous ? ' (Ẩn danh)' : ''}`}
                 >
                   <div style={{ 
                     fontWeight: 'bold', 
@@ -803,6 +830,12 @@ const DoctorSchedule = () => {
                 borderRadius: 2 
               }}></div>
               <Text>Đã tiếp nhận lịch {doctorTypeInfo.appointmentType} (Trực tuyến)</Text>
+            </div>
+          </Col>
+          <Col>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: '14px' }}>🔒</span>
+              <Text>Lịch hẹn ẩn danh</Text>
             </div>
           </Col>
         </Row>

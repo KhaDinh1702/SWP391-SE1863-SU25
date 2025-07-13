@@ -158,6 +158,32 @@ const PatientAppointmentForm = ({ patientId }) => {
       
       const existingDateTime = new Date(appointment.appointmentStartDate || appointment.AppointmentStartDate);
       
+      // Kiểm tra xung đột cùng khung giờ với bất kỳ bác sĩ nào
+      const selectedTimestamp = selectedDateTime.getTime();
+      const existingTimestamp = existingDateTime.getTime();
+      const timeDiffMinutes = Math.abs(selectedTimestamp - existingTimestamp) / (1000 * 60);
+      
+      // Nếu thời gian chênh lệch ít hơn 30 phút thì coi như cùng khung giờ
+      if (timeDiffMinutes < 30) {
+        const existingDoctorId = appointment.doctorId || appointment.DoctorId;
+        const existingTimeStr = existingDateTime.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        // Tìm tên bác sĩ đã đặt lịch
+        const existingDoctor = doctors.find(doc => doc.id === existingDoctorId);
+        const doctorName = existingDoctor ? existingDoctor.fullName : 'bác sĩ khác';
+        
+        return {
+          isValid: false,
+          message: `Bạn đã có lịch hẹn vào ${existingTimeStr} với ${doctorName}. Bạn không thể đặt nhiều lịch hẹn cùng một khung giờ.`
+        };
+      }
+      
       // Kiểm tra khoảng cách 2 tiếng với các cuộc hẹn khác của cùng bệnh nhân
       const timeDifference = Math.abs(selectedDateTime - existingDateTime);
       const hoursDifference = timeDifference / (1000 * 60 * 60);
@@ -493,7 +519,7 @@ const PatientAppointmentForm = ({ patientId }) => {
       appointmentEndDate: appointmentEndDate, // Thêm appointmentEndDate
       appointmentType: parseInt(formData.meetingFormat), // 0 = Online, 1 = Offline (backend expects this)
       notes: formData.reason,
-      isAnonymousAppointment: formData.isAnonymousAppointment,
+      IsAnonymousAppointment: formData.isAnonymousAppointment, // Backend expects PascalCase
       apointmentTitle: getAppointmentTitle(parseInt(formData.appointmentType)), // Backend expects "ApointmentTitle"
       status: 0,
       onlineLink: formData.meetingFormat === 0 ? "TBD" : null, // Set placeholder for online meetings
@@ -501,6 +527,7 @@ const PatientAppointmentForm = ({ patientId }) => {
     };
     
     console.log('Request payload:', requestPayload);
+    console.log('Anonymous appointment flag:', formData.isAnonymousAppointment);
     try {
       const res = await appointmentService.createAppointmentWithMomo(requestPayload);
       // Lấy link từ cả PaymentRedirectUrl (chữ hoa) và paymentRedirectUrl (chữ thường)
@@ -552,25 +579,29 @@ const PatientAppointmentForm = ({ patientId }) => {
           ) : (
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Anonymous Toggle */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className={`flex items-center justify-between p-4 rounded-lg border ${formData.isAnonymousAppointment ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="flex items-center space-x-3">
-                  <EyeInvisibleOutlined className="text-xl text-[#3B9AB8]" />
+                  <EyeInvisibleOutlined className={`text-xl ${formData.isAnonymousAppointment ? 'text-blue-600' : 'text-[#3B9AB8]'}`} />
                   <div>
                     <h3 className="font-medium text-gray-900">Đặt lịch ẩn danh</h3>
-                    <p className="text-sm text-gray-500">Thông tin của bạn sẽ được bảo mật</p>
+                    <p className={`text-sm ${formData.isAnonymousAppointment ? 'text-blue-600' : 'text-gray-500'}`}>
+                      {formData.isAnonymousAppointment ? '✓ Lịch hẹn này sẽ được bảo mật ẩn danh' : 'Thông tin của bạn sẽ được bảo mật'}
+                    </p>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   name="isAnonymousAppointment"
                   checked={formData.isAnonymousAppointment}
-                  onChange={e =>
+                  onChange={e => {
+                    const isAnonymous = e.target.checked;
+                    console.log('Anonymous appointment toggled:', isAnonymous);
                     setFormData(prev => ({
                       ...prev,
-                      isAnonymousAppointment: e.target.checked,
-                    }))
-                  }
-                  className="w-5 h-5 accent-[#3B9AB8]"
+                      isAnonymousAppointment: isAnonymous,
+                    }));
+                  }}
+                  className={`w-5 h-5 rounded transition-colors ${formData.isAnonymousAppointment ? 'accent-blue-600' : 'accent-[#3B9AB8]'}`}
                 />
               </div>
 

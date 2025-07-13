@@ -318,10 +318,10 @@ export const doctorService = {
     }
   },
 
-  // Lấy thông tin bác sĩ hiện tại
-  getCurrentDoctor: async () => {
+  // Lấy thống kê của bác sĩ
+  getDoctorStats: async (doctorId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/Doctor/get-current-doctor`, {
+      const response = await fetch(`${API_BASE_URL}/Doctor/get-doctor-stats?doctorId=${doctorId}`, {
         method: 'GET',
         headers: getAuthHeaders()
       });
@@ -333,8 +333,8 @@ export const doctorService = {
       
       return await response.json();
     } catch (error) {
-      console.error('Error fetching current doctor:', error);
+      console.error('Error fetching doctor stats:', error);
       throw error;
     }
-  },
+  }
 };

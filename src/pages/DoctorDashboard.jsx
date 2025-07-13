@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Layout, 
   Typography, 
@@ -35,7 +35,6 @@ import DoctorSchedule from '../components/doctor/Schedule/DoctorSchedule';
 import PatientProfiles from '../components/doctor/Patient/PatientProfiles';
 import LabResults from '../components/doctor/Lab/LabResults';
 import TreatmentProtocol from '../components/doctor/Treatment/TreatmentProtocol';
-import OnlineConsultation from '../components/doctor/Consultation/OnlineConsultation';
 import DoctorProfile from '../components/doctor/Profile/DoctorProfile';
 import { doctorService } from '../services/doctorService';
 import { patientService } from '../services/patientService';
@@ -64,25 +63,88 @@ const DoctorDashboard = () => {
   useEffect(() => {
     const fetchCurrentDoctor = async () => {
       try {
-        const doctor = await doctorService.getCurrentDoctor();
-        setCurrentDoctor(doctor);
+        // Lấy thông tin user từ token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found');
+          setCurrentDoctor(null);
+          return;
+        }
+
+        // Decode JWT để lấy thông tin user
+        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        const userId = tokenPayload.userId || tokenPayload.sub || tokenPayload.nameid;
+
+        if (!userId) {
+          console.error('No user ID found in token');
+          setCurrentDoctor(null);
+          return;
+        }
+
+        // Lấy danh sách tất cả bác sĩ từ API
+        const allDoctors = await doctorService.getAllDoctors();
+
+        if (!allDoctors || allDoctors.length === 0) {
+          console.error('No doctors found in API');
+          setCurrentDoctor(null);
+          return;
+        }
+
+        // Tìm bác sĩ có userId trùng với token
+        const currentDoctor = allDoctors.find(doctor => doctor.userId === userId);
+
+        if (currentDoctor) {
+          const doctorData = {
+            ...currentDoctor,
+            doctorId: currentDoctor.id,
+            id: currentDoctor.id
+          };
+          setCurrentDoctor(doctorData);
+        } else {
+          console.error('Current doctor not found in doctor list');
+          setCurrentDoctor(null);
+        }
       } catch (error) {
         console.error('Error fetching current doctor:', error);
-        // Fallback: sử dụng thông tin từ localStorage hoặc token
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        setCurrentDoctor(userInfo);
+        setCurrentDoctor(null);
       }
     };
 
     fetchCurrentDoctor();
   }, []);
 
-  // Lấy dữ liệu dashboard khi tab active
+  // Kiểm tra loại bác sĩ dựa trên specialization
+  const getDoctorType = () => {
+    if (!currentDoctor?.specialization) return 'general';
+    
+    const spec = currentDoctor.specialization.toLowerCase();
+    if (spec.includes('xét nghiệm') || spec.includes('lab') || spec.includes('test')) {
+      return 'lab';
+    } else if (spec.includes('điều trị') || spec.includes('treatment')) {
+      return 'treatment';
+    } else if (spec.includes('tư vấn') || spec.includes('consultant') || spec.includes('consultation')) {
+      return 'consultant';
+    }
+    return 'general';
+  };
+
+  // Lấy danh sách menu đầy đủ cho tất cả các loại bác sĩ
+  const getAvailableTabs = () => {
+    // Trả về tất cả tab cho mọi loại bác sĩ
+    return ['dashboard', 'schedule', 'patients', 'lab', 'treatment', 'profile'];
+  };
+
+  // Lấy dữ liệu dashboard khi tab active và có currentDoctor
   useEffect(() => {
-    if (activeTab === 'dashboard') {
+    if (activeTab === 'dashboard' && currentDoctor) {
       fetchDashboardData();
     }
-  }, [activeTab]);
+  }, [activeTab, currentDoctor]);
+
+  // Kiểm tra và chuyển về dashboard nếu tab hiện tại không khả dụng (bỏ kiểm tra này vì tất cả tab đều khả dụng)
+  useEffect(() => {
+    // Không cần kiểm tra nữa vì tất cả tab đều khả dụng cho mọi bác sĩ
+  }, [activeTab, currentDoctor]);
 
   const fetchDashboardData = async () => {    
     setLoading(true);
@@ -120,12 +182,23 @@ const DoctorDashboard = () => {
 
   const fetchStats = async () => {
     try {
+      if (!currentDoctor) {
+        return {
+          totalPatients: 0,
+          todayAppointments: 0,
+          pendingLabResults: 0,
+          activeTreatments: 0
+        };
+      }
+      
+      const doctorId = currentDoctor?.doctorId || currentDoctor?.id;
+      
       // Lấy dữ liệu thống kê từ nhiều API
       const [patients, todayAppts, labResults, activeTreatments] = await Promise.allSettled([
-        patientService.getAllPatients(), // Sử dụng patientService để lấy tất cả bệnh nhân
-        currentDoctor?.doctorId ? doctorService.getTodayAppointments(currentDoctor.doctorId) : Promise.resolve([]),
-        labResultService.getAllLabResults(), // Sử dụng labResultService để lấy tất cả kết quả xét nghiệm
-        currentDoctor?.doctorId ? doctorService.getActiveTreatments(currentDoctor.doctorId) : Promise.resolve([])
+        patientService.getAllPatients(),
+        doctorId ? doctorService.getTodayAppointments(doctorId) : Promise.resolve([]),
+        labResultService.getAllLabResults(),
+        doctorId ? doctorService.getActiveTreatments(doctorId) : Promise.resolve([])
       ]);
 
       // Tính số lượng lab results cần chú ý (không có kết luận hoặc cần theo dõi)
@@ -133,15 +206,16 @@ const DoctorDashboard = () => {
         labResults.value.filter(lab => !lab.Conclusion || lab.Conclusion.toLowerCase().includes('cần theo dõi') || lab.Conclusion.toLowerCase().includes('bất thường')) : 
         [];
 
-      return {
+      const finalStats = {
         totalPatients: patients.status === 'fulfilled' ? patients.value?.length || 0 : 0,
         todayAppointments: todayAppts.status === 'fulfilled' ? todayAppts.value?.length || 0 : 0,
         pendingLabResults: pendingLabResults.length,
         activeTreatments: activeTreatments.status === 'fulfilled' ? activeTreatments.value?.length || 0 : 0
       };
+      
+      return finalStats;
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Fallback với dữ liệu mẫu
       return {
         totalPatients: 0,
         todayAppointments: 0,
@@ -153,9 +227,43 @@ const DoctorDashboard = () => {
 
   const fetchTodayAppointments = async () => {
     try {
-      if (!currentDoctor?.doctorId) return [];
-      const appointments = await doctorService.getTodayAppointments(currentDoctor.doctorId);
-      return appointments || [];
+      if (!currentDoctor || (!currentDoctor?.doctorId && !currentDoctor?.id)) {
+        return [];
+      }
+      
+      const doctorId = currentDoctor?.doctorId || currentDoctor?.id;
+      
+      try {
+        // Thử API endpoint chuyên dụng trước
+        const appointments = await doctorService.getTodayAppointments(doctorId);
+        return appointments || [];
+      } catch (apiError) {
+        // Fallback: Lấy tất cả appointments và lọc
+        const { appointmentService } = await import('../services/appointmentService');
+        const allAppointments = await appointmentService.getAllAppointments();
+        
+        if (!allAppointments) return [];
+        
+        // Lấy ngày hôm nay theo múi giờ VN
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        // Lọc appointments của bác sĩ hôm nay
+        const todayAppointments = allAppointments.filter(apt => {
+          const appointmentDoctorId = apt.doctorId || apt.DoctorId;
+          const appointmentDate = apt.appointmentStartDate || apt.AppointmentStartDate;
+          
+          if (!appointmentDate) return false;
+          
+          const aptDateStr = new Date(appointmentDate).toISOString().split('T')[0];
+          const isToday = aptDateStr === todayStr;
+          const isThisDoctor = appointmentDoctorId === doctorId;
+          
+          return isToday && isThisDoctor;
+        });
+        
+        return todayAppointments || [];
+      }
     } catch (error) {
       console.error('Error fetching today appointments:', error);
       return [];
@@ -175,8 +283,6 @@ const DoctorDashboard = () => {
   const fetchLabResults = async () => {
     try {
       const results = await labResultService.getAllLabResults();
-      console.log('Lab results fetched:', results); // Debug log
-      console.log('Sample lab result structure:', results?.[0]); // Debug log
       return results || [];
     } catch (error) {
       console.error('Error fetching lab results:', error);
@@ -191,7 +297,6 @@ const DoctorDashboard = () => {
       case 'patients': return 'Hồ sơ Bệnh nhân';
       case 'lab': return 'Xét nghiệm';
       case 'treatment': return 'Quy trình điều trị';
-      case 'consultation': return 'Tư vấn trực tuyến';
       case 'profile': return 'Hồ sơ cá nhân';
       default: return 'Dashboard';
     }
@@ -204,14 +309,13 @@ const DoctorDashboard = () => {
       case 'patients': return 'Xem thông tin chi tiết về bệnh nhân';
       case 'lab': return 'Xem kết quả xét nghiệm của bệnh nhân';
       case 'treatment': return 'Tạo quy trình khám bệnh cho bệnh nhân';
-      case 'consultation': return 'Thực hiện tư vấn trực tuyến';
       case 'profile': return 'Thông tin cá nhân của bác sĩ';
       default: return 'Dashboard';
     }
   };
 
-  // Filter patients based on search and filter criteria
-  const getFilteredPatients = () => {
+  // Filter patients based on search and filter criteria với useMemo để tối ưu
+  const getFilteredPatients = useMemo(() => {
     return allPatients.filter(patient => {
       const matchesSearch = !searchPatient || 
         patient.fullName?.toLowerCase().includes(searchPatient.toLowerCase()) ||
@@ -224,7 +328,124 @@ const DoctorDashboard = () => {
       
       return matchesSearch && matchesGender;
     });
-  };
+  }, [allPatients, searchPatient, filterGender]);
+
+  // Memoize table columns để tránh re-render
+  const patientColumns = useMemo(() => [
+    { 
+      title: 'Mã BN', 
+      dataIndex: 'patientId', 
+      key: 'patientId',
+      width: 120,
+      render: (id) => <Text code>{id?.substring(0, 8)}...</Text>
+    },
+    { 
+      title: 'Họ và tên', 
+      dataIndex: 'fullName', 
+      key: 'fullName',
+      render: (name, record) => (
+        <Space>
+          <Avatar 
+            icon={<UserOutlined />} 
+            style={{ backgroundColor: record.gender === 0 ? '#1890ff' : '#f759ab' }}
+          />
+          <Text strong>{name || 'N/A'}</Text>
+        </Space>
+      )
+    },
+    {
+      title: 'Ngày sinh',
+      dataIndex: 'dateOfBirth',
+      key: 'dateOfBirth',
+      width: 120,
+      render: (date) => {
+        if (!date) return 'N/A';
+        try {
+          const birthDate = new Date(date);
+          const age = new Date().getFullYear() - birthDate.getFullYear();
+          return (
+            <div>
+              <div>{birthDate.toLocaleDateString('vi-VN')}</div>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {age} tuổi
+              </Text>
+            </div>
+          );
+        } catch {
+          return date;
+        }
+      }
+    },
+    {
+      title: 'Giới tính',
+      dataIndex: 'gender',
+      key: 'gender',
+      width: 100,
+      render: (gender) => {
+        const genderText = gender === 0 ? 'Nam' : gender === 1 ? 'Nữ' : 'Khác';
+        const color = gender === 0 ? 'blue' : gender === 1 ? 'pink' : 'default';
+        return <Tag color={color}>{genderText}</Tag>;
+      }
+    },
+    { 
+      title: 'Liên hệ', 
+      dataIndex: 'phoneNumber', 
+      key: 'contact',
+      width: 150,
+      render: (phone, record) => (
+        <Space direction="vertical" size="small">
+          <Space size="small">
+            <PhoneOutlined />
+            <Text copyable={{ text: phone }}>{phone}</Text>
+          </Space>
+          {record.email && (
+            <Space size="small">
+              <MailOutlined />
+              <Text copyable={{ text: record.email }} style={{ fontSize: 12 }}>
+                {record.email}
+              </Text>
+            </Space>
+          )}
+        </Space>
+      )
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 120,
+      render: (isActive) => (
+        <Tag color={isActive ? 'green' : 'red'} icon={isActive ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}>
+          {isActive ? 'Hoạt động' : 'Không hoạt động'}
+        </Tag>
+      )
+    }
+  ], []);
+
+  // Memoize table data để tránh re-render
+  const tableData = useMemo(() => {
+    return getFilteredPatients.map((patient, index) => ({
+      key: patient.patientId || index,
+      patientId: patient.patientId,
+      fullName: patient.fullName,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      email: patient.email,
+      address: patient.address,
+      isActive: patient.isActive
+    }));
+  }, [getFilteredPatients]);
+
+  // Callback để handle search input change
+  const handleSearchChange = useCallback((e) => {
+    setSearchPatient(e.target.value);
+  }, []);
+
+  // Callback để handle gender filter change
+  const handleGenderChange = useCallback((value) => {
+    setFilterGender(value);
+  }, []);
 
   const DashboardOverview = () => (
     <div>
@@ -239,7 +460,7 @@ const DoctorDashboard = () => {
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
-              })}. Bạn có ${stats.todayAppointments} lịch hẹn hôm nay.`}
+              })}`}
               type="info"
               showIcon
               icon={<HeartOutlined />}
@@ -339,205 +560,7 @@ const DoctorDashboard = () => {
           </Col>
         </Row>
 
-        <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col xs={24} lg={12}>
-            <Card title="Lịch hẹn hôm nay" size="small">
-              <Table
-                dataSource={todayAppointments.map((apt, index) => ({
-                  key: apt.appointmentId || index,
-                  patient: apt.patientName || apt.patient?.fullName || 'N/A',
-                  time: apt.appointmentTime || apt.time,
-                  status: apt.appointmentStatus || apt.status || 'Scheduled'
-                }))}
-                columns={[
-                  { title: 'Bệnh nhân', dataIndex: 'patient', key: 'patient' },
-                  { 
-                    title: 'Thời gian', 
-                    dataIndex: 'time', 
-                    key: 'time',
-                    render: (time) => {
-                      if (!time) return 'N/A';
-                      try {
-                        return new Date(time).toLocaleTimeString('vi-VN', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        });
-                      } catch {
-                        return time;
-                      }
-                    }
-                  },
-                  {
-                    title: 'Trạng thái',
-                    dataIndex: 'status',
-                    key: 'status',
-                    render: (status) => {
-                      const statusConfig = {
-                        Scheduled: { color: 'blue', text: 'Đã lên lịch', icon: <ClockCircleOutlined /> },
-                        InProgress: { color: 'orange', text: 'Đang khám', icon: <ClockCircleOutlined /> },
-                        Completed: { color: 'green', text: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-                        Cancelled: { color: 'red', text: 'Đã hủy', icon: <ExclamationCircleOutlined /> },
-                        0: { color: 'blue', text: 'Đã lên lịch', icon: <ClockCircleOutlined /> },
-                        1: { color: 'orange', text: 'Đang khám', icon: <ClockCircleOutlined /> },
-                        2: { color: 'green', text: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-                        3: { color: 'red', text: 'Đã hủy', icon: <ExclamationCircleOutlined /> }
-                      };
-                      const config = statusConfig[status] || { color: 'default', text: status || 'N/A', icon: null };
-                      return (
-                        <Tag color={config.color} icon={config.icon}>
-                          {config.text}
-                        </Tag>
-                      );
-                    }
-                  }
-                ]}
-                pagination={false}
-                size="small"
-              />
-            </Card>          </Col>
-        </Row>        <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col span={24}>
-            <Card 
-              title={`Danh sách bệnh nhân (${getFilteredPatients().length}/${allPatients.length})`} 
-              size="small"
-              extra={
-                <Space>
-                  <Input
-                    placeholder="Tìm kiếm bệnh nhân..."
-                    prefix={<SearchOutlined />}
-                    value={searchPatient}
-                    onChange={(e) => setSearchPatient(e.target.value)}
-                    style={{ width: 200 }}
-                    allowClear
-                  />
-                  <Select
-                    value={filterGender}
-                    onChange={setFilterGender}
-                    style={{ width: 120 }}
-                    placeholder="Giới tính"
-                  >
-                    <Select.Option value="all">Tất cả</Select.Option>
-                    <Select.Option value="male">Nam</Select.Option>
-                    <Select.Option value="female">Nữ</Select.Option>
-                  </Select>
-                </Space>
-              }
-            >
-              <Table
-                dataSource={getFilteredPatients().map((patient, index) => ({
-                  key: patient.patientId || index,
-                  patientId: patient.patientId,
-                  fullName: patient.fullName,
-                  dateOfBirth: patient.dateOfBirth,
-                  gender: patient.gender,
-                  phoneNumber: patient.phoneNumber,
-                  email: patient.email,
-                  address: patient.address,
-                  isActive: patient.isActive
-                }))}
-                columns={[
-                  { 
-                    title: 'Mã BN', 
-                    dataIndex: 'patientId', 
-                    key: 'patientId',
-                    width: 120,
-                    render: (id) => <Text code>{id?.substring(0, 8)}...</Text>
-                  },
-                  { 
-                    title: 'Họ và tên', 
-                    dataIndex: 'fullName', 
-                    key: 'fullName',
-                    render: (name, record) => (
-                      <Space>
-                        <Avatar 
-                          icon={<UserOutlined />} 
-                          style={{ backgroundColor: record.gender === 0 ? '#1890ff' : '#f759ab' }}
-                        />
-                        <Text strong>{name || 'N/A'}</Text>
-                      </Space>
-                    )
-                  },
-                  {
-                    title: 'Ngày sinh',
-                    dataIndex: 'dateOfBirth',
-                    key: 'dateOfBirth',
-                    width: 120,
-                    render: (date) => {
-                      if (!date) return 'N/A';
-                      try {
-                        const birthDate = new Date(date);
-                        const age = new Date().getFullYear() - birthDate.getFullYear();
-                        return (
-                          <div>
-                            <div>{birthDate.toLocaleDateString('vi-VN')}</div>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                              {age} tuổi
-                            </Text>
-                          </div>
-                        );
-                      } catch {
-                        return date;
-                      }
-                    }
-                  },
-                  {
-                    title: 'Giới tính',
-                    dataIndex: 'gender',
-                    key: 'gender',
-                    width: 100,
-                    render: (gender) => {
-                      const genderText = gender === 0 ? 'Nam' : gender === 1 ? 'Nữ' : 'Khác';
-                      const color = gender === 0 ? 'blue' : gender === 1 ? 'pink' : 'default';
-                      return <Tag color={color}>{genderText}</Tag>;
-                    }
-                  },
-                  { 
-                    title: 'Liên hệ', 
-                    dataIndex: 'phoneNumber', 
-                    key: 'contact',
-                    width: 150,
-                    render: (phone, record) => (
-                      <Space direction="vertical" size="small">
-                        <Space size="small">
-                          <PhoneOutlined />
-                          <Text copyable={{ text: phone }}>{phone}</Text>
-                        </Space>
-                        {record.email && (
-                          <Space size="small">
-                            <MailOutlined />
-                            <Text copyable={{ text: record.email }} style={{ fontSize: 12 }}>
-                              {record.email}
-                            </Text>
-                          </Space>
-                        )}
-                      </Space>
-                    )
-                  },
-                  {
-                    title: 'Trạng thái',
-                    dataIndex: 'isActive',
-                    key: 'isActive',
-                    width: 120,
-                    render: (isActive) => (
-                      <Tag color={isActive ? 'green' : 'red'} icon={isActive ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}>
-                        {isActive ? 'Hoạt động' : 'Không hoạt động'}
-                      </Tag>
-                    )
-                  }
-                ]}
-                pagination={{
-                  pageSize: 8,
-                  showSizeChanger: true,
-                  showQuickJumper: true,
-                  showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bệnh nhân`,
-                  pageSizeOptions: ['5', '8', '10', '20']
-                }}
-                size="small"
-                scroll={{ x: 1000 }}
-              />
-            </Card>
-          </Col>
-        </Row>
+
 
 
       </Spin>
@@ -547,7 +570,11 @@ const DoctorDashboard = () => {
   return (
     <Layout className="min-h-screen">
       <Sider width={220} className="fixed left-0 h-screen overflow-y-auto bg-white shadow-sm" theme="light">
-        <DoctorSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <DoctorSidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          availableTabs={getAvailableTabs()}
+        />
       </Sider>
       <Layout className="ml-[10px]">
         <Content className="bg-gray-50 p-6">
@@ -565,7 +592,6 @@ const DoctorDashboard = () => {
             {activeTab === 'patients' && <PatientProfiles />}
             {activeTab === 'lab' && <LabResults />}
             {activeTab === 'treatment' && <TreatmentProtocol />}
-            {activeTab === 'consultation' && <OnlineConsultation />}
             {activeTab === 'profile' && <DoctorProfile />}
           </div>
         </Content>
