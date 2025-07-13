@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, Image } from 'antd';
-import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined, PictureOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, ReloadOutlined, SearchOutlined, FilterOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons';
 import { labResultService } from '../../../services';
 import { patientService } from '../../../services/patientService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
@@ -24,6 +24,7 @@ const LabResults = () => {
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentDoctor, setCurrentDoctor] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -221,6 +222,7 @@ const LabResults = () => {
       await labResultService.createLabResult(requestData);
       message.success('Tạo kết quả xét nghiệm thành công');
       setIsModalVisible(false);
+      setSelectedFiles([]);
       form.resetFields();
       fetchLabResults();
     } catch (error) {
@@ -394,6 +396,7 @@ const LabResults = () => {
               icon={<PlusOutlined />}
               onClick={() => {
                 setSelectedResult(null);
+                setSelectedFiles([]);
                 setIsModalVisible(true);
                 // Set doctorId immediately when opening modal
                 if (currentDoctor?.id) {
@@ -456,12 +459,14 @@ const LabResults = () => {
         onCancel={() => {
           setIsModalVisible(false);
           setSelectedResult(null);
+          setSelectedFiles([]);
           form.resetFields();
         }}
         footer={selectedResult ? [
           <Button key="close" onClick={() => {
             setIsModalVisible(false);
             setSelectedResult(null);
+            setSelectedFiles([]);
           }}>
             Đóng
           </Button>
@@ -469,6 +474,7 @@ const LabResults = () => {
           <Button key="cancel" onClick={() => {
             setIsModalVisible(false);
             setSelectedResult(null);
+            setSelectedFiles([]);
             form.resetFields();
           }}>
             Hủy
@@ -493,7 +499,12 @@ const LabResults = () => {
                 })()}</p>
                 <p><strong>Giai đoạn điều trị:</strong> {(() => {
                   const stage = treatmentStages.find(s => s.treatmentStageId === selectedResult.treatmentStageId || s.id === selectedResult.treatmentStageId);
-                  return stage ? `${stage.stageName} (${stage.treatmentStageId || stage.id})` : selectedResult.treatmentStageId || '-';
+                  if (stage) {
+                    const stageId = stage.treatmentStageId || stage.id;
+                    const shortId = stageId ? stageId.toString().substring(0, 4) : '';
+                    return `${stage.stageName} (${shortId})`;
+                  }
+                  return selectedResult.treatmentStageId ? selectedResult.treatmentStageId.toString().substring(0, 4) : '-';
                 })()}</p>
                 <p><strong>Loại xét nghiệm:</strong> {selectedResult.testType || '-'}</p>
                 <p><strong>Tên xét nghiệm:</strong> {selectedResult.testName || '-'}</p>
@@ -602,7 +613,67 @@ const LabResults = () => {
                   label="Hình ảnh xét nghiệm (bắt buộc)"
                   rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh xét nghiệm' }]}
                 >
-                  <input type="file" name="labPictures" multiple accept="image/*" />
+                  <div style={{ border: '1px dashed #d9d9d9', borderRadius: 6, padding: 16, textAlign: 'center', backgroundColor: '#fafafa' }}>
+                    <input 
+                      type="file" 
+                      name="labPictures" 
+                      multiple 
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="file-input"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files);
+                        setSelectedFiles(files);
+                        form.setFieldsValue({ labPictures: files });
+                      }}
+                    />
+                    <Button
+                      type="dashed"
+                      icon={<UploadOutlined />}
+                      size="large"
+                      onClick={() => document.getElementById('file-input').click()}
+                      style={{ marginBottom: 8 }}
+                    >
+                      Chọn hình ảnh xét nghiệm
+                    </Button>
+                    {selectedFiles.length > 0 && (
+                      <div style={{ marginTop: 8, textAlign: 'left' }}>
+                        <p style={{ margin: 0, fontWeight: 'bold', color: '#1890ff' }}>
+                          Đã chọn {selectedFiles.length} file:
+                        </p>
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', backgroundColor: '#f0f8ff', margin: '4px 0', borderRadius: 4, paddingLeft: 8, paddingRight: 8 }}>
+                            <span style={{ fontSize: 12, color: '#666' }}>
+                              <PictureOutlined style={{ marginRight: 4 }} /> {file.name}
+                            </span>
+                            <Button
+                              type="link"
+                              size="small"
+                              danger
+                              onClick={() => {
+                                const newFiles = selectedFiles.filter((_, i) => i !== index);
+                                setSelectedFiles(newFiles);
+                                form.setFieldsValue({ labPictures: newFiles });
+                                // Update the actual file input
+                                const fileInput = document.getElementById('file-input');
+                                const dt = new DataTransfer();
+                                newFiles.forEach(f => dt.items.add(f));
+                                fileInput.files = dt.files;
+                              }}
+                            >
+                              Xóa
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {selectedFiles.length === 0 && (
+                      <p style={{ margin: 0, color: '#999', fontSize: 12 }}>
+                        <PictureOutlined style={{ marginRight: 4 }} />
+                        Chọn các hình ảnh xét nghiệm (JPG, PNG, GIF...)
+                      </p>
+                    )}
+                  </div>
                 </Form.Item>
               </Col>
             </Row>
