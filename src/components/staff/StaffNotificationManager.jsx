@@ -22,11 +22,8 @@ const StaffNotificationManager = () => {
   const [treatmentStages, setTreatmentStages] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [selectedTreatmentStage, setSelectedTreatmentStage] = useState(null);
-  // Thêm các state cho lặp lại thông báo thuốc
-  const [repeatType, setRepeatType] = useState('none'); // none, daily, weekly, custom
-  const [repeatDays, setRepeatDays] = useState([]); // Các ngày trong tuần
-  const [reminderTimes, setReminderTimes] = useState(['']); // Nhiều giờ nhắc trong ngày
-  const [endDate, setEndDate] = useState(''); // Ngày kết thúc lặp lại
+  // State cho thời gian nhắc uống thuốc (chỉ một lần)
+  const [reminderTimes, setReminderTimes] = useState(['']);
 
   useEffect(() => {
     fetchPatients();
@@ -187,23 +184,9 @@ const StaffNotificationManager = () => {
         message.error('Vui lòng chọn giai đoạn điều trị');
         return;
       }
-      if (repeatType === 'none' && reminderTimes[0] === '') {
+      if (reminderTimes[0] === '') {
         message.error('Vui lòng chọn thời gian nhắc uống');
         return;
-      }
-      if (repeatType !== 'none') {
-        if (reminderTimes.some(time => time === '')) {
-          message.error('Vui lòng nhập đầy đủ thời gian nhắc uống');
-          return;
-        }
-        if (repeatType === 'custom' && repeatDays.length === 0) {
-          message.error('Vui lòng chọn ít nhất một ngày trong tuần');
-          return;
-        }
-        if (!endDate) {
-          message.error('Vui lòng chọn ngày kết thúc lặp lại');
-          return;
-        }
       }
     }
     
@@ -224,42 +207,23 @@ const StaffNotificationManager = () => {
         if (dosage.trim()) {
           finalMessage += ` - Liều: ${dosage}`;
         }
-        
-        // Xử lý tạo thông báo lặp lại
-        if (repeatType === 'none') {
-          // Tạo thông báo một lần
-          finalMessage += ` - Thời gian: ${new Date(reminderTimes[0]).toLocaleString('vi-VN')}`;
-          
-          const notificationData = {
-            patientId: selectedPatient,
-            message: finalMessage,
-            treatmentStageId: selectedTreatmentStage,
-            appointmentId: null,
-            scheduledTime: reminderTimes[0]
-          };
-          
-          await notificationService.createNotification(notificationData);
-        } else {
-          // Tạo nhiều thông báo lặp lại
-          const notifications = generateRepeatingNotifications(
-            selectedPatient,
-            medicineName,
-            messageText,
-            dosage,
-            selectedTreatmentStage,
-            repeatType,
-            repeatDays,
-            reminderTimes,
-            endDate
-          );
-          
-          // Tạo từng thông báo
-          for (const notification of notifications) {
-            await notificationService.createNotification(notification);
-          }
-          
-          message.success(`Đã tạo ${notifications.length} thông báo nhắc uống thuốc`);
+        // Xác định thời gian nhắc uống thuốc (giờ:phút hôm nay hoặc ngày mai nếu đã qua)
+        const [hour, minute] = reminderTimes[0].split(':');
+        const now = new Date();
+        let scheduledDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hour), parseInt(minute), 0, 0);
+        if (scheduledDate <= now) {
+          // Nếu thời gian đã qua, đặt cho ngày mai
+          scheduledDate.setDate(scheduledDate.getDate() + 1);
         }
+        finalMessage += ` - Thời gian: ${scheduledDate.toLocaleString('vi-VN')}`;
+        const notificationData = {
+          patientId: selectedPatient,
+          message: finalMessage,
+          treatmentStageId: selectedTreatmentStage,
+          appointmentId: null,
+          scheduledTime: scheduledDate.toISOString()
+        };
+        await notificationService.createNotification(notificationData);
       } else if (notificationType === 'appointment') {
         finalMessage = `Thông báo lịch hẹn: ${messageText}`;
         
@@ -286,11 +250,7 @@ const StaffNotificationManager = () => {
         await notificationService.createNotification(notificationData);
       }
       
-      // Chỉ hiển thị success message cho non-medicine hoặc medicine không lặp lại
-      if (notificationType !== 'medicine' || repeatType === 'none') {
-        message.success('Tạo thông báo thành công');
-      }
-      
+      message.success('Tạo thông báo thành công');
       // Reset form
       setMessageText('');
       setSelectedPatient(null);
@@ -300,12 +260,7 @@ const StaffNotificationManager = () => {
       setNotificationType('general');
       setSelectedAppointment(null);
       setSelectedTreatmentStage(null);
-      // Reset các field mới
-      setRepeatType('none');
-      setRepeatDays([]);
       setReminderTimes(['']);
-      setEndDate('');
-      
       // Tải lại notifications
       fetchNotifications();
     } catch (error) {
@@ -317,52 +272,7 @@ const StaffNotificationManager = () => {
   };
 
   // Hàm tạo thông báo lặp lại
-  const generateRepeatingNotifications = (patientId, medicineName, messageText, dosage, treatmentStageId, repeatType, repeatDays, reminderTimes, endDate) => {
-    const notifications = [];
-    const startDate = new Date();
-    const endDateTime = new Date(endDate);
-    
-    // Tạo danh sách ngày cần tạo thông báo
-    const targetDays = repeatType === 'daily' ? [0, 1, 2, 3, 4, 5, 6] : 
-                      repeatType === 'weekly' ? [startDate.getDay()] : 
-                      repeatDays;
-    
-    // Lặp từ ngày hiện tại đến ngày kết thúc
-    for (let currentDate = new Date(startDate); currentDate <= endDateTime; currentDate.setDate(currentDate.getDate() + 1)) {
-      const dayOfWeek = currentDate.getDay();
-      
-      // Kiểm tra xem ngày này có trong danh sách cần tạo thông báo không
-      if (targetDays.includes(dayOfWeek)) {
-        // Tạo thông báo cho từng giờ nhắc
-        reminderTimes.forEach(time => {
-          if (time) {
-            const [hours, minutes] = time.split(':');
-            const scheduledDateTime = new Date(currentDate);
-            scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            
-            // Chỉ tạo thông báo cho tương lai
-            if (scheduledDateTime > startDate) {
-              let finalMessage = `Nhắc nhở uống thuốc: ${medicineName} - ${messageText}`;
-              if (dosage.trim()) {
-                finalMessage += ` - Liều: ${dosage}`;
-              }
-              finalMessage += ` - Thời gian: ${scheduledDateTime.toLocaleString('vi-VN')}`;
-              
-              notifications.push({
-                patientId: patientId,
-                message: finalMessage,
-                treatmentStageId: treatmentStageId,
-                appointmentId: null,
-                scheduledTime: scheduledDateTime.toISOString()
-              });
-            }
-          }
-        });
-      }
-    }
-    
-    return notifications;
-  };
+  // Đã loại bỏ hàm tạo thông báo lặp lại vì chỉ hỗ trợ "một lần"
 
   // Hàm thêm/bớt thời gian nhắc
   const addReminderTime = () => {
@@ -382,13 +292,7 @@ const StaffNotificationManager = () => {
   };
 
   // Hàm xử lý thay đổi ngày lặp lại
-  const handleRepeatDaysChange = (day) => {
-    if (repeatDays.includes(day)) {
-      setRepeatDays(repeatDays.filter(d => d !== day));
-    } else {
-      setRepeatDays([...repeatDays, day]);
-    }
-  };
+  // Đã loại bỏ hàm xử lý ngày lặp lại vì chỉ hỗ trợ "một lần"
 
   return (
     <div className="p-6">
@@ -472,11 +376,8 @@ const StaffNotificationManager = () => {
                 setMedicineName('');
                 setDosage('');
                 setReminderTime('');
-                // Reset các field mới
-                setRepeatType('none');
-                setRepeatDays([]);
+                // Reset giờ nhắc
                 setReminderTimes(['']);
-                setEndDate('');
                 
                 // Fetch dữ liệu theo loại thông báo và patient đã chọn
                 if (selectedPatient) {
@@ -617,21 +518,6 @@ const StaffNotificationManager = () => {
                 </div>
               </div>
 
-              {/* Chọn loại lặp lại */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Loại lịch nhắc:</label>
-                <Select
-                  value={repeatType}
-                  onChange={setRepeatType}
-                  className="w-full"
-                >
-                  <Option value="none">Chỉ một lần</Option>
-                  <Option value="daily">Hàng ngày</Option>
-                  <Option value="weekly">Hàng tuần</Option>
-                  <Option value="custom">Tùy chọn ngày trong tuần</Option>
-                </Select>
-              </div>
-
               {/* Thời gian nhắc */}
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -668,41 +554,10 @@ const StaffNotificationManager = () => {
               </div>
 
               {/* Chọn ngày trong tuần (chỉ hiển thị khi chọn custom) */}
-              {repeatType === 'custom' && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Chọn ngày trong tuần <span className="text-red-500">*</span>:
-                  </label>
-                  <div className="grid grid-cols-7 gap-2">
-                    {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day, index) => (
-                      <Button
-                        key={index}
-                        type={repeatDays.includes(index) ? 'primary' : 'default'}
-                        size="small"
-                        onClick={() => handleRepeatDaysChange(index)}
-                        className="text-center"
-                      >
-                        {day}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Đã loại bỏ chọn ngày trong tuần */}
 
               {/* Ngày kết thúc (chỉ hiển thị khi không phải "chỉ một lần") */}
-              {repeatType !== 'none' && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Ngày kết thúc lặp lại <span className="text-red-500">*</span>:
-                  </label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={e => setEndDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-              )}
+              {/* Đã loại bỏ chọn ngày kết thúc lặp lại */}
             </div>
           )}
 
@@ -718,9 +573,7 @@ const StaffNotificationManager = () => {
               (notificationType === 'medicine' && (
                 !medicineName.trim() || 
                 !selectedTreatmentStage ||
-                reminderTimes.some(time => time === '') ||
-                (repeatType !== 'none' && !endDate) ||
-                (repeatType === 'custom' && repeatDays.length === 0)
+                reminderTimes.some(time => time === '')
               )) ||
               (notificationType === 'appointment' && !selectedAppointment)
             }
