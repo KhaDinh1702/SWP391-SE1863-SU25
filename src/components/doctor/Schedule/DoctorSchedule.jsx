@@ -34,6 +34,10 @@ const DoctorSchedule = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // LOGIC MỚI: CHỈ HIỂN THỊ LỊCH HẸN KHI ĐÃ CÓ LỊCH LÀM VIỆC
+  // Bác sĩ phải được manager tạo lịch làm việc trước, sau đó mới có thể có lịch hẹn trong slot đó
+  // Nếu không có lịch làm việc thì không hiển thị lịch hẹn, ngăn chặn việc bệnh nhân đặt lịch tùy ý
+
   const fetchSchedules = async () => {
     setLoading(true);
     setError(null);
@@ -77,45 +81,18 @@ const DoctorSchedule = () => {
       
       // Lọc chỉ lấy các appointment đã thanh toán (status = 1, 3, 4)
       // Loại bỏ những appointment chờ thanh toán (status = 0)
-      console.log('All appointments before status filter:', allAppointmentsResponse?.map(apt => ({
-        id: apt.id,
-        status: apt.status || apt.Status,
-        title: apt.appointmentTitle || apt.AppointmentTitle,
-        doctorId: apt.doctorId,
-        isAnonymous: apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous
-      })));
-      
       filteredAppointments = filteredAppointments.filter(apt => {
         const status = apt.status || apt.Status || apt.paymentStatus || apt.PaymentStatus;
         const passesStatusFilter = status === 1 || status === 3 || status === 4;
         const isAnonymous = apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous;
-        console.log(`Appointment ${apt.id} - Status: ${status}, Passes filter: ${passesStatusFilter}, Anonymous: ${isAnonymous}`);
         return passesStatusFilter;
       });
-      
-      console.log('Appointments after status filter:', filteredAppointments.length);
-      console.log('Filtered appointments with anonymous info:', filteredAppointments.map(apt => ({
-        id: apt.id,
-        title: apt.appointmentTitle || apt.AppointmentTitle,
-        patientId: apt.patientId,
-        isAnonymous: apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous,
-        appointmentDate: apt.appointmentStartDate || apt.AppointmentStartDate
-      })));
       
       // Chỉ lọc nếu bác sĩ có chuyên khoa cụ thể
       if (doctorType.isTestDoctor || doctorType.isTreatmentDoctor || doctorType.isConsultantDoctor) {
         filteredAppointments = filteredAppointments.filter(apt => {
           const title = (apt.appointmentTitle || apt.AppointmentTitle || '').toLowerCase();
           const notes = (apt.notes || apt.Notes || '').toLowerCase();
-          
-          // Debug log để kiểm tra appointment data
-          console.log('Checking appointment:', {
-            id: apt.id,
-            title: apt.appointmentTitle || apt.AppointmentTitle,
-            notes: apt.notes || apt.Notes,
-            doctorId: apt.doctorId,
-            currentDoctorId: doctorId
-          });
           
           // Lọc theo bác sĩ xét nghiệm
           if (doctorType.isTestDoctor) {
@@ -434,29 +411,10 @@ const DoctorSchedule = () => {
         align: 'center',
         render: (_, record) => {
           const schedules = getSchedulesForTimeSlot(day, record.hour, record.minute);
-          // Tìm appointment thực sự nằm trong khung giờ này
-          let appointmentInfo = null;
-          if (appointments.length > 0) {
-            appointmentInfo = appointments.find(apt => {
-              const startDate = apt.appointmentStartDate || apt.AppointmentStartDate || apt.appointmentDate;
-              if (!startDate) return false;
-              const aptMoment = moment(startDate);
-              // So khớp ngày
-              if (!aptMoment.isSame(day, 'day')) return false;
-              // So khớp giờ trong khung 1h30
-              const slotStart = day.clone().set({ hour: record.hour, minute: record.minute, second: 0, millisecond: 0 });
-              const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
-              const isInSlot = aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
-              
-              // Debug log
-              if (aptMoment.format('HH:mm') === '14:00') {
-                console.log(`Appointment 14:00 check - Day: ${day.format('DD/MM')}, Slot: ${record.hour}:${record.minute}-${slotEnd.format('HH:mm')}, In slot: ${isInSlot}`);
-              }
-              
-              return isInSlot;
-            });
-          }
-          if (schedules.length === 0 && !appointmentInfo) {
+          
+          // CHỈ HIỂN THỊ LỊCH HẸN KHI CÓ LỊCH LÀM VIỆC - LOGIC MỚI
+          // Nếu không có lịch làm việc trong slot này, không hiển thị gì
+          if (schedules.length === 0) {
             return (
               <div style={{ 
                 padding: '4px',
@@ -473,8 +431,26 @@ const DoctorSchedule = () => {
             );
           }
 
-          // Nếu có appointment trong slot này, ưu tiên hiển thị appointment
-          if (appointmentInfo) {
+          // CHỈ TÌM APPOINTMENT KHI ĐÃ CÓ LỊCH LÀM VIỆC
+          let appointmentInfo = null;
+          if (appointments.length > 0 && schedules.length > 0) {
+            appointmentInfo = appointments.find(apt => {
+              const startDate = apt.appointmentStartDate || apt.AppointmentStartDate || apt.appointmentDate;
+              if (!startDate) return false;
+              const aptMoment = moment(startDate);
+              // So khớp ngày
+              if (!aptMoment.isSame(day, 'day')) return false;
+              // So khớp giờ trong khung 1h30
+              const slotStart = day.clone().set({ hour: record.hour, minute: record.minute, second: 0, millisecond: 0 });
+              const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
+              const isInSlot = aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
+              
+              return isInSlot;
+            });
+          }
+
+          // Nếu có appointment trong slot này VÀ có lịch làm việc, hiển thị appointment
+          if (appointmentInfo && schedules.length > 0) {
             const aptMoment = moment(appointmentInfo.appointmentStartDate || appointmentInfo.AppointmentStartDate || appointmentInfo.appointmentDate);
             const patientDisplayName = getPatientDisplayName(appointmentInfo);
             const isAnonymous = appointmentInfo.isAnonymousAppointment || appointmentInfo.IsAnonymousAppointment || appointmentInfo.anonymous || appointmentInfo.Anonymous;
@@ -539,199 +515,107 @@ const DoctorSchedule = () => {
             );
           }
 
-          // Nếu chỉ có một lịch trình, sử dụng logic hiển thị gốc
-          if (schedules.length === 1) {
+          // Nếu chỉ có lịch làm việc nhưng chưa có appointment, hiển thị slot trống có thể đặt lịch
+          if (schedules.length > 0 && !appointmentInfo) {
             const schedule = schedules[0];
-            const appointmentInfo = schedule.appointmentId ? getAppointmentInfo(schedule.appointmentId) : null;
-            
-            let showAppointment = false;
-            let appointmentTime = null;
-            let isOnlineAppointment = false;
-            let onlineLink = null;
-            
-            if (appointmentInfo) {
-              // Kiểm tra xem appointment có nằm trong ngày và khung giờ hiện tại không
-              const appointmentDate = appointmentInfo.startTime;
-              const isCorrectDay = appointmentDate.isSame(day, 'day');
-              
-              if (isCorrectDay) {
-                const appointmentHour = appointmentDate.hour();
-                const appointmentMinute = appointmentDate.minute();
-                const appointmentSlotMinutes = appointmentHour * 60 + appointmentMinute;
-                const currentSlotMinutes = record.hour * 60 + record.minute;
-                const nextSlotMinutes = currentSlotMinutes + 90; // Sửa từ 30 thành 90 phút (1h30)
-                
-                // Kiểm tra xem appointment có nằm trong slot hiện tại không
-                showAppointment = appointmentSlotMinutes >= currentSlotMinutes && appointmentSlotMinutes < nextSlotMinutes;
-                appointmentTime = appointmentDate.format('HH:mm');
-                isOnlineAppointment = appointmentInfo.appointmentType === 0 || appointmentInfo.AppointmentType === 0 || 
-                                appointmentInfo.appointmentType === 'Online' || appointmentInfo.AppointmentType === 'Online';
-                onlineLink = appointmentInfo.onlineLink || appointmentInfo.OnlineLink;
-              }
-            }
-            
-            // CHỈ HIỂN THỊ NẾU CÓ APPOINTMENT, KHÔNG HIỂN THỊ CHỈ SCHEDULE TRỐNG
-            if (showAppointment && appointmentInfo) {
-              const patientName = getPatientDisplayName(appointmentInfo);
-              const isAnonymous = appointmentInfo.isAnonymousAppointment || appointmentInfo.IsAnonymousAppointment || appointmentInfo.anonymous || appointmentInfo.Anonymous;
-              
-              return (
-                <div 
-                  style={{ 
-                    padding: '4px 6px',
-                    borderRadius: '4px',
-                    backgroundColor: isOnlineAppointment ? '#f6ffed' : '#fffbe6',
-                    border: isOnlineAppointment ? '1px solid #b7eb8f' : '1px solid #ffe58f',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    minHeight: '30px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center'
-                  }}
-                  title={`Lịch ID: ${schedule.originalId || schedule.id}\nCuộc hẹn: ${appointmentInfo.title} - ${patientName} lúc ${appointmentTime}${isOnlineAppointment ? ' (Trực tuyến)' : ''}${isAnonymous ? ' (Ẩn danh)' : ''}`}
-                >
-                  <div style={{ 
-                    fontWeight: 'bold', 
-                    color: isOnlineAppointment ? '#389e0d' : '#d48806',
-                    marginBottom: '1px'
-                  }}>
-                    {`Đã tiếp nhận lịch ${doctorTypeInfo.appointmentType}`}
-                  </div>
-                  <div style={{ 
-                    fontSize: '9px', 
-                    color: '#52c41a',
-                    fontWeight: 'bold'
-                  }}>
-                    {isOnlineAppointment ? '💻' : '📅'} {appointmentTime}
-                  </div>
-                  {isOnlineAppointment && onlineLink && (
-                    <a 
-                      href={onlineLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ 
-                        color: '#1890ff', 
-                        fontSize: '8px', 
-                        marginTop: 2,
-                        textDecoration: 'underline'
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      🔗 Tham gia
-                    </a>
-                  )}
-                  {isOnlineAppointment && !onlineLink && (
-                    <div style={{ 
-                      fontSize: '8px', 
-                      color: '#ff4d4f',
-                      marginTop: 2
-                    }}>
-                      Chưa có link
-                    </div>
-                  )}
-                  {schedule.notes && (
-                    <div style={{ 
-                      fontSize: '8px', 
-                      color: '#666',
-                      marginTop: '1px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {schedule.notes}
-                    </div>
-                  )}
+            return (
+              <div 
+                style={{ 
+                  padding: '4px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: '#f0f8ff',
+                  border: '1px dashed #1890ff',
+                  fontSize: '11px',
+                  textAlign: 'center',
+                  minHeight: '30px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  color: '#1890ff'
+                }}
+                title={`Lịch làm việc ${doctorTypeInfo.appointmentType} - Slot trống có thể nhận lịch hẹn`}
+              >
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  fontSize: '10px'
+                }}>
+                  Sẵn sàng tiếp nhận
                 </div>
-              );
-            } else {
-              // Nếu chỉ có schedule nhưng không có appointment, hiển thị "Sẵn sàng"
-              return (
-                <div 
-                  style={{ 
-                    padding: '4px 6px',
-                    borderRadius: '4px',
-                    backgroundColor: '#e6f7ff',
-                    border: '1px solid #91d5ff',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    minHeight: '30px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center'
-                  }}
-                  title={`Lịch ID: ${schedule.originalId || schedule.id} - Sẵn sàng tiếp nhận lịch hẹn`}
-                >
-                  <div style={{ 
-                    fontWeight: 'bold', 
-                    color: '#1890ff',
-                    marginBottom: '1px'
-                  }}>
-                    Sẵn sàng
-                  </div>
-                  {schedule.notes && (
-                    <div style={{ 
-                      fontSize: '8px', 
-                      color: '#666',
-                      marginTop: '1px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {schedule.notes}
-                    </div>
-                  )}
+                <div style={{ 
+                  fontSize: '9px'
+                }}>
+                  {doctorTypeInfo.appointmentType}
                 </div>
-              );
-            }
+                {schedule.notes && (
+                  <div style={{ 
+                    fontSize: '8px', 
+                    color: '#666',
+                    marginTop: '1px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {schedule.notes}
+                  </div>
+                )}
+              </div>
+            );
           }
 
-          // Multiple schedules: show summary view
-          const appointmentCount = schedules.filter(s => s.appointmentId).length;
-          const availableCount = schedules.filter(s => s.isAvailable).length;
-          const busyCount = schedules.length - availableCount;
-          
-          return (
-            <div 
-              style={{ 
-                padding: '2px 4px',
-                borderRadius: '4px',
-                backgroundColor: '#f6ffed',
-                border: '1px solid #b7eb8f',
-                fontSize: '10px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                minHeight: '30px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}
-              title={`Tổng cộng: ${schedules.length} lịch làm việc\n${availableCount} sẵn sàng, ${busyCount} bận\n${appointmentCount} cuộc hẹn đã đặt`}
-            >
-              <div style={{ 
-                fontWeight: 'bold', 
-                color: '#389e0d',
-                fontSize: '9px'
-              }}>
-                {schedules.length} lịch
-              </div>
-              {appointmentCount > 0 && (
-                <div style={{ 
-                  fontSize: '8px', 
-                  color: '#1890ff',
-                  fontWeight: 'bold'
-                }}>
-                  📅 {appointmentCount} hẹn
+          // Multiple schedules: chỉ hiển thị nếu có appointments và schedules
+          if (schedules.length > 1) {
+            const schedulesWithAppointments = schedules.filter(s => {
+              // Kiểm tra xem có appointment nào match với schedule này không
+              return appointments.some(apt => {
+                const startDate = apt.appointmentStartDate || apt.AppointmentStartDate || apt.appointmentDate;
+                if (!startDate) return false;
+                const aptMoment = moment(startDate);
+                if (!aptMoment.isSame(day, 'day')) return false;
+                const slotStart = day.clone().set({ hour: record.hour, minute: record.minute, second: 0, millisecond: 0 });
+                const slotEnd = slotStart.clone().add(1, 'hour').add(30, 'minutes');
+                return aptMoment.isSameOrAfter(slotStart) && aptMoment.isBefore(slotEnd);
+              });
+            });
+            
+            return (
+              <div 
+                style={{ 
+                  padding: '4px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: schedulesWithAppointments.length > 0 ? '#fff2e8' : '#f0f8ff',
+                  border: schedulesWithAppointments.length > 0 ? '1px solid #ffb366' : '1px dashed #1890ff',
+                  fontSize: '10px',
+                  textAlign: 'center',
+                  minHeight: '30px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}
+                title={`${schedules.length} lịch làm việc, ${schedulesWithAppointments.length} có lịch hẹn`}
+              >
+                <div style={{ fontWeight: 'bold', color: schedulesWithAppointments.length > 0 ? '#d46b08' : '#1890ff' }}>
+                  {schedulesWithAppointments.length > 0 ? `${schedulesWithAppointments.length} lịch hẹn` : 'Sẵn sàng tiếp nhận'}
                 </div>
-              )}
-              <div style={{ 
-                fontSize: '8px', 
-                color: availableCount > 0 ? '#52c41a' : '#ff4d4f'
-              }}>
-                {availableCount > 0 ? `${availableCount} sẵn sàng` : 'Đã đầy'}
+                <div style={{ fontSize: '8px', color: '#666' }}>
+                  {schedules.length} slot làm việc
+                </div>
               </div>
+            );
+          }
+
+          // Fallback - không nên đến đây với logic mới
+          return (
+            <div style={{ 
+              padding: '4px',
+              color: '#ccc',
+              fontSize: '10px',
+              textAlign: 'center',
+              minHeight: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              -
             </div>
           );
         }

@@ -1,31 +1,54 @@
 import React, { useEffect, useState } from 'react';
 import { labResultService } from '../services/labResultService';
 import { patientService } from '../services/patientService';
+import { medicalRecordService } from '../services/medicalRecordService';
+import { doctorService } from '../services/doctorService';
 
 export default function MedicalRecordPage() {
   const [labResults, setLabResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [patient, setPatient] = useState(null);
+  const [medicalRecords, setMedicalRecords] = useState([]);
+  const [doctors, setDoctors] = useState({}); // Map doctorId -> doctorName
 
   useEffect(() => {
     const fetchLabResults = async () => {
       try {
-        const allResults = await labResultService.getAllLabResults();
         const patientId = localStorage.getItem('patientId');
-        const filtered = allResults.filter(lr => lr.patientId === patientId);
-        setLabResults(filtered);
-        // Lấy thông tin bệnh nhân nếu có kết quả
-        if (filtered.length > 0) {
+        // Lấy thông tin bệnh nhân trước
+        if (patientId) {
           try {
             const patientInfo = await patientService.getPatientById(patientId);
             setPatient(patientInfo);
           } catch (err) {
-            setPatient(null); // Không lấy được thông tin bệnh nhân
+            setPatient(null);
           }
         }
+        // Lấy danh sách bác sĩ
+        try {
+          const doctorList = await doctorService.getAllDoctors();
+          const doctorMap = {};
+          doctorList.forEach(doc => {
+            doctorMap[doc.id] = doc.fullName || doc.name || doc.email || '---';
+          });
+          setDoctors(doctorMap);
+        } catch (err) {
+          setDoctors({});
+        }
+        // Lấy kết quả xét nghiệm
+        const allResults = await labResultService.getAllLabResults();
+        const filtered = allResults.filter(lr => lr.patientId === patientId);
+        setLabResults(filtered);
+        // Lấy lịch sử khám bệnh
+        try {
+          const records = await medicalRecordService.getListMedicalRecord(patientId);
+          setMedicalRecords(records || []);
+        } catch (err) {
+          setMedicalRecords([]);
+        }
       } catch (err) {
-        setError('Không thể tải kết quả xét nghiệm.');
+        setError('Không thể tải dữ liệu hồ sơ y tế.');
       } finally {
         setLoading(false);
       }
@@ -53,6 +76,35 @@ export default function MedicalRecordPage() {
               </div>
             </div>
           )}
+
+          {/* Lịch sử khám bệnh */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-[#3B9AB8]">Lịch sử khám bệnh</h2>
+            {medicalRecords.length === 0 ? (
+              <p className="text-center text-gray-500">Không có lịch sử khám bệnh.</p>
+            ) : (
+              <ul className="space-y-6">
+                {medicalRecords.map(record => (
+                  <li key={record.id} className="border p-6 rounded-lg shadow bg-white hover:shadow-lg transition-shadow">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
+                      <div className="text-lg font-semibold text-[#3B9AB8]">{record.diagnosis || 'Chẩn đoán'}</div>
+                      <div className="text-sm text-gray-500">{new Date(record.examinationDate).toLocaleString()}</div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 mb-2">
+                      <div><b>Bác sĩ khám:</b> {doctors[record.doctorId] || '---'}</div>
+                      <div><b>Chẩn đoán:</b> {record.diagnosis}</div>
+                      <div><b>Triệu chứng:</b> {record.symptoms || '---'}</div>
+                      <div><b>Đơn thuốc:</b> {record.prescription || '---'}</div>
+                      <div><b>Ghi chú:</b> {record.notes}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Kết quả xét nghiệm */}
+          <h2 className="text-xl font-semibold mb-4 text-[#3B9AB8]">Kết quả xét nghiệm</h2>
           {labResults.length === 0 ? (
             <p className="text-center text-gray-500">Không có kết quả xét nghiệm nào.</p>
           ) : (

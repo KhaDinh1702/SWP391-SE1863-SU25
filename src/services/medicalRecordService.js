@@ -100,5 +100,22 @@ export const medicalRecordService = {
       console.error('Error updating medical record:', error);
       throw error;
     }
+  },
+
+  // Lấy danh sách medical records theo patientId
+  getListMedicalRecord: async (patientId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/MedicalRecord/get-list-medical-record?patientId=${patientId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch medical records by patient');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching medical records by patient:', error);
+      throw error;
+    }
   }
 };
