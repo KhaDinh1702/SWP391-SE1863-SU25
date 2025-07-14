@@ -313,6 +313,7 @@ const PatientProfiles = () => {
       
       await medicalRecordService.updateMedicalRecord(recordData);
       message.success('Cập nhật hồ sơ bệnh án thành công!');
+      // Chỉ reset form và close modal sau khi update thành công
       editForm.resetFields();
       setIsEditModalVisible(false);
       setSelectedRecord(null);
@@ -660,18 +661,17 @@ const PatientProfiles = () => {
         open={isEditModalVisible}
         onCancel={() => {
           setIsEditModalVisible(false);
-          setSelectedRecord(null);
-          editForm.resetFields();
+          // Không reset form và selectedRecord để giữ state
         }}
         footer={null}
         width={800}
-        destroyOnClose
+        destroyOnClose={false}
       >
         <Form
           form={editForm}
           layout="vertical"
           onFinish={handleUpdateRecord}
-          preserve={false}
+          preserve={true}
         >
           <Form.Item
             name="dateOfVisit"
@@ -756,9 +756,13 @@ const PatientProfiles = () => {
           <div style={{ textAlign: 'right', marginTop: 24 }}>
             <Space>
               <Button onClick={() => {
-                setIsEditModalVisible(false);
-                setSelectedRecord(null);
                 editForm.resetFields();
+              }} size="large">
+                Xóa form
+              </Button>
+              <Button onClick={() => {
+                setIsEditModalVisible(false);
+                // Không reset form và selectedRecord để giữ state
               }} size="large">
                 Hủy
               </Button>

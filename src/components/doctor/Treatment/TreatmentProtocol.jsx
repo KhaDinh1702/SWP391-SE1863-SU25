@@ -631,16 +631,7 @@ const TreatmentProtocol = () => {
               status: 'Active'
             }}
           >
-            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#e6f7ff', borderRadius: 6, border: '1px solid #91d5ff' }}>
-              <div style={{ fontSize: '14px', color: '#0958d9', marginBottom: 8 }}>
-                <strong>📋 Hướng dẫn tạo quy trình điều trị:</strong>
-              </div>
-              <ul style={{ fontSize: '13px', color: '#1890ff', margin: 0, paddingLeft: 20 }}>
-                <li>Chọn bệnh nhân đã có lịch hẹn trong hệ thống</li>
-                <li>Chọn phác đồ ARV phù hợp với tình trạng bệnh nhân</li>
-                <li>Thiết lập thời gian điều trị từ ngày hiện tại trở đi</li>
-              </ul>
-            </div>
+        
             <Form.Item
               name="patientId"
               label="Bệnh nhân"

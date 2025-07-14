@@ -774,23 +774,16 @@ export default function Notifications() {
   const getNotificationDisplayInfo = (message) => {
     const lowerMessage = message.toLowerCase();
     
-    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
-        lowerMessage.includes('nhắc uống thuốc') || 
-        lowerMessage.includes('thuốc') ||
-        lowerMessage.includes('medication') ||
-        lowerMessage.includes('medicine')) {
-      return {
-        icon: <FaPills className="text-green-600" />,
-        title: 'Nhắc nhở uống thuốc',
-        bgColor: 'bg-green-100'
-      };
-    }
-    
+    // Kiểm tra lịch hẹn trước (ưu tiên cao hơn) - chỉ khi có ngữ cảnh rõ ràng về cuộc hẹn
     if (lowerMessage.includes('lịch hẹn') || 
         lowerMessage.includes('cuộc hẹn') || 
         lowerMessage.includes('appointment') ||
-        lowerMessage.includes('khám') ||
-        lowerMessage.includes('tái khám')) {
+        lowerMessage.includes('tái khám') ||
+        lowerMessage.includes('hẹn khám') ||
+        lowerMessage.includes('lịch khám') ||
+        lowerMessage.includes('đặt lịch') ||
+        lowerMessage.includes('book appointment') ||
+        (lowerMessage.includes('khám') && (lowerMessage.includes('lịch') || lowerMessage.includes('hẹn') || lowerMessage.includes('cuộc') || lowerMessage.includes('appointment')))) {
       return {
         icon: <FaCalendarAlt className="text-blue-600" />,
         title: 'Thông báo lịch hẹn',
@@ -798,6 +791,21 @@ export default function Notifications() {
       };
     }
     
+    // Kiểm tra thuốc (nhưng không phải lịch hẹn)
+    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
+        lowerMessage.includes('nhắc uống thuốc') || 
+        lowerMessage.includes('uống thuốc') ||
+        lowerMessage.includes('medication') ||
+        lowerMessage.includes('medicine') ||
+        (lowerMessage.includes('thuốc') && !lowerMessage.includes('lịch') && !lowerMessage.includes('hẹn'))) {
+      return {
+        icon: <FaPills className="text-green-600" />,
+        title: 'Nhắc nhở uống thuốc',
+        bgColor: 'bg-green-100'
+      };
+    }
+    
+    // Kiểm tra điều trị
     if (lowerMessage.includes('điều trị') || 
         lowerMessage.includes('treatment') ||
         lowerMessage.includes('protocol') ||
@@ -809,10 +817,14 @@ export default function Notifications() {
       };
     }
     
+    // Kiểm tra xét nghiệm (chỉ khi có ngữ cảnh rõ ràng)
     if (lowerMessage.includes('xét nghiệm') || 
-        lowerMessage.includes('test') ||
-        lowerMessage.includes('lab') ||
-        lowerMessage.includes('kết quả')) {
+        lowerMessage.includes('kết quả xét nghiệm') ||
+        lowerMessage.includes('lab result') ||
+        lowerMessage.includes('laboratory') ||
+        (lowerMessage.includes('test') && (lowerMessage.includes('kết quả') || lowerMessage.includes('result') || lowerMessage.includes('xét nghiệm'))) ||
+        lowerMessage.includes('thử nghiệm y tế') ||
+        lowerMessage.includes('chỉ số')) {
       return {
         icon: <FaCalendarAlt className="text-orange-600" />,
         title: 'Thông báo xét nghiệm',
@@ -820,11 +832,11 @@ export default function Notifications() {
       };
     }
     
-    // Mặc định
+    // Mặc định cho thông báo chung
     return {
-      icon: <FaBell className="text-green-600" />,
+      icon: <FaBell className="text-gray-600" />,
       title: 'Thông báo chung',
-      bgColor: 'bg-green-100'
+      bgColor: 'bg-gray-100'
     };
   };
 
@@ -832,20 +844,27 @@ export default function Notifications() {
   const getNotificationTypeFromMessage = (message) => {
     const lowerMessage = message.toLowerCase();
     
-    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
-        lowerMessage.includes('nhắc uống thuốc') || 
-        lowerMessage.includes('thuốc') ||
-        lowerMessage.includes('medication') ||
-        lowerMessage.includes('medicine')) {
-      return 'medicine';
-    }
-    
+    // Kiểm tra lịch hẹn trước (ưu tiên cao hơn) - chỉ khi có ngữ cảnh rõ ràng về cuộc hẹn
     if (lowerMessage.includes('lịch hẹn') || 
         lowerMessage.includes('cuộc hẹn') || 
         lowerMessage.includes('appointment') ||
-        lowerMessage.includes('khám') ||
-        lowerMessage.includes('tái khám')) {
+        lowerMessage.includes('tái khám') ||
+        lowerMessage.includes('hẹn khám') ||
+        lowerMessage.includes('lịch khám') ||
+        lowerMessage.includes('đặt lịch') ||
+        lowerMessage.includes('book appointment') ||
+        (lowerMessage.includes('khám') && (lowerMessage.includes('lịch') || lowerMessage.includes('hẹn') || lowerMessage.includes('cuộc') || lowerMessage.includes('appointment')))) {
       return 'appointment';
+    }
+    
+    // Kiểm tra thuốc (nhưng không phải lịch hẹn)
+    if (lowerMessage.includes('nhắc nhở uống thuốc') || 
+        lowerMessage.includes('nhắc uống thuốc') || 
+        lowerMessage.includes('uống thuốc') ||
+        lowerMessage.includes('medication') ||
+        lowerMessage.includes('medicine') ||
+        (lowerMessage.includes('thuốc') && !lowerMessage.includes('lịch') && !lowerMessage.includes('hẹn'))) {
+      return 'medicine';
     }
     
     return 'general';

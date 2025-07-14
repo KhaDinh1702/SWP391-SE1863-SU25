@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Tag, message } from 'antd';
 import { doctorService } from '../../../services/doctorService';
-import { appointmentService } from '../../../services/appointmentService';
 import DoctorScheduleForm from './DoctorScheduleForm';
 import dayjs from 'dayjs';
 
@@ -9,14 +8,12 @@ const DoctorScheduleList = () => {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState({});
-  const [appointments, setAppointments] = useState({});
 
   useEffect(() => {
     const initializeData = async () => {
       try {
         await fetchSchedules();
         await fetchDoctors();
-        await fetchAppointments();
       } catch (error) {
         console.error('Error initializing data:', error);
         message.error('Có lỗi xảy ra khi tải dữ liệu ban đầu');
@@ -38,52 +35,7 @@ const DoctorScheduleList = () => {
       message.error('Không thể lấy danh sách bác sĩ');
     }
   };
-  const fetchAppointments = async () => {
-    try {
-      // Lấy chỉ những appointment đã thanh toán cho manager
-      const response = await fetch('https://localhost:7040/api/Appointment/get-paid-appointments', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Không thể lấy danh sách cuộc hẹn đã thanh toán');
-      }
-      
-      const appointmentsList = await response.json();
-      console.log('Fetched paid appointments for list:', appointmentsList);
-      console.log('Sample paid appointment structure for list:', appointmentsList[0]);
-      
-      // Check if appointmentsList is valid array
-      if (!Array.isArray(appointmentsList)) {
-        console.warn('Appointments data is not an array:', appointmentsList);
-        setAppointments({});
-        return;
-      }
-      
-      const appointmentsMap = {};
-      appointmentsList.forEach(appointment => {
-        if (appointment && appointment.id) {
-          appointmentsMap[appointment.id] = appointment;
-        }
-      });
-      setAppointments(appointmentsMap);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      message.error(`Không thể lấy danh sách cuộc hẹn: ${error.message}`);
-      setAppointments({}); // Set empty object on error
-    }
-  };
-
+  
   const fetchSchedules = async () => {
     try {
       setLoading(true);
@@ -117,31 +69,6 @@ const DoctorScheduleList = () => {
     if (!doctor) return '';
     return doctor.specialization || doctor.Specialization || '';
   };
-  const getAppointmentInfo = (appointmentId) => {
-    if (!appointmentId) return null;
-    const appointment = appointments[appointmentId];
-    if (!appointment) return { loading: true };
-    
-    return {
-      patientName: appointment.patientName || 
-                  appointment.PatientName ||
-                  appointment.patient?.fullName || 
-                  appointment.patient?.name || 
-                  'Chưa có tên',
-      appointmentDate: appointment.appointmentStartDate || 
-                      appointment.AppointmentStartDate ||
-                      appointment.appointmentDate ? 
-                      new Date(appointment.appointmentStartDate || 
-                              appointment.AppointmentStartDate || 
-                              appointment.appointmentDate).toLocaleDateString('vi-VN', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) : 'Chưa có ngày'
-    };
-  };
 
   const formatDateTime = (dateTimeStr) => {
     return dayjs(dateTimeStr).format('DD/MM/YYYY HH:mm');
@@ -157,35 +84,6 @@ const DoctorScheduleList = () => {
           <div className="text-sm text-gray-500">{getDoctorSpecialization(doctorId)}</div>
         </div>
       ),
-    },    {
-      title: 'Cuộc hẹn',
-      dataIndex: 'appointmentId',
-      key: 'appointmentId',
-      render: (appointmentId) => {
-        const appointmentInfo = getAppointmentInfo(appointmentId);
-        
-        if (!appointmentId) {
-          return <div className="text-gray-400 text-sm">Không có cuộc hẹn</div>;
-        }
-        
-        if (appointmentInfo?.loading) {
-          return <div className="text-gray-500 text-sm">Đang tải...</div>;
-        }
-        
-        return (
-          <div className="text-sm">
-            <div className="font-medium text-blue-600">
-              {appointmentInfo.patientName}
-            </div>
-            <div className="text-gray-500">
-              📅 {appointmentInfo.appointmentDate}
-            </div>
-            <div className="text-gray-400 text-xs">
-              ID: {appointmentId.substring(0, 8)}...
-            </div>
-          </div>
-        );
-      },
     },
     {
       title: 'Thời gian bắt đầu',
@@ -223,7 +121,6 @@ const DoctorScheduleList = () => {
         <h2 className="text-2xl font-bold text-gray-800">Quản lý lịch làm việc bác sĩ</h2>
         <DoctorScheduleForm onSuccess={() => {
           fetchSchedules();
-          fetchAppointments();
         }} />
       </div>
       
