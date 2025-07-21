@@ -12,7 +12,9 @@ import {
   message, 
   Spin,
   Progress,
-  Tag
+  Tag,
+  Modal,
+  Descriptions
 } from 'antd';
 import {
   BarChart,
@@ -34,12 +36,15 @@ import {
   CalendarOutlined,
   TeamOutlined,
   FileTextOutlined,
-  ExperimentOutlined,
   HeartOutlined,
   BookOutlined,
-  DollarOutlined
+  DollarOutlined,
+  EyeOutlined,
+  CreditCardOutlined
 } from '@ant-design/icons';
 import { reportService } from '../../services/reportService';
+import { paymentTransactionService } from '../../services/paymentTransactionService';
+import { API_BASE_URL, getAuthHeaders } from '../../services/config';
 import StatisticsOverview from './Reports/StatisticsOverview';
 import MonthlyActivityChart from './Reports/MonthlyActivityChart';
 import dayjs from 'dayjs';
@@ -65,11 +70,15 @@ const ReportsAndStatistics = () => {
   const [appointmentStats, setAppointmentStats] = useState({});
   const [doctorStats, setDoctorStats] = useState({});
   const [patientStats, setPatientStats] = useState({});
-  const [labResultStats, setLabResultStats] = useState({});
   const [medicalRecordStats, setMedicalRecordStats] = useState({});
-  const [blogStats, setBlogStats] = useState({});
   const [revenueStats, setRevenueStats] = useState({});
+  const [paymentTransactions, setPaymentTransactions] = useState([]);
+  const [paymentStats, setPaymentStats] = useState({});
   const [dateRange, setDateRange] = useState([]);
+  
+  // Payment transaction modal states
+  const [paymentDetailModalVisible, setPaymentDetailModalVisible] = useState(false);
+  const [selectedPaymentTransaction, setSelectedPaymentTransaction] = useState(null);
 
   useEffect(() => {
     fetchAllStatistics();
@@ -78,42 +87,186 @@ const ReportsAndStatistics = () => {
   const fetchAllStatistics = async () => {
     setLoading(true);
     try {
+      // Prepare date range for payment transactions
+      let fromDate = null;
+      let toDate = null;
+      
+      if (dateRange && dateRange.length === 2) {
+        fromDate = dateRange[0].startOf('day').toISOString();
+        toDate = dateRange[1].endOf('day').toISOString();
+      }
+
+      // Fetch statistics with individual error handling (removed blog and lab result services)
+      const results = await Promise.allSettled([
+        reportService.getOverallStatistics(),
+        reportService.getUserStatistics(),
+        reportService.getAppointmentStatistics(),
+        reportService.getDoctorStatistics(),
+        reportService.getPatientStatistics(),
+        reportService.getMedicalRecordStatistics(),
+        reportService.getRevenueStatistics(),
+        paymentTransactionService.getAllPaymentTransactions(fromDate, toDate)
+      ]);
+
+      // Extract successful results and handle failures gracefully
       const [
         overall,
         users,
         appointments,
         doctors,
         patients,
-        labResults,
         medicalRecords,
-        blogs,
-        revenue
-      ] = await Promise.all([
-        reportService.getOverallStatistics(),
-        reportService.getUserStatistics(),
-        reportService.getAppointmentStatistics(),
-        reportService.getDoctorStatistics(),
-        reportService.getPatientStatistics(),
-        reportService.getLabResultStatistics(),
-        reportService.getMedicalRecordStatistics(),
-        reportService.getBlogStatistics(),
-        reportService.getRevenueStatistics()
-      ]);
+        revenue,
+        payments
+      ] = results.map((result, index) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          const apiNames = [
+            'Overall Statistics',
+            'User Statistics', 
+            'Appointment Statistics',
+            'Doctor Statistics',
+            'Patient Statistics',
+            'Medical Record Statistics',
+            'Revenue Statistics',
+            'Payment Transactions'
+          ];
+          console.warn(`Failed to fetch ${apiNames[index]}:`, result.reason);
+          return {}; // Return empty object for failed requests
+        }
+      });
 
-      setOverallStats(overall);
-      setUserStats(users);
-      setAppointmentStats(appointments);
-      setDoctorStats(doctors);
-      setPatientStats(patients);
-      setLabResultStats(labResults);
-      setMedicalRecordStats(medicalRecords);
-      setBlogStats(blogs);
-      setRevenueStats(revenue);
+      setOverallStats(overall || {});
+      setUserStats(users || {});
+      setAppointmentStats(appointments || {});
+      setDoctorStats(doctors || {});
+      setPatientStats(patients || {});
+      setMedicalRecordStats(medicalRecords || {});
+      setRevenueStats(revenue || {});
+      setPaymentTransactions(Array.isArray(payments) ? payments : []);
+      
+      // Calculate payment statistics
+      calculatePaymentStatistics(Array.isArray(payments) ? payments : []);
+
+      // Show warning if some APIs failed
+      const failedApis = results.filter(result => result.status === 'rejected').length;
+      if (failedApis > 0) {
+        message.warning(`Đã tải được dữ liệu nhưng ${failedApis} API gặp lỗi. Một số thống kê có thể không đầy đủ.`);
+      } else {
+        message.success('Đã tải thành công tất cả dữ liệu thống kê');
+      }
     } catch (error) {
       console.error('Error fetching statistics:', error);
       message.error('Không thể tải dữ liệu thống kê');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const calculatePaymentStatistics = (transactions) => {
+    if (!transactions || transactions.length === 0) {
+      setPaymentStats({});
+      return;
+    }
+
+    const stats = {
+      total: transactions.length,
+      successful: transactions.filter(t => t.paymentStatus === 'Success' || t.paymentStatus === 1).length,
+      pending: transactions.filter(t => t.paymentStatus === 'Pending' || t.paymentStatus === 0).length,
+      failed: transactions.filter(t => t.paymentStatus === 'Failed' || t.paymentStatus === 2).length,
+      totalAmount: transactions.reduce((sum, t) => sum + (t.amount || 0), 0),
+      byMethod: {},
+      byMonth: {},
+      byStatus: {}
+    };
+
+    // Group by payment method
+    transactions.forEach(transaction => {
+      const method = transaction.paymentMethod || 'Unknown';
+      stats.byMethod[method] = (stats.byMethod[method] || 0) + 1;
+    });
+
+    // Group by month
+    transactions.forEach(transaction => {
+      const month = dayjs(transaction.createdDate || transaction.paymentDate).format('MM/YYYY');
+      stats.byMonth[month] = (stats.byMonth[month] || 0) + (transaction.amount || 0);
+    });
+
+    // Group by status
+    transactions.forEach(transaction => {
+      const status = getPaymentStatusLabel(transaction.paymentStatus);
+      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+    });
+
+    setPaymentStats(stats);
+  };
+
+  const getPaymentStatusLabel = (status) => {
+    switch (status) {
+      case 0:
+      case 'Pending':
+        return 'Đang xử lý';
+      case 1:
+      case 'Success':
+        return 'Thành công';
+      case 2:
+      case 'Failed':
+        return 'Thất bại';
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  const getPaymentStatusColor = (status) => {
+    switch (status) {
+      case 0:
+      case 'Pending':
+        return 'orange';
+      case 1:
+      case 'Success':
+        return 'green';
+      case 2:
+      case 'Failed':
+        return 'red';
+      default:
+        return 'default';
+    }
+  };
+
+  const handleViewPaymentDetail = (transaction) => {
+    setSelectedPaymentTransaction(transaction);
+    setPaymentDetailModalVisible(true);
+  };
+
+  const formatDateTime = (dateTime) => {
+    if (!dateTime) return 'N/A';
+    return dayjs(dateTime).format('DD/MM/YYYY HH:mm:ss');
+  };
+
+  const formatCurrency = (amount) => {
+    if (!amount) return '0 đ';
+    return `${amount.toLocaleString('vi-VN')} đ`;
+  };
+
+  const refreshPaymentTransactions = async () => {
+    try {
+      let fromDate = null;
+      let toDate = null;
+      
+      if (dateRange && dateRange.length === 2) {
+        fromDate = dateRange[0].startOf('day').toISOString();
+        toDate = dateRange[1].endOf('day').toISOString();
+        message.info(`Tải dữ liệu từ ${dateRange[0].format('DD/MM/YYYY')} đến ${dateRange[1].format('DD/MM/YYYY')}`);
+      }
+      
+      const result = await paymentTransactionService.getAllPaymentTransactions(fromDate, toDate);
+      setPaymentTransactions(Array.isArray(result) ? result : []);
+      calculatePaymentStatistics(Array.isArray(result) ? result : []);
+      message.success('Đã cập nhật dữ liệu giao dịch thanh toán');
+    } catch (error) {
+      console.error('Error refreshing payment transactions:', error);
+      message.error('Không thể tải dữ liệu giao dịch thanh toán');
     }
   };
 
@@ -440,57 +593,124 @@ const ReportsAndStatistics = () => {
     </div>
   );
 
-  const LabResultStatisticsTab = () => (
+  const RevenueAndPaymentTab = () => (
     <div>
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tổng số xét nghiệm"
-              value={labResultStats.total || 0}
-              prefix={<ExperimentOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Hoàn thành"
-              value={labResultStats.completed || 0}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Đang chờ"
-              value={labResultStats.pending || 0}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      {/* Phần thống kê doanh thu */}
+      <Card title="Thống kê doanh thu" className="mb-6">
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng doanh thu"
+                value={revenueStats.totalRevenue || 0}
+                prefix={<DollarOutlined />}
+                suffix="đ"
+                valueStyle={{ color: '#3f8600' }}
+                formatter={(value) => value.toLocaleString('vi-VN')}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Lịch hẹn đã thanh toán"
+                value={revenueStats.totalPaidAppointments || 0}
+                prefix={<CalendarOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Doanh thu trung bình/lịch hẹn"
+                value={Math.round(revenueStats.averageRevenuePerAppointment || 0)}
+                suffix="đ"
+                valueStyle={{ color: '#fa541c' }}
+                formatter={(value) => value.toLocaleString('vi-VN')}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tăng trưởng tháng"
+                value={revenueStats.monthlyGrowth || 0}
+                suffix="%"
+                valueStyle={{ 
+                  color: (revenueStats.monthlyGrowth || 0) >= 0 ? '#3f8600' : '#cf1322'
+                }}
+                prefix={
+                  (revenueStats.monthlyGrowth || 0) >= 0 ? '↑' : '↓'
+                }
+              />
+            </Card>
+          </Col>
+        </Row>
+      </Card>
 
-      <Row gutter={[16, 16]}>
+      {/* Phần thống kê giao dịch thanh toán */}
+      <Card title="Thống kê giao dịch thanh toán" className="mb-6">
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng giao dịch"
+                value={paymentStats.total || 0}
+                prefix={<CreditCardOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Thành công"
+                value={paymentStats.successful || 0}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Đang xử lý"
+                value={paymentStats.pending || 0}
+                valueStyle={{ color: '#fa8c16' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Thất bại"
+                value={paymentStats.failed || 0}
+                valueStyle={{ color: '#cf1322' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Phần biểu đồ phân bố giao dịch */}
+      <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} lg={12}>
-          <Card title="Loại xét nghiệm">
+          <Card title="Phân bố theo trạng thái">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={Object.entries(labResultStats.byTestType || {}).map(([type, count]) => ({
-                    name: type,
+                  data={Object.entries(paymentStats.byStatus || {}).map(([status, count]) => ({
+                    name: status,
                     value: count
                   }))}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {Object.entries(labResultStats.byTestType || {}).map((entry, index) => (
+                  {Object.entries(paymentStats.byStatus || {}).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -501,136 +721,121 @@ const ReportsAndStatistics = () => {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Xét nghiệm theo tháng">
+          <Card title="Phân bố theo phương thức">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={getChartData(labResultStats.byMonth)}>
+              <BarChart data={getChartData(paymentStats.byMethod)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="count" stroke="#fa8c16" />
-              </LineChart>
+                <Bar dataKey="value" fill="#13c2c2" />
+              </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
       </Row>
+
+      {/* Phần danh sách giao dịch */}
+      <PaymentTransactionTable />
     </div>
   );
 
-  const RevenueStatisticsTab = () => (
-    <div>
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Tổng doanh thu"
-              value={revenueStats.totalRevenue || 0}
-              prefix={<DollarOutlined />}
-              suffix="đ"
-              valueStyle={{ color: '#3f8600' }}
-              formatter={(value) => value.toLocaleString('vi-VN')}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Lịch hẹn đã thanh toán"
-              value={revenueStats.totalPaidAppointments || 0}
-              prefix={<CalendarOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Doanh thu trung bình/lịch hẹn"
-              value={Math.round(revenueStats.averageRevenuePerAppointment || 0)}
-              suffix="đ"
-              valueStyle={{ color: '#fa541c' }}
-              formatter={(value) => value.toLocaleString('vi-VN')}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Tăng trưởng tháng"
-              value={revenueStats.monthlyGrowth || 0}
-              suffix="%"
-              valueStyle={{ 
-                color: (revenueStats.monthlyGrowth || 0) >= 0 ? '#3f8600' : '#cf1322'
-              }}
-              prefix={
-                (revenueStats.monthlyGrowth || 0) >= 0 ? '↑' : '↓'
-              }
-            />
-          </Card>
-        </Col>
-      </Row>
+  const PaymentTransactionTable = () => {
+    const columns = [
+      {
+        title: 'ID',
+        dataIndex: 'id',
+        key: 'id',
+        width: 100,
+      },
+      {
+        title: 'Mã giao dịch',
+        dataIndex: 'transactionId',
+        key: 'transactionId',
+        render: (text) => text || 'N/A',
+      },
+      {
+        title: 'Số tiền',
+        dataIndex: 'amount',
+        key: 'amount',
+        render: (amount) => formatCurrency(amount),
+        sorter: (a, b) => (a.amount || 0) - (b.amount || 0),
+      },
+      {
+        title: 'Trạng thái',
+        dataIndex: 'paymentStatus',
+        key: 'paymentStatus',
+        render: (status) => (
+          <Tag color={getPaymentStatusColor(status)}>
+            {getPaymentStatusLabel(status)}
+          </Tag>
+        ),
+      },
+      {
+        title: 'Ngày tạo',
+        dataIndex: 'createdDate',
+        key: 'createdDate',
+        render: (date) => formatDateTime(date),
+        sorter: (a, b) => dayjs(a.createdDate).isBefore(dayjs(b.createdDate)) ? -1 : 1,
+      },
+      {
+        title: 'Ngày thanh toán',
+        dataIndex: 'paymentDate',
+        key: 'paymentDate',
+        render: (date) => formatDateTime(date),
+      },
+      {
+        title: 'Hành động',
+        key: 'action',
+        render: (_, record) => (
+          <Button
+            type="primary"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewPaymentDetail(record)}
+            size="small"
+          >
+            Xem chi tiết
+          </Button>
+        ),
+        width: 120,
+      },
+    ];
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card title="Doanh thu theo tháng">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData(revenueStats.revenueByMonth)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                <Tooltip 
-                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
-                />
-                <Bar dataKey="value" fill="#52c41a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card title="Doanh thu theo ngày trong tuần">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData(revenueStats.revenueByDayOfWeek)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                <Tooltip 
-                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
-                />
-                <Bar dataKey="value" fill="#1890ff" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Card title="Doanh thu theo bác sĩ (Top 10)">
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart 
-                data={Object.entries(revenueStats.revenueByDoctor || {})
-                  .sort(([,a], [,b]) => b - a)
-                  .slice(0, 10)
-                  .map(([doctor, revenue]) => ({
-                    name: doctor,
-                    value: revenue
-                  }))}
-                layout="horizontal"
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                <YAxis type="category" dataKey="name" width={150} />
-                <Tooltip 
-                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
-                />
-                <Bar dataKey="value" fill="#722ed1" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-    </div>
-  );
+    return (
+      <Card 
+        title="Danh sách giao dịch đã thanh toán"
+        extra={
+          <Button 
+            onClick={refreshPaymentTransactions}
+          >
+            Áp dụng bộ lọc thời gian
+          </Button>
+        }
+      >
+        {paymentTransactions.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <CreditCardOutlined style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }} />
+            <p style={{ color: '#999', fontSize: '16px' }}>Chưa có dữ liệu giao dịch thanh toán</p>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={paymentTransactions}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} của ${total} giao dịch`,
+            }}
+            scroll={{ x: 1000 }}
+          />
+        )}
+      </Card>
+    );
+  };
 
   // Helper functions
   const getChartData = (data) => {
@@ -665,7 +870,7 @@ const ReportsAndStatistics = () => {
             onChange={setDateRange}
             placeholder={['Từ ngày', 'Đến ngày']}
           />
-          <Button type="primary" onClick={fetchAllStatistics}>
+          <Button type="primary" onClick={fetchAllStatistics} loading={loading}>
             Làm mới dữ liệu
           </Button>
         </div>
@@ -681,9 +886,9 @@ const ReportsAndStatistics = () => {
             children: <OverviewTab />
           },
           {
-            key: 'revenue',
-            label: 'Doanh thu',
-            children: <RevenueStatisticsTab />
+            key: 'revenue-payments',
+            label: 'Doanh thu & Giao dịch',
+            children: <RevenueAndPaymentTab />
           },
           {
             key: 'users',
@@ -704,14 +909,72 @@ const ReportsAndStatistics = () => {
             key: 'patients',
             label: 'Bệnh nhân',
             children: <PatientStatisticsTab />
-          },
-          {
-            key: 'labResults',
-            label: 'Xét nghiệm',
-            children: <LabResultStatisticsTab />
           }
         ]}
       />
+
+      {/* Payment Transaction Detail Modal */}
+      <Modal
+        title="Chi tiết giao dịch thanh toán"
+        open={paymentDetailModalVisible}
+        onCancel={() => setPaymentDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setPaymentDetailModalVisible(false)}>
+            Đóng
+          </Button>
+        ]}
+        width={800}
+      >
+        {selectedPaymentTransaction && (
+          <Descriptions column={2} bordered>
+            <Descriptions.Item label="ID" span={1}>
+              {selectedPaymentTransaction.id}
+            </Descriptions.Item>
+            <Descriptions.Item label="Mã giao dịch" span={1}>
+              {selectedPaymentTransaction.transactionId || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số tiền" span={1}>
+              {formatCurrency(selectedPaymentTransaction.amount)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Trạng thái" span={1}>
+              <Tag color={getPaymentStatusColor(selectedPaymentTransaction.paymentStatus)}>
+                {getPaymentStatusLabel(selectedPaymentTransaction.paymentStatus)}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="ID Cuộc hẹn" span={1}>
+              {selectedPaymentTransaction.appointmentId || 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày tạo" span={1}>
+              {formatDateTime(selectedPaymentTransaction.createdDate)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày thanh toán" span={1}>
+              {formatDateTime(selectedPaymentTransaction.paymentDate)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Mô tả" span={2}>
+              {selectedPaymentTransaction.description || 'Không có mô tả'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ghi chú" span={2}>
+              {selectedPaymentTransaction.notes || 'Không có ghi chú'}
+            </Descriptions.Item>
+            {selectedPaymentTransaction.paymentUrl && (
+              <Descriptions.Item label="Link thanh toán" span={2}>
+                <a 
+                  href={selectedPaymentTransaction.paymentUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  {selectedPaymentTransaction.paymentUrl}
+                </a>
+              </Descriptions.Item>
+            )}
+            {selectedPaymentTransaction.momoTransactionId && (
+              <Descriptions.Item label="Momo Transaction ID" span={2}>
+                {selectedPaymentTransaction.momoTransactionId}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   );
 };
