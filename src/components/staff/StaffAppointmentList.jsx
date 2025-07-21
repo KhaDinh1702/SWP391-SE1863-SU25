@@ -190,9 +190,15 @@ const StaffAppointmentList = () => {
     
     try {
       const appointmentId = reschedulingAppointment.id || reschedulingAppointment.Id || reschedulingAppointment.appointmentId;
+      const doctorId = reschedulingAppointment.doctorId || reschedulingAppointment.DoctorId;
       
       if (!newStartDate || !selectedTimeSlot) {
         message.error('Vui lòng chọn ngày và khung giờ mới!');
+        return;
+      }
+      
+      if (!doctorId) {
+        message.error('Không tìm thấy thông tin bác sĩ!');
         return;
       }
       
@@ -218,12 +224,16 @@ const StaffAppointmentList = () => {
       // Automatically add 1 hour 30 minutes for end time
       const endDateTime = new Date(startDateTime.getTime() + 90 * 60000);
       
-      // Check for slot conflicts with paid appointments only
+      // Check for slot conflicts with paid appointments only (for the same doctor)
       const conflictingAppointment = appointments.find(apt => {
         // Skip current appointment being rescheduled
         const currentAptId = reschedulingAppointment.id || reschedulingAppointment.Id || reschedulingAppointment.appointmentId;
         const aptId = apt.id || apt.Id || apt.appointmentId;
         if (aptId === currentAptId) return false;
+        
+        // Only check conflict with the same doctor
+        const aptDoctorId = apt.doctorId || apt.DoctorId;
+        if (aptDoctorId !== doctorId) return false;
         
         // Only check conflict with paid appointments (status = 1, 3, 4)
         const status = apt.PaymentStatus !== undefined ? apt.PaymentStatus :
@@ -244,11 +254,13 @@ const StaffAppointmentList = () => {
           (p.id || p.patientId) === (conflictingAppointment.patientId || conflictingAppointment.PatientId)
         );
         const patientName = conflictPatient ? `${conflictPatient.firstName} ${conflictPatient.lastName}` : 'N/A';
-        message.error(`Khung giờ này đã có lịch hẹn khác (Bệnh nhân: ${patientName}). Vui lòng chọn khung giờ khác!`);
+        message.error(`Khung giờ này đã có lịch hẹn khác của cùng bác sĩ (Bệnh nhân: ${patientName}). Vui lòng chọn khung giờ khác!`);
         return;
       }
       
       console.log('Reschedule debug:', {
+        appointmentId,
+        doctorId,
         selectedDate: newStartDate,
         selectedTimeSlot,
         startDateTime,
@@ -260,7 +272,8 @@ const StaffAppointmentList = () => {
       await appointmentService.rescheduleAppointment(
         appointmentId,
         startDateTime,
-        endDateTime
+        endDateTime,
+        doctorId
       );
       
       message.success('Đã dời lịch cuộc hẹn thành công!');

@@ -168,7 +168,7 @@ export const appointmentService = {
   },
 
   // Reschedule appointment
-  rescheduleAppointment: async (appointmentId, newStartDate, newEndDate) => {
+  rescheduleAppointment: async (appointmentId, newStartDate, newEndDate, doctorId) => {
     try {
       // Format datetime to local timezone string (YYYY-MM-DDTHH:mm:ss)
       const formatDateTimeLocal = (date) => {
@@ -184,7 +184,8 @@ export const appointmentService = {
       const payload = { 
         Id: appointmentId, 
         NewAppointmentStartDate: formatDateTimeLocal(newStartDate),
-        NewAppointmentEndDate: formatDateTimeLocal(newEndDate)
+        NewAppointmentEndDate: formatDateTimeLocal(newEndDate),
+        DoctorId: doctorId
       };
 
       console.log('Reschedule payload:', payload); // Debug log
