@@ -522,14 +522,6 @@ const TreatmentProtocol = () => {
               </Space>
             }
           >
-            <div style={{ marginBottom: 16 }}>
-              <strong>Chú thích trạng thái:</strong>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                <li><Tag color="green">Đang điều trị</Tag>: 0</li>
-                <li><Tag color="blue">Hoàn thành</Tag>: 1</li>
-                <li><Tag color="red">Ngừng điều trị</Tag>: 2</li>
-              </ul>
-            </div>
             <Table
               columns={protocolColumns}
               dataSource={patientProtocols}

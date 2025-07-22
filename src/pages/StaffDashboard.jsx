@@ -26,19 +26,44 @@ const StaffDashboard = () => {
     joinedDate: '',
     avatarUrl: '',
   };
-  // Dashboard stats (dummy, replace with real API if needed)
+  // Dashboard stats (fetch real data)
   const [stats, setStats] = useState({
     totalAppointments: 0,
     totalDoctors: 0,
     totalPatients: 0
   });
-  // Simulate fetching stats (replace with real API calls if needed)
+
+  // Fetch real statistics on mount
   useState(() => {
-    setStats({
-      totalAppointments: 0,
-      totalDoctors: 0,
-      totalPatients: 0
-    });
+    const fetchStats = async () => {
+      try {
+        // Import services dynamically to avoid breaking SSR
+        const { appointmentService } = await import('../services/appointmentService');
+        const { doctorService } = await import('../services/doctorService');
+        const { patientService } = await import('../services/patientService');
+
+        // Fetch all appointments
+        const appointments = await appointmentService.getAllAppointments();
+        // Fetch all doctors
+        const doctors = await doctorService.getAllDoctors();
+        // Fetch all patients
+        const patients = await patientService.getAllPatients();
+
+        setStats({
+          totalAppointments: Array.isArray(appointments) ? appointments.length : 0,
+          totalDoctors: Array.isArray(doctors) ? doctors.length : 0,
+          totalPatients: Array.isArray(patients) ? patients.length : 0
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        setStats({
+          totalAppointments: 0,
+          totalDoctors: 0,
+          totalPatients: 0
+        });
+      }
+    };
+    fetchStats();
   });
 
   const getPageTitle = () => {

@@ -61,16 +61,10 @@ const UserList = ({ users = [], isLoading, onEditUser, onDeactivateUser }) => {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 60,
-    },
-    {
-      title: 'Họ tên',
-      dataIndex: 'fullName',
-      key: 'fullName',
-      render: (text, record) => text || record.username,
+      title: 'Tên đăng nhập',
+      dataIndex: 'username',
+      key: 'username',
+      render: (text) => text,
       width: 150,
     },
     {
