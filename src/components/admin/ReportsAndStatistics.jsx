@@ -234,6 +234,26 @@ const ReportsAndStatistics = () => {
     }
   };
 
+  const getGenderLabel = (gender) => {
+    // Convert string to lowercase for comparison
+    const genderStr = String(gender).toLowerCase();
+    
+    switch (genderStr) {
+      case 'male':
+      case '0':
+        return 'Nam';
+      case 'female':
+      case '1':
+        return 'Nữ';
+      case 'other':
+      case '2':
+        return 'Khác';
+      default:
+        console.log('Unknown gender value:', gender); // Debug log
+        return 'Không xác định';
+    }
+  };
+
   const handleViewPaymentDetail = (transaction) => {
     setSelectedPaymentTransaction(transaction);
     setPaymentDetailModalVisible(true);
@@ -542,7 +562,7 @@ const ReportsAndStatistics = () => {
               <PieChart>
                 <Pie
                   data={Object.entries(patientStats.byGender || {}).map(([gender, count]) => ({
-                    name: gender === 'Male' ? 'Nam' : 'Nữ',
+                    name: getGenderLabel(gender),
                     value: count
                   }))}
                   cx="50%"

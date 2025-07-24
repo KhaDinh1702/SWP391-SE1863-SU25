@@ -1,5 +1,25 @@
 // API Configuration
-export const API_BASE_URL = 'https://localhost:7040/api';
+const getApiBaseUrl = () => {
+  // Use environment variable if available
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Auto-detect based on environment
+  const isDevelopment = import.meta.env.DEV;
+  const isProduction = import.meta.env.PROD;
+  
+  if (isDevelopment) {
+    return 'https://localhost:7040/api';
+  } else if (isProduction) {
+    return 'https://your-production-api.com/api';
+  }
+  
+  // Fallback
+  return 'https://localhost:7040/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

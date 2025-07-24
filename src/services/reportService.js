@@ -145,6 +145,7 @@ export const reportService = {
       const statistics = {
         total: patients.length,
         byGender: patients.reduce((acc, patient) => {
+          console.log('Patient gender:', patient.gender); // Debug log
           acc[patient.gender] = (acc[patient.gender] || 0) + 1;
           return acc;
         }, {}),
