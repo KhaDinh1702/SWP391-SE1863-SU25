@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Spin, Alert, Typography, Button, Row, Col, Table } from 'antd';
+import { Card, Spin, Alert, Typography, Button, Row, Col, Table, Tag } from 'antd';
 import { LeftOutlined, RightOutlined, ReloadOutlined } from '@ant-design/icons';
 import { doctorScheduleService } from '../../../services/doctorScheduleService';
 import { doctorService } from '../../../services/doctorService';
@@ -79,12 +79,10 @@ const DoctorSchedule = () => {
       // Lọc appointments theo chuyên khoa của bác sĩ
       let filteredAppointments = allAppointmentsResponse || [];
       
-      // Lọc chỉ lấy các appointment đã thanh toán (status = 1, 3, 4)
-      // Loại bỏ những appointment chờ thanh toán (status = 0)
+      // Lọc chỉ lấy các appointment đã xác nhận hoặc hoàn thành, dời lịch, check-in (status = 1, 3, 4, 5)
       filteredAppointments = filteredAppointments.filter(apt => {
-        const status = apt.status || apt.Status || apt.paymentStatus || apt.PaymentStatus;
-        const passesStatusFilter = status === 1 || status === 3 || status === 4;
-        const isAnonymous = apt.isAnonymousAppointment || apt.IsAnonymousAppointment || apt.anonymous || apt.Anonymous;
+        const status = apt.status !== undefined ? apt.status : apt.Status;
+        const passesStatusFilter = status === 1 || status === 3 || status === 4 || status === 5;
         return passesStatusFilter;
       });
       
@@ -457,7 +455,17 @@ const DoctorSchedule = () => {
             const isOnlineAppointment = appointmentInfo.appointmentType === 0 || appointmentInfo.AppointmentType === 0 || 
                                       appointmentInfo.appointmentType === 'Online' || appointmentInfo.AppointmentType === 'Online';
             const onlineLink = appointmentInfo.onlineLink || appointmentInfo.OnlineLink;
-            
+            // Lấy trạng thái
+            const status = appointmentInfo.status !== undefined ? appointmentInfo.status : appointmentInfo.Status;
+            let statusColor = 'default', statusLabel = '';
+            switch (status) {
+              case 2: statusColor = 'red'; statusLabel = 'Đã hủy'; break;
+              case 3: statusColor = 'blue'; statusLabel = 'Hoàn thành'; break;
+              case 4: statusColor = 'purple'; statusLabel = 'Dời lịch'; break;
+              case 5: statusColor = 'cyan'; statusLabel = 'Đã check-in'; break;
+              case 1: statusColor = 'green'; statusLabel = 'Đã xác nhận'; break;
+              default: statusColor = 'orange'; statusLabel = 'Chờ duyệt';
+            }
             return (
               <div style={{
                 padding: '4px 6px',
@@ -486,6 +494,9 @@ const DoctorSchedule = () => {
                 }}>
                   {isAnonymous ? '🔒 ' : ''}{patientDisplayName}
                 </span>
+                <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                  <Tag color={statusColor} style={{ marginTop: 2, fontWeight: 500, minWidth: 80, textAlign: 'center' }}>{statusLabel}</Tag>
+                </div>
                 {isOnlineAppointment && onlineLink && (
                   <a 
                     href={onlineLink} 

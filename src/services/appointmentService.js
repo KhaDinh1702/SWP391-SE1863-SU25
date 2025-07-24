@@ -167,6 +167,32 @@ export const appointmentService = {
     }
   },
 
+  // Update appointment status
+  updateAppointmentStatus: async ({ appointmentId, newStatus, note }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/Appointment/appointment-update-status`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appointmentId,
+          newStatus,
+          note: note || '',
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Không thể cập nhật trạng thái lịch hẹn');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      throw error;
+    }
+  },
+
   // Reschedule appointment
   rescheduleAppointment: async (appointmentId, newStartDate, newEndDate, doctorId) => {
     try {
@@ -190,7 +216,7 @@ export const appointmentService = {
 
       console.log('Reschedule payload:', payload); // Debug log
       
-      const response = await fetch(`${API_BASE_URL}/Appointment/reschedule`, {
+      const response = await fetch(`${API_BASE_URL}/Appointment/appointment-reschedule`, {
         method: 'PUT',
         headers: {
           ...getAuthHeaders(),

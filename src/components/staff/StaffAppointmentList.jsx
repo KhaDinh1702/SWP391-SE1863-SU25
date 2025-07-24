@@ -36,6 +36,20 @@ const StaffAppointmentList = () => {
   const [medicalRecordModalVisible, setMedicalRecordModalVisible] = useState(false);
   const [selectedPatientForMedical, setSelectedPatientForMedical] = useState(null);
 
+  // Thêm state cho cập nhật trạng thái
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+
+  // Danh sách trạng thái đầy đủ
+  const appointmentStatusOptions = [
+    { value: 0, label: 'Chờ duyệt' },
+    { value: 1, label: 'Đã xác nhận' },
+    { value: 2, label: 'Đã hủy' },
+    { value: 3, label: 'Hoàn thành' },
+    { value: 4, label: 'Dời lịch' },
+    { value: 5, label: 'Đã check-in' },
+  ];
+
   // Generate fixed time slots (8h, 10h, 12h, 14h, 16h)
   const generateTimeSlots = () => {
     const slots = [];
@@ -294,25 +308,47 @@ const StaffAppointmentList = () => {
     }
   };
 
+  // Hàm cập nhật trạng thái
+  const handleUpdateStatus = async (appointment, newStatus) => {
+    setUpdatingStatusId(appointment.id || appointment.Id || appointment.appointmentId);
+    setStatusUpdating(true);
+    try {
+      await appointmentService.updateAppointmentStatus({
+        appointmentId: appointment.id || appointment.Id || appointment.appointmentId,
+        newStatus,
+        note: '',
+      });
+      message.success('Cập nhật trạng thái thành công!');
+      fetchAppointments();
+    } catch (error) {
+      message.error(error.message || 'Cập nhật trạng thái thất bại!');
+    } finally {
+      setUpdatingStatusId(null);
+      setStatusUpdating(false);
+    }
+  };
+
   // Status management functions
   const getAppointmentStatusLabel = (status) => {
     switch (status) {
-      case 0: return 'Chờ thanh toán';
-      case 1: return 'Đã thanh toán';
+      case 0: return 'Chờ duyệt';
+      case 1: return 'Đã xác nhận';
       case 2: return 'Đã hủy';
       case 3: return 'Hoàn thành';
       case 4: return 'Dời lịch';
-      default: return 'Chờ thanh toán';
+      case 5: return 'Đã check-in';
+      default: return 'Chờ duyệt';
     }
   };
 
   const getAppointmentStatusColor = (status) => {
     switch (status) {
-      case 0: return 'orange';   // Chờ thanh toán
-      case 1: return 'green';    // Đã thanh toán
+      case 0: return 'orange';   // Chờ duyệt
+      case 1: return 'green';    // Đã xác nhận
       case 2: return 'red';      // Đã hủy
       case 3: return 'blue';     // Hoàn thành
       case 4: return 'purple';   // Dời lịch
+      case 5: return 'cyan';     // Đã check-in
       default: return 'orange';
     }
   };
@@ -424,25 +460,55 @@ const StaffAppointmentList = () => {
       width: 180,
     },
     {
-      title: 'Trạng thái',
+      title: 'Trạng thái thanh toán',
       dataIndex: 'PaymentStatus',
       key: 'PaymentStatus',
+      render: (paymentStatus, record) => {
+        // Ưu tiên lấy PaymentStatus/paymentStatus
+        const payStatus = record.PaymentStatus !== undefined ? record.PaymentStatus :
+                          record.paymentStatus !== undefined ? record.paymentStatus : 0;
+        let color = 'orange', label = 'Chờ thanh toán';
+        switch (payStatus) {
+          case 0: color = 'orange'; label = 'Chờ thanh toán'; break;
+          case 1: color = 'green'; label = 'Đã thanh toán'; break;
+          case 2: color = 'red'; label = 'Đã hủy'; break;
+          default: color = 'orange'; label = 'Chờ thanh toán';
+        }
+        return <Tag color={color} style={{ fontWeight: 500 }}>{label}</Tag>;
+      },
+      width: 150,
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'Status',
+      key: 'Status',
       render: (status, record) => {
-        // Use PaymentStatus as the primary field name
-        const appointmentStatus = record.PaymentStatus !== undefined ? record.PaymentStatus :
-                                 record.paymentStatus !== undefined ? record.paymentStatus :
-                                 status !== undefined ? status : 
-                                 record.Status !== undefined ? record.Status : 0;
-        
+        // Ưu tiên lấy Status/status làm trạng thái lịch hẹn
+        const appointmentStatus = record.Status !== undefined ? record.Status :
+                                 record.status !== undefined ? record.status :
+                                 0;
         const color = getAppointmentStatusColor(appointmentStatus);
         const label = getAppointmentStatusLabel(appointmentStatus);
         return (
-          <Tag color={color} style={{ fontWeight: 500 }}>
-            {label}
-          </Tag>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 220 }}>
+            <Tag color={color} style={{ fontWeight: 500, minWidth: 90, textAlign: 'center' }}>{label}</Tag>
+            <Select
+              size="small"
+              style={{ width: 120, minWidth: 120 }}
+              value={appointmentStatus}
+              onChange={val => handleUpdateStatus(record, val)}
+              loading={statusUpdating && updatingStatusId === (record.id || record.Id || record.appointmentId)}
+              disabled={statusUpdating && updatingStatusId === (record.id || record.Id || record.appointmentId)}
+              dropdownStyle={{ minWidth: 120 }}
+            >
+              {appointmentStatusOptions.map(opt => (
+                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              ))}
+            </Select>
+          </div>
         );
       },
-      width: 150,
+      width: 220,
     },
     {
       title: 'Hành động',
@@ -527,8 +593,8 @@ const StaffAppointmentList = () => {
               onChange={setSelectedStatus}
               allowClear
             >
-              <Option value={0}>Chờ thanh toán</Option>
-              <Option value={1}>Đã thanh toán</Option>
+              <Option value={0}>Chờ duyệt</Option>
+              <Option value={1}>Đã xác nhận</Option>
               <Option value={2}>Đã hủy</Option>
               <Option value={3}>Hoàn thành</Option>
               <Option value={4}>Dời lịch</Option>
