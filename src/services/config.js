@@ -10,13 +10,14 @@ const getApiBaseUrl = () => {
   const isProduction = import.meta.env.PROD;
   
   if (isDevelopment) {
-    return 'https://localhost:7040/api';
+    // Use relative path in development - Vite proxy will handle this
+    return '/api';
   } else if (isProduction) {
     return 'https://your-production-api.com/api';
   }
   
   // Fallback
-  return 'https://localhost:7040/api';
+  return '/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

@@ -387,82 +387,65 @@ const ReportsAndStatistics = () => {
     </div>
   );
 
-  const AppointmentStatisticsTab = () => (
-    <div>
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Tổng số cuộc hẹn"
-              value={appointmentStats.total || 0}
-              prefix={<CalendarOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Đã thanh toán"
-              value={appointmentStats.paid || 0}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Chưa thanh toán"
-              value={appointmentStats.unpaid || 0}
-              valueStyle={{ color: '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={6}>
-          <Card>
-            <Statistic
-              title="Tổng doanh thu"
-              value={revenueStats.totalRevenue || 0}
-              prefix={<DollarOutlined />}
-              suffix="đ"
-              valueStyle={{ color: '#fa541c' }}
-              formatter={(value) => value.toLocaleString('vi-VN')}
-            />
-          </Card>
-        </Col>
-      </Row>
+  const AppointmentStatisticsTab = () => {
+    // Tính số lượng cuộc hẹn đã thanh toán
+    const appointments = appointmentStats.list || [];
+    const paidAppointments = appointments.filter(
+      apt => apt.status === 1 || apt.status === 'Confirmed' || apt.isPaid === true || apt.paymentStatus === 'Paid'
+    );
+    const paidCount = paidAppointments.length;
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card title="Trạng thái cuộc hẹn">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData(appointmentStats.byStatus)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#1890ff" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card title="Doanh thu theo tháng">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData(revenueStats.revenueByMonth)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                <Tooltip 
-                  formatter={(value) => [`${value.toLocaleString('vi-VN')} đ`, 'Doanh thu']}
-                />
-                <Bar dataKey="value" fill="#52c41a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-    </div>
-  );
+    return (
+      <div>
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng số cuộc hẹn"
+                value={appointmentStats.total || 0}
+                prefix={<CalendarOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card>
+              <Statistic
+                title="Tổng doanh thu"
+                value={revenueStats.totalRevenue || 0}
+                prefix={<DollarOutlined />}
+                suffix="đ"
+                valueStyle={{ color: '#fa541c' }}
+                formatter={(value) => value.toLocaleString('vi-VN')}
+              />
+            </Card>
+          </Col>
+        </Row>
+
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <Card title="Trạng thái cuộc hẹn">
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={Object.entries(appointmentStats.byStatus || {}).map(([status, count]) => ({
+                  name: getAppointmentStatusLabel(Number(status)),
+                  value: count
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#1890ff" >
+                    {Object.entries(appointmentStats.byStatus || {}).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getAppointmentStatusColor(entry[0])} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    );
+  };
 
   const DoctorStatisticsTab = () => (
     <div>
@@ -866,6 +849,50 @@ const ReportsAndStatistics = () => {
       month: key,
       count: value
     }));
+  };
+
+  const getAppointmentStatusLabel = (status) => {
+    switch (status) {
+      case 0:
+      case 'Pending':
+        return 'Đợi duyệt';
+      case 1:
+      case 'Confirmed':
+        return 'Đã xác nhận & thanh toán';
+      case 2:
+      case 'Cancelled':
+        return 'Đã hủy';
+      case 3:
+      case 'Completed':
+        return 'Hoàn thành';
+      case 4:
+      case 'ReArranged':
+        return 'Dời lịch';
+      case 5:
+      case 'CheckedIn':
+        return 'Đã check-in';
+      default:
+        return 'Không xác định';
+    }
+  };
+
+  const getAppointmentStatusColor = (status) => {
+    switch (Number(status)) {
+      case 0: // Pending
+        return '#faad14'; // vàng
+      case 1: // Confirmed
+        return '#1890ff'; // xanh dương
+      case 2: // Cancelled
+        return '#ff4d4f'; // đỏ
+      case 3: // Completed
+        return '#52c41a'; // xanh lá
+      case 4: // ReArranged
+        return '#722ed1'; // tím
+      case 5: // CheckedIn
+        return '#13c2c2'; // xanh ngọc
+      default:
+        return '#bfbfbf'; // xám
+    }
   };
 
   if (loading) {

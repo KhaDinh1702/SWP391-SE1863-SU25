@@ -1,10 +1,24 @@
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { authService } from './authService';
+import { API_BASE_URL } from './config';
 
 class SignalRService {
   constructor() {
     this.connection = null;
     this.isConnected = false;
+  }
+
+  // Get SignalR hub URL based on environment
+  getSignalRUrl() {
+    // Extract base URL without /api suffix
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}/reminderHub`;
+  }
+
+  // Get health check URL
+  getHealthCheckUrl() {
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return baseUrl;
   }
 
   // Wait for SignalR connection to be fully established
@@ -30,7 +44,7 @@ class SignalRService {
   // Check if backend server is running
   async checkBackendHealth() {
     try {
-      const response = await fetch('https://localhost:7040', {
+      const response = await fetch(this.getHealthCheckUrl(), {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
       });
@@ -57,7 +71,7 @@ class SignalRService {
 
       // Thử kết nối với WebSocket trước
       this.connection = new HubConnectionBuilder()
-        .withUrl('https://localhost:7040/reminderHub', {
+        .withUrl(this.getSignalRUrl(), {
           accessTokenFactory: () => authService.getCurrentUser()?.token,
           skipNegotiation: true,
           transport: 1 // WebSockets only
@@ -97,7 +111,7 @@ class SignalRService {
       // Fallback: thử kết nối với tất cả transport methods
       try {
         this.connection = new HubConnectionBuilder()
-          .withUrl('https://localhost:7040/reminderHub', {
+          .withUrl(this.getSignalRUrl(), {
             accessTokenFactory: () => authService.getCurrentUser()?.token
           })
           .withAutomaticReconnect()
