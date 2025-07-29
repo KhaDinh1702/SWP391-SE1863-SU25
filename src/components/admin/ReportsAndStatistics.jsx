@@ -579,19 +579,7 @@ const ReportsAndStatistics = () => {
             </ResponsiveContainer>
           </Card>
         </Col>
-        <Col xs={24} lg={8}>
-          <Card title="Bệnh nhân mới theo tháng">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={getChartData(patientStats.byMonth)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="count" stroke="#eb2f96" />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
+      
       </Row>
     </div>
   );
