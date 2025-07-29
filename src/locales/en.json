@@ -1,0 +1,174 @@
+{
+  "languages": {
+    "vi": "Vietnamese",
+    "en": "English"
+  },
+  "nav": {
+    "companyName": "Comprehensive Medical Center",
+    "about": "About Us",
+    "appointment": "Book Appointment",
+    "pricing": "Pricing",
+    "services": "Services",
+    "medical": "Medical",
+    "blog": "News",
+    "bookAppointment": "Book Appointment",
+    "contact24h": "Contact 24/7",
+    "hello": "Hello",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "logoutSuccess": "Logout successful!"
+  },
+  "home": {
+    "hero": {
+      "title1": "Comprehensive Health Care",
+      "title2": "3AE Medical Services",
+      "subtitle1": "Accompanying you on your health care journey",
+      "subtitle2": "Login to experience high-quality medical services",
+      "bookNow": "Book appointment now",
+      "viewServices": "View services"
+    },
+    "features": {
+      "arv": "ARV Health Insurance",
+      "pep": "PEP 72 hours (HIV Prevention Treatment)",
+      "vaccine": "Vaccination (Vaccine)",
+      "testing": "Testing"
+    },
+    "stats": {
+      "experience": "Years of experience",
+      "patients": "Patients",
+      "doctors": "Doctors",
+      "support": "Support"
+    },
+    "services": {
+      "title": "Featured Services"
+    },
+    "cta": {
+      "title": "Need medical consultation?",
+      "subtitle": "Our team of experts is always ready to support you",
+      "callNow": "Call now: 0943 108 138",
+      "contact": "Contact for consultation"
+    },
+    "arv": {
+      "badge": "ARV SERVICES",
+      "title": "HIV Treatment with Health Insurance",
+      "subtitle": "Quick procedures - Get medicine on the same day",
+      "features": {
+        "simple": {
+          "title": "Simple procedures",
+          "desc": "Just need health insurance card and prescription, get medicine immediately"
+        },
+        "free": {
+          "title": "Free testing",
+          "desc": "12 important indicators completely free"
+        },
+        "specialist": {
+          "title": "Specialist doctors",
+          "desc": "Dedicated consultation and treatment monitoring"
+        },
+        "quality": {
+          "title": "Quality medicine",
+          "desc": "Guarantee origin and quality of ARV drugs"
+        },
+        "support": {
+          "title": "24/7 Support",
+          "desc": "Consulting team always ready to help"
+        },
+        "trusted": {
+          "title": "Leading reputation",
+          "desc": "Recognized quality by Ministry of Health"
+        }
+      },
+      "needHelp": {
+        "title": "Do you need ARV treatment?",
+        "desc": "Our team of experts will advise and guide you through the process of registering for health insurance and receiving free ARV drugs."
+      }
+    },
+    "whyChoose": {
+      "title": "WHY CHOOSE 3AE",
+      "features": {
+        "hours": "Open continuously: 8am - 8pm (Mon - Sun)",
+        "testing": "30-minute testing, receive results online",
+        "insurance": "Payment by health insurance",
+        "care": "Care, psychological and social support, mental health",
+        "delivery": "ONLINE consultation & Home drug delivery",
+        "expertise": "Doctors and staff with high expertise",
+        "technology": "Modern medical equipment technology",
+        "community": "Empathy and understanding of LGBT+ community"
+      }
+    },
+    "doctors": {
+      "badge": "EXPERT TEAM",
+      "title": "Leading doctors at 3AE",
+      "subtitle": "High expertise - Dedication - Responsibility"
+    },
+    "news": {
+      "badge": "MEDICAL KNOWLEDGE",
+      "title": "News & Events",
+      "subtitle": "Latest medical information updates on HIV treatment",
+      "readMore": "Read more"
+    },
+    "partners": {
+      "title": "3AE PARTNERS"    },
+    "backToTop": "Back to top"
+  },
+  "footer": {
+    "systemTitle": "3AE CLINIC SYSTEM",
+    "locations": {
+      "quan5": {
+        "title": "3AE DISTRICT 5",
+        "address": "104 Tran Binh Trong St, Ward 1, District 5",
+        "hours": "8:00 AM – 8:00 PM (Mon – Sun)"
+      },
+      "tanBinh": {
+        "title": "3AE TAN BINH",
+        "address": "96 Ngo Thi Thu Minh St, Ward 2, Tan Binh District",
+        "hours": "11:00 AM – 8:00 PM (Mon – Sat)"
+      },
+      "haNoi": {
+        "title": "3AE HANOI",
+        "address": "15 Alley 143 Trung Kinh St, Cau Giay, Hanoi",
+        "hours": "9:00 AM – 8:00 PM (Mon – Sun)"
+      }
+    },
+    "viewMap": "View map",
+    "menu": {
+      "medicalCenter": "Medical Center",
+      "help": "Help",
+      "legal": "Legal",
+      "items": {
+        "about": "About Us",
+        "services": "Services",
+        "medicalTeam": "Medical Team",
+        "faq": "Frequently Asked Questions",
+        "appointmentGuide": "Appointment Guide",
+        "termsOfUse": "Terms of Use",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "licenses": "Operating Licenses"
+      }
+    },
+    "contact": {
+      "title": "Contact & Support",
+      "hotline": "Consultation Hotline",
+      "email": "Email",
+      "connect": "Connect with us"
+    },
+    "certifications": {
+      "iso": {
+        "title": "ISO 9001:2015",
+        "description": "Quality management system certification"
+      },
+      "privacy": {
+        "title": "Information Security",
+        "description": "Compliance with data protection regulations"
+      },
+      "license": {
+        "title": "Operating License",
+        "description": "Issued by Ho Chi Minh City Department of Health"
+      }
+    },
+    "copyright": "3AE Medical Center. All rights reserved.",
+    "businessInfo": "Tax Code: 0312345678 | Business License No: 41A123456 issued by HCMC Department of Planning and Investment on 01/01/2020"
+  }
+}
