@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaClock, FaUserMd, FaHospital, FaTimes, FaCheck, FaSpinner, FaVideo } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaUserMd, FaHospital, FaTimes, FaCheck, FaSpinner, FaVideo, FaPlay } from 'react-icons/fa';
 import { authService } from "../../services/authService";
 import { doctorService } from "../../services/doctorService";
 
@@ -109,50 +109,23 @@ export default function PatientAppointments() {
     fetchAppointments();
   }, [navigate]);
 
-  const handleCancelAppointment = async (appointmentId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) {
-      return;
-    }
 
-    try {
-      setLoading(true);
-      const currentUser = authService.getCurrentUser();
-      const response = await fetch(`https://localhost:7040/api/Appointment/cancel-appointment/${appointmentId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to cancel appointment');
-      }
-
-      // Update local state
-      setAppointments(appointments.map(apt => 
-        apt.id === appointmentId || apt.Id === appointmentId ? { ...apt, status: 3, Status: 3 } : apt
-      ));
-      alert('Hủy lịch hẹn thành công');
-    } catch (err) {
-      alert(err.message || 'Failed to cancel appointment');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusColor = (status) => {
     const statusNum = parseInt(status);
     switch (statusNum) {
       case 0:
-        return 'bg-[#FFF8E1] text-[#C46547]'; // Chờ xác nhận - orange
+        return 'bg-[#FFF8E1] text-[#C46547]'; // Pending - Đợi duyệt - orange
       case 1:
-        return 'bg-[#E3F6FB] text-[#3B9AB8]'; // Đã xác nhận - primary
+        return 'bg-[#E3F6FB] text-[#3B9AB8]'; // Confirmed - Đã xác nhận - primary
       case 2:
-        return 'bg-[#E6F9F0] text-[#2D7A94]'; // Đã hoàn thành - secondary
+        return 'bg-[#FDE8E8] text-[#E53935]'; // Cancelled - Hủy - red
       case 3:
-        return 'bg-[#FDE8E8] text-[#E53935]'; // Đã hủy - red
+        return 'bg-[#E6F9F0] text-[#2D7A94]'; // Completed - Hoàn thành - green
+      case 4:
+        return 'bg-[#FEF3C7] text-[#D97706]'; // ReArranged - Dời lịch - yellow
+      case 5:
+        return 'bg-[#E0E7FF] text-[#3730A3]'; // CheckedIn - Đã check-in - indigo
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -163,13 +136,17 @@ export default function PatientAppointments() {
     
     switch (statusNum) {
       case 0:
-        return 'Chờ xác nhận';
+        return 'Đợi duyệt';
       case 1:
         return 'Đã xác nhận';
       case 2:
-        return 'Đã hoàn thành';
-      case 3:
         return 'Đã hủy';
+      case 3:
+        return 'Đã hoàn thành';
+      case 4:
+        return 'Đã dời lịch';
+      case 5:
+        return 'Đã check-in';
       default:
         return 'Không xác định';
     }
@@ -183,13 +160,31 @@ export default function PatientAppointments() {
       case 1:
         return <FaClock className="text-[#3B9AB8]" />;
       case 2:
-        return <FaCheck className="text-[#2D7A94]" />;
-      case 3:
         return <FaTimes className="text-[#E53935]" />;
+      case 3:
+        return <FaCheck className="text-[#2D7A94]" />;
+      case 4:
+        return <FaCalendarAlt className="text-[#D97706]" />;
+      case 5:
+        return <FaCheck className="text-[#3730A3]" />;
       default:
         return <FaSpinner className="text-gray-600" />;
     }
   };
+
+  // Helper function to check if appointment is in progress
+  const isAppointmentInProgress = (appointment) => {
+    const status = parseInt(appointment.status || appointment.Status);
+    return status === 5; // CheckedIn - Đã check-in
+  };
+
+  // Helper function to check if appointment is completed
+  const isAppointmentCompleted = (appointment) => {
+    const status = parseInt(appointment.status || appointment.Status);
+    return status === 3; // Completed - Hoàn thành
+  };
+
+
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Không có thông tin';
@@ -365,17 +360,32 @@ export default function PatientAppointments() {
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-center gap-2 mb-2">
                       <FaVideo className="text-blue-600" />
-                      <span className="text-sm font-medium text-blue-800">Link cuộc họp trực tuyến:</span>
+                      <span className="text-sm font-medium text-blue-800">
+                        {isAppointmentInProgress(appointment) ? 'Cuộc họp đang diễn ra' : 
+                         isAppointmentCompleted(appointment) ? 'Cuộc họp đã kết thúc' : 
+                         'Link cuộc họp trực tuyến:'}
+                      </span>
                     </div>
-                    <a
-                      href={getMeetingLink(appointment)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      <FaVideo />
-                      Tham gia cuộc họp
-                    </a>
+                    {isAppointmentCompleted(appointment) ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <FaCheck />
+                        <span className="text-sm font-medium">Cuộc họp đã hoàn thành thành công</span>
+                      </div>
+                    ) : (
+                      <a
+                        href={getMeetingLink(appointment)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                          isAppointmentInProgress(appointment) 
+                            ? 'bg-green-600 text-white hover:bg-green-700' 
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isAppointmentInProgress(appointment) ? <FaPlay /> : <FaVideo />}
+                        {isAppointmentInProgress(appointment) ? 'Tham gia ngay' : 'Tham gia cuộc họp'}
+                      </a>
+                    )}
                     <div className="mt-2 text-xs text-blue-600 break-all">
                       Link: {getMeetingLink(appointment)}
                     </div>
@@ -393,7 +403,9 @@ export default function PatientAppointments() {
                     <div className="flex items-center gap-2">
                       <FaVideo className="text-yellow-600" />
                       <span className="text-sm text-yellow-800">
-                        Link cuộc họp sẽ được cập nhật bởi nhân viên trước giờ hẹn
+                        {isAppointmentCompleted(appointment) 
+                          ? 'Cuộc họp đã kết thúc' 
+                          : 'Link cuộc họp sẽ được cập nhật bởi nhân viên trước giờ hẹn'}
                       </span>
                     </div>
                   </div>
@@ -409,6 +421,23 @@ export default function PatientAppointments() {
                     <p className="mt-1">{appointment.notes || appointment.Notes}</p>
                   </div>
                 ) : null}
+
+                {/* Status information */}
+                <div className="mt-4">
+                  {isAppointmentCompleted(appointment) && (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <FaCheck />
+                      <span className="text-sm font-medium">Cuộc hẹn đã hoàn thành</span>
+                    </div>
+                  )}
+                  
+                  {isAppointmentInProgress(appointment) && (
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <FaPlay />
+                      <span className="text-sm font-medium">Cuộc hẹn đang diễn ra</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           )}
