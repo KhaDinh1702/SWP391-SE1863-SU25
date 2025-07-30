@@ -4,7 +4,7 @@ import Navbar from "../components/NavBar.jsx";
 import Footer from "../components/Footer.jsx";
 import Carousel from "../components/home/Carousel.jsx";
 import CallWidget from "../components/home/CallWidget";
-import ChatWidget from "../components/home/ChatWidget";
+// import ChatWidget from "../components/home/ChatWidget";
 import PatientProfile from "../components/patient/PatientProfile.jsx";
 import newsData from "../data/newsData";
 import doctorsData from "../data/doctorsData";
@@ -377,16 +377,7 @@ export default function Home() {
       {/* Floating Widgets */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-row items-end gap-4">
         <CallWidget />
-        <ChatWidget />
-        <BackToTop/>        {showScrollTop && (
-          <button
-            onClick={() => window.scrollTo(0, 0)}
-            className="bg-[#3B9AB8] hover:bg-[#2D7A94] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center animate-fade-in"
-            aria-label={t('home.backToTop')}
-          >
-            <FaArrowUp className="text-xl" />
-          </button>
-        )}
+        <BackToTop/>
       </div>
 
       <Footer />
