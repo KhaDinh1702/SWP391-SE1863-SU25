@@ -48,6 +48,8 @@ import { API_BASE_URL, getAuthHeaders } from '../../services/config';
 import StatisticsOverview from './Reports/StatisticsOverview';
 import MonthlyActivityChart from './Reports/MonthlyActivityChart';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -261,7 +263,8 @@ const ReportsAndStatistics = () => {
 
   const formatDateTime = (dateTime) => {
     if (!dateTime) return 'N/A';
-    return dayjs(dateTime).format('DD/MM/YYYY HH:mm:ss');
+    // Chuyển từ UTC sang giờ local của trình duyệt
+    return dayjs.utc(dateTime).local().format('DD/MM/YYYY HH:mm:ss');
   };
 
   const formatCurrency = (amount) => {
@@ -682,49 +685,7 @@ const ReportsAndStatistics = () => {
         </Row>
       </Card>
 
-      {/* Phần biểu đồ phân bố giao dịch */}
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} lg={12}>
-          <Card title="Phân bố theo trạng thái">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={Object.entries(paymentStats.byStatus || {}).map(([status, count]) => ({
-                    name: status,
-                    value: count
-                  }))}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {Object.entries(paymentStats.byStatus || {}).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card title="Phân bố theo phương thức">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData(paymentStats.byMethod)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#13c2c2" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
+      {/* Đã xoá phần biểu đồ phân bố giao dịch theo trạng thái và phương thức */}
 
       {/* Phần danh sách giao dịch */}
       <PaymentTransactionTable />
@@ -975,9 +936,6 @@ const ReportsAndStatistics = () => {
               <Tag color={getPaymentStatusColor(selectedPaymentTransaction.paymentStatus)}>
                 {getPaymentStatusLabel(selectedPaymentTransaction.paymentStatus)}
               </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="ID Cuộc hẹn" span={1}>
-              {selectedPaymentTransaction.appointmentId || 'N/A'}
             </Descriptions.Item>
             <Descriptions.Item label="Ngày tạo" span={1}>
               {formatDateTime(selectedPaymentTransaction.createdDate)}
