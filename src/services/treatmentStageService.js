@@ -58,5 +58,49 @@ export const treatmentStageService = {
       console.error('Error creating treatment stage:', error);
       throw error;
     }
+  },
+
+  // Lấy prescription theo prescriptionId
+  getPrescriptionById: async (prescriptionId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/TreatmentStage/get-prescription-by-id?prescriptionId=${prescriptionId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Không tìm thấy đơn thuốc');
+        }
+        throw new Error('Failed to fetch prescription');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching prescription by ID:', error);
+      throw error;
+    }
+  },
+
+  // Lấy prescription theo medicalRecordId
+  getPrescriptionByMedicalRecordId: async (medicalRecordId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/TreatmentStage/get-prescription-by-medical-record?medicalRecordId=${medicalRecordId}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Không tìm thấy đơn thuốc cho hồ sơ bệnh án này');
+        }
+        throw new Error('Failed to fetch prescription by medical record');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching prescription by medical record ID:', error);
+      throw error;
+    }
   }
 }; 

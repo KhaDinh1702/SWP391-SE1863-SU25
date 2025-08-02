@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Spin, Alert, Typography, Avatar, Input, Modal, Button, Form, DatePicker, Select, message, Space, Input as AntInput } from 'antd';
-import { UserOutlined, EditOutlined } from '@ant-design/icons';
+import { UserOutlined, EditOutlined, MedicineBoxOutlined } from '@ant-design/icons';
 import { appointmentService } from '../../../services/appointmentService';
 import { doctorService } from '../../../services/doctorService';
 import { patientService } from '../../../services/patientService';
@@ -32,6 +32,9 @@ const PatientProfiles = () => {
   const [editForm] = Form.useForm();
   const [editLoading, setEditLoading] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isPrescriptionModalVisible, setIsPrescriptionModalVisible] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
+  const [loadingPrescription, setLoadingPrescription] = useState(false);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -212,7 +215,14 @@ const PatientProfiles = () => {
           (record.patientId === patientId || record.PatientId === patientId)
         );
       }
+      console.log(`=== MEDICAL RECORDS DEBUG ===`);
       console.log(`Medical records for patient ${patientId}:`, data);
+      if (data && data.length > 0) {
+        console.log('Sample record structure:', data[0]);
+        console.log('Sample record properties:', Object.keys(data[0]));
+        console.log('Sample record ID:', data[0].id || data[0].Id);
+      }
+      console.log('=== END MEDICAL RECORDS DEBUG ===');
       setMedicalRecords(data);
     } catch (error) {
       console.error('Error fetching medical records for patient:', error);
@@ -261,17 +271,132 @@ const PatientProfiles = () => {
     }
   };
 
+  const handleViewPrescription = async (record) => {
+    setLoadingPrescription(true);
+    setIsPrescriptionModalVisible(true);
+    setSelectedPrescription(null);
+
+    try {
+      console.log('=== PRESCRIPTION DEBUG ===');
+      console.log('Medical record:', record);
+      console.log('Medical record ID:', record.id || record.Id);
+      console.log('Looking for prescriptionId in record...');
+      
+      let prescriptionData = null;
+      
+      // Cách 1: Nếu medical record có prescriptionId, gọi API để lấy prescription chi tiết
+      if (record.prescriptionId || record.PrescriptionId) {
+        try {
+          const prescriptionId = record.prescriptionId || record.PrescriptionId;
+          console.log('Method 1: Found prescriptionId:', prescriptionId);
+          
+          const apiPrescription = await treatmentStageService.getPrescriptionById(prescriptionId);
+          console.log('API prescription response (by prescriptionId):', apiPrescription);
+          
+          if (apiPrescription) {
+            prescriptionData = {
+              ...apiPrescription,
+              medicalRecordInfo: {
+                examinationDate: record.examinationDate,
+                diagnosis: record.diagnosis,
+                symptoms: record.symptoms,
+                notes: record.notes
+              },
+              isFromAPI: true,
+              method: 'prescriptionId'
+            };
+          }
+        } catch (apiError) {
+          console.log('Method 1 failed:', apiError.message);
+        }
+      }
+      
+      // Cách 2: Nếu không có prescriptionId, thử tìm prescription bằng medicalRecordId
+      if (!prescriptionData && (record.id || record.Id)) {
+        try {
+          const medicalRecordId = record.id || record.Id;
+          console.log('Method 2: Using medicalRecordId:', medicalRecordId);
+          
+          const apiPrescription = await treatmentStageService.getPrescriptionByMedicalRecordId(medicalRecordId);
+          console.log('API prescription response (by medicalRecordId):', apiPrescription);
+          
+          if (apiPrescription) {
+            prescriptionData = {
+              ...apiPrescription,
+              medicalRecordInfo: {
+                examinationDate: record.examinationDate,
+                diagnosis: record.diagnosis,
+                symptoms: record.symptoms,
+                notes: record.notes
+              },
+              isFromAPI: true,
+              method: 'medicalRecordId'
+            };
+          }
+        } catch (apiError) {
+          console.log('Method 2 failed:', apiError.message);
+        }
+      }
+      
+      // Cách 3: Fallback - hiển thị thông tin từ medical record
+      if (!prescriptionData) {
+        console.log('Method 3: Using fallback data from medical record');
+        const hasNote = record.prescriptionNote && record.prescriptionNote.trim() !== '';
+        
+        prescriptionData = {
+          note: hasNote ? record.prescriptionNote : null,
+          prescriptionNote: hasNote ? record.prescriptionNote : null,
+          items: [],
+          medicalRecordInfo: {
+            examinationDate: record.examinationDate,
+            diagnosis: record.diagnosis,
+            symptoms: record.symptoms,
+            notes: record.notes
+          },
+          isFromMedicalRecord: true,
+          hasNote: hasNote,
+          isEmpty: !hasNote
+        };
+      }
+      
+      console.log('Final prescription data:', prescriptionData);
+      console.log('=== END DEBUG ===');
+      
+      setSelectedPrescription(prescriptionData);
+      
+    } catch (error) {
+      console.error('Error viewing prescription:', error);
+      message.error('Không thể tải thông tin đơn thuốc');
+      setSelectedPrescription(null);
+    } finally {
+      setLoadingPrescription(false);
+    }
+  };
+
   const handleOpenEditModal = (record) => {
+    console.log('=== EDIT MODAL DEBUG ===');
+    console.log('Full record object:', record);
+    console.log('Record properties:', Object.keys(record));
+    console.log('Record.id:', record.id);
+    console.log('Record.Id:', record.Id);
+    console.log('Record ID final:', record.id || record.Id);
+    console.log('Current selectedPatient:', selectedPatient);
+    console.log('=== END EDIT MODAL DEBUG ===');
+    
+    // Validate record ID
+    const recordId = record.id || record.Id;
+    if (!recordId || recordId === '00000000-0000-0000-0000-000000000000') {
+      message.error('ID hồ sơ bệnh án không hợp lệ: ' + recordId);
+      return;
+    }
+    
     setSelectedRecord(record);
     setIsEditModalVisible(true);
-    
-    console.log('Opening edit modal with record:', record);
-    console.log('Current selectedPatient:', selectedPatient);
     
     // Populate form with existing data
     editForm.setFieldsValue({
       dateOfVisit: record.examinationDate ? moment(record.examinationDate) : null,
-      treatmentStageId: record.treatmentStageId,
+      treatmentStageId: record.treatmentStageId || record.TreatmentStageId,
       diagnosis: record.diagnosis,
       symptoms: record.symptoms,
       prescriptionNote: record.prescriptionNote,
@@ -280,11 +405,22 @@ const PatientProfiles = () => {
   };
 
   const handleUpdateRecord = async (values) => {
-    if (!selectedRecord) return;
+    if (!selectedRecord) {
+      console.log('❌ No selectedRecord');
+      return;
+    }
     
     setEditLoading(true);
     try {
-      const recordId = selectedRecord.id;
+      console.log('=== UPDATE RECORD DEBUG ===');
+      console.log('selectedRecord object:', selectedRecord);
+      console.log('selectedRecord properties:', Object.keys(selectedRecord));
+      console.log('selectedRecord.id:', selectedRecord.id);
+      console.log('selectedRecord.Id:', selectedRecord.Id);
+      
+      const recordId = selectedRecord.id || selectedRecord.Id;
+      console.log('Final recordId:', recordId);
+      
       const currentUser = authService.getCurrentUser();
       const doctorId = currentUser?.doctorId || currentUser?.id;
       
@@ -293,21 +429,27 @@ const PatientProfiles = () => {
         recordId,
         doctorId,
         selectedPatient,
-        patientIdFromRecord: selectedRecord.patientId,
+        patientIdFromRecord: selectedRecord.patientId || selectedRecord.PatientId,
         patientIdFromSelected: selectedPatient?.id || selectedPatient?.Id,
         values
       });
+
+      // Validate recordId
+      if (!recordId || recordId === '00000000-0000-0000-0000-000000000000') {
+        console.log('❌ Invalid record ID:', recordId);
+        throw new Error('ID hồ sơ bệnh án không hợp lệ: ' + recordId);
+      }
       
       const recordData = {
-        id: recordId,
-        patientId: selectedRecord.patientId || selectedPatient?.id || selectedPatient?.Id,
-        doctorId: doctorId,
-        treatmentStageId: values.treatmentStageId,
-        examinationDate: values.dateOfVisit ? values.dateOfVisit.toISOString() : null,
-        diagnosis: values.diagnosis,
-        symptoms: values.symptoms,
-        prescriptionNote: values.prescriptionNote,
-        notes: values.notes
+        MedicalRecordId: recordId,  // Backend expects MedicalRecordId
+        PatientId: selectedRecord.patientId || selectedRecord.PatientId || selectedPatient?.id || selectedPatient?.Id,  // Backend expects PatientId
+        DoctorId: doctorId,  // Backend expects DoctorId
+        TreatmentStageId: values.treatmentStageId,  // Backend expects TreatmentStageId
+        ExaminationDate: values.dateOfVisit ? values.dateOfVisit.toISOString() : null,  // Backend expects ExaminationDate
+        Diagnosis: values.diagnosis,
+        Symptoms: values.symptoms,
+        PrescriptionNote: values.prescriptionNote,  // Backend expects PrescriptionNote
+        Notes: values.notes
       };
 
       console.log('Sending record data:', recordData);
@@ -463,17 +605,28 @@ const PatientProfiles = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 100,
+      width: 150,
       render: (_, record) => (
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          size="small"
-          onClick={() => handleOpenEditModal(record)}
-          title="Chỉnh sửa hồ sơ bệnh án"
-        >
-          Sửa
-        </Button>
+        <Space size="small">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => handleOpenEditModal(record)}
+            title="Chỉnh sửa hồ sơ bệnh án"
+          >
+            Sửa
+          </Button>
+          <Button
+            type="default"
+            icon={<MedicineBoxOutlined />}
+            size="small"
+            onClick={() => handleViewPrescription(record)}
+            title="Xem đơn thuốc"
+          >
+            Đơn thuốc
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -814,6 +967,176 @@ const PatientProfiles = () => {
           </Spin>
         )}
       </div>
+
+      {/* Prescription Modal */}
+      <Modal
+        title="Thông tin đơn thuốc"
+        open={isPrescriptionModalVisible}
+        onCancel={() => setIsPrescriptionModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setIsPrescriptionModalVisible(false)}>
+            Đóng
+          </Button>
+        ]}
+        width={800}
+        destroyOnClose={true}
+      >
+        <Spin spinning={loadingPrescription}>
+          {selectedPrescription ? (
+            <div>
+              {/* Medical Record Info */}
+              <div style={{ marginBottom: 20, padding: 16, backgroundColor: '#f0f2f5', borderRadius: 8 }}>
+                <h4 style={{ margin: '0 0 12px 0', color: '#1890ff' }}>Thông tin khám bệnh</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <strong>Ngày khám:</strong>
+                    <div style={{ marginTop: 4 }}>
+                      {selectedPrescription.medicalRecordInfo?.examinationDate 
+                        ? moment(selectedPrescription.medicalRecordInfo.examinationDate).format('DD/MM/YYYY')
+                        : 'N/A'
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    <strong>Chẩn đoán:</strong>
+                    <div style={{ marginTop: 4 }}>
+                      {selectedPrescription.medicalRecordInfo?.diagnosis || 'N/A'}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <strong>Triệu chứng:</strong>
+                  <div style={{ marginTop: 4 }}>
+                    {selectedPrescription.medicalRecordInfo?.symptoms || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Prescription Note */}
+              {selectedPrescription.isEmpty ? (
+                <div style={{ 
+                  marginBottom: 20, 
+                  padding: 20, 
+                  backgroundColor: '#fff2f0', 
+                  borderRadius: 8, 
+                  border: '1px solid #ffccc7',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '48px', color: '#ff7875', marginBottom: 12 }}>💊</div>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#cf1322' }}>
+                    Chưa có đơn thuốc
+                  </h4>
+                  <p style={{ margin: 0, color: '#8c8c8c' }}>
+                    Bệnh nhân này chưa được kê đơn thuốc nào.<br/>
+                    Bác sĩ có thể thêm đơn thuốc trong phần quản lý điều trị.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ marginBottom: 20, padding: 16, backgroundColor: '#f6ffed', borderRadius: 8, border: '1px solid #b7eb8f' }}>
+                  <h4 style={{ margin: '0 0 8px 0', color: '#389e0d' }}>
+                    Ghi chú đơn thuốc
+                    {selectedPrescription.isFromAPI && (
+                      <span style={{ marginLeft: 8, fontSize: '12px', color: '#52c41a', fontWeight: 'normal' }}>
+                        (Từ cơ sở dữ liệu - {selectedPrescription.method})
+                      </span>
+                    )}
+                    {selectedPrescription.isFromMedicalRecord && (
+                      <span style={{ marginLeft: 8, fontSize: '12px', color: '#fa8c16', fontWeight: 'normal' }}>
+                        (Từ hồ sơ bệnh án)
+                      </span>
+                    )}
+                  </h4>
+                  <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {selectedPrescription.prescriptionNote || selectedPrescription.note || 'Không có ghi chú đơn thuốc'}
+                  </p>
+                </div>
+              )}
+
+              {/* Prescription Items */}
+              {selectedPrescription.items && selectedPrescription.items.length > 0 ? (
+                <div style={{ marginBottom: 20 }}>
+                  <h4 style={{ margin: '0 0 16px 0', color: '#1890ff' }}>Danh sách thuốc chi tiết</h4>
+                  {selectedPrescription.items.map((item, index) => (
+                    <div key={item.id || index} style={{ 
+                      marginBottom: 16, 
+                      padding: 16, 
+                      border: '1px solid #d9d9d9', 
+                      borderRadius: 8,
+                      backgroundColor: '#fafafa'
+                    }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <strong style={{ color: '#1890ff' }}>Thuốc #{index + 1}</strong>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                          <strong>Tên thuốc:</strong>
+                          <div style={{ marginTop: 4, padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: 4 }}>
+                            {item.drugName || 'Không có thông tin'}
+                          </div>
+                        </div>
+                        <div>
+                          <strong>Liều lượng:</strong>
+                          <div style={{ marginTop: 4, padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: 4 }}>
+                            {item.frequency || 'Không có thông tin'}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 12 }}>
+                        <strong>Tác dụng phụ:</strong>
+                        <div style={{ marginTop: 4, padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: 4 }}>
+                          {item.dosage || 'Không có thông tin'}
+                        </div>
+                      </div>
+                      {item.instructions && (
+                        <div style={{ marginTop: 12 }}>
+                          <strong>Hướng dẫn sử dụng:</strong>
+                          <div style={{ marginTop: 4, padding: '6px 12px', backgroundColor: '#fff', border: '1px solid #e8e8e8', borderRadius: 4 }}>
+                            {item.instructions}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                !selectedPrescription.isEmpty && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '24px', 
+                    color: '#666',
+                    border: '1px dashed #d9d9d9',
+                    borderRadius: '6px',
+                    backgroundColor: '#fafafa'
+                  }}>
+                    <MedicineBoxOutlined style={{ fontSize: '36px', color: '#d9d9d9', marginBottom: '12px' }} />
+                    <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                      {selectedPrescription.isFromAPI 
+                        ? 'Đơn thuốc này chưa có thông tin chi tiết về các loại thuốc'
+                        : 'Thông tin chi tiết về từng loại thuốc sẽ được hiển thị khi có đơn thuốc chi tiết'
+                      }
+                    </p>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>
+                      {selectedPrescription.isFromMedicalRecord 
+                        ? 'Hiện tại chỉ hiển thị ghi chú đơn thuốc từ hồ sơ bệnh án'
+                        : 'Đơn thuốc từ cơ sở dữ liệu nhưng chưa có items'
+                      }
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
+          ) : !loadingPrescription ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '40px', 
+              color: '#999'
+            }}>
+              <MedicineBoxOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
+              <p>Không thể tải thông tin đơn thuốc</p>
+            </div>
+          ) : null}
+        </Spin>
+      </Modal>
     </div>
   );
 };

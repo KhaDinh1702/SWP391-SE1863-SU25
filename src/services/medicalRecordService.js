@@ -74,14 +74,25 @@ export const medicalRecordService = {
   // Cập nhật medical record
   updateMedicalRecord: async (recordData) => {
     try {
+      console.log('=== UPDATE MEDICAL RECORD DEBUG ===');
+      console.log('Input recordData:', recordData);
+      console.log('Record ID:', recordData.id);
+      
       const formData = new FormData();
       
       // Thêm các fields vào FormData
       Object.keys(recordData).forEach(key => {
         if (recordData[key] !== null && recordData[key] !== undefined) {
+          console.log(`Adding to FormData: ${key} = ${recordData[key]}`);
           formData.append(key, recordData[key]);
         }
       });
+
+      // Log FormData contents
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       const response = await fetch(`${API_BASE_URL}/MedicalRecord/update-medical-record`, {
         method: 'PUT',
@@ -93,6 +104,7 @@ export const medicalRecordService = {
       
       console.log('Update response status:', response.status);
       console.log('Update response headers:', response.headers);
+      console.log('=== END DEBUG ===');
       
       if (!response.ok) {
         const errorText = await response.text();
