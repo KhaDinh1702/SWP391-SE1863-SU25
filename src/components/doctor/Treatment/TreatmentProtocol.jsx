@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, DatePicker, Row, Col, TimePicker } from 'antd';
+import { Table, Card, Button, Modal, Form, Input, Select, AutoComplete, message, Space, Tag, Tooltip, DatePicker, Row, Col, TimePicker } from 'antd';
 import { PlusOutlined, EyeOutlined, ReloadOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
 import { patientTreatmentProtocolService } from '../../../services/patientTreatmentProtocolService';
 import { treatmentStageService } from '../../../services/treatmentStageService';
@@ -14,6 +14,23 @@ const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 
 const TreatmentProtocol = () => {
+  // HIV drug combinations for dropdown
+  const hivDrugOptions = [
+    'Tenofovir + Lamivudine + Efavirenz',
+    'Zidovudine + Lamivudine + Efavirenz',
+    'Tenofovir + Emtricitabine + Efavirenz',
+    'Abacavir + Lamivudine + Efavirenz',
+    'Tenofovir + Lamivudine + Rilpivirine',
+    'Zidovudine + Lamivudine + Nevirapine',
+    'Tenofovir + Emtricitabine + Rilpivirine',
+    'Abacavir + Lamivudine + Dolutegravir',
+    'Tenofovir + Lamivudine + Dolutegravir',
+    'Tenofovir + Emtricitabine + Dolutegravir',
+    'Darunavir + Ritonavir + Tenofovir + Emtricitabine',
+    'Atazanavir + Ritonavir + Tenofovir + Emtricitabine',
+    'Lopinavir + Ritonavir + Zidovudine + Lamivudine'
+  ];
+
   const [patientProtocols, setPatientProtocols] = useState([]);
   const [treatmentStages, setTreatmentStages] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -251,23 +268,33 @@ const TreatmentProtocol = () => {
         reminderTimesString = values.reminderTimes.format('HH:mm');
       }
 
+      // Parse prescription items from form
+      let prescriptionObject = null;
+      if (values.prescriptionItems && values.prescriptionItems.length > 0) {
+        prescriptionObject = {
+          PrescriptionItems: values.prescriptionItems.map(item => ({
+            DrugName: item.drugName || '',
+            Dosage: item.dosage || '',
+            Frequency: item.frequency || ''
+          }))
+        };
+      }
+
       const requestData = {
         StageName: values.stageName,
-        StageNumber: values.orderNumber,
+        StageNumber: parseInt(values.orderNumber),
         Description: values.description || '',
         PatientTreatmentProtocolId: values.patientTreatmentProtocolId,
         StartDate: values.startDate.toISOString(),
         EndDate: values.endDate ? values.endDate.toISOString() : null,
         ReminderTimes: reminderTimesString,
-        Medicine: values.medicine || '',
-        Status: values.status || 'Active',
-        PatientId: values.patientId,
-        DoctorId: currentDoctor?.id, // Always use currentDoctor.id
+        Status: 0, // Active status
         ExaminationDate: values.examinationDate.toISOString(),
         Diagnosis: values.diagnosis || '',
         Symptoms: values.symptoms || '',
-        Prescription: values.prescription || '',
-        Notes: values.notes || ''
+        Notes: values.notes || '',
+        PrescriptionNote: values.prescriptionNote || '',
+        Prescription: prescriptionObject
       };
 
       console.log('Creating treatment stage with data:', requestData);
@@ -403,7 +430,7 @@ const TreatmentProtocol = () => {
       ),
     },
     {
-      title: 'Thao tác',
+      title: 'Chi tiết',
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -730,19 +757,35 @@ const TreatmentProtocol = () => {
         width={600}
       >
         {selectedStage ? (
-          <div> 
-            <p><strong>Tên giai đoạn:</strong> {selectedStage.stageName || selectedStage.StageName}</p>
-            <p><strong>Mô tả:</strong> {selectedStage.description || selectedStage.Description || '-'}</p>
-            <p><strong>Ngày bắt đầu:</strong> {selectedStage.startDate ? new Date(selectedStage.startDate).toLocaleDateString('vi-VN') : (selectedStage.StartDate ? new Date(selectedStage.StartDate).toLocaleDateString('vi-VN') : '-')}</p>
-            <p><strong>Ngày kết thúc:</strong> {selectedStage.endDate ? new Date(selectedStage.endDate).toLocaleDateString('vi-VN') : (selectedStage.EndDate ? new Date(selectedStage.EndDate).toLocaleDateString('vi-VN') : '-')}</p>
-            <p><strong>Thời gian nhắc nhở:</strong> {
-              (() => {
-                const reminderTime = selectedStage.reminderTimes || selectedStage.ReminderTimes;
-                return reminderTime || 'Không có';
-              })()
-            }</p>
-            <p><strong>Thuốc:</strong> {selectedStage.medicine || selectedStage.Medicine || '-'}</p>
-            <p><strong>Bệnh nhân:</strong> {selectedStage.patientName || selectedStage.PatientName || selectedStage.patientId || selectedStage.PatientId || '-'}</p>
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}> 
+            {/* Thông tin cơ bản */}
+            <div style={{ marginBottom: 20, padding: 16, backgroundColor: '#f0f9ff', borderRadius: 8, border: '1px solid #bae6fd' }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#0369a1' }}>Thông tin giai đoạn</h4>
+              <p><strong>Tên giai đoạn:</strong> {selectedStage.stageName || selectedStage.StageName || '-'}</p>
+              <p><strong>Mô tả:</strong> {selectedStage.description || selectedStage.Description || 'Không có mô tả'}</p>
+              <p><strong>Bệnh nhân:</strong> {selectedStage.patientName || selectedStage.PatientName || '-'}</p>
+            </div>
+
+            {/* Thời gian */}
+            <div style={{ marginBottom: 20, padding: 16, backgroundColor: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+              <h4 style={{ margin: '0 0 12px 0', color: '#166534' }}>Thời gian điều trị</h4>
+              <p><strong>Ngày bắt đầu:</strong> {selectedStage.startDate ? new Date(selectedStage.startDate).toLocaleDateString('vi-VN') : (selectedStage.StartDate ? new Date(selectedStage.StartDate).toLocaleDateString('vi-VN') : 'Chưa xác định')}</p>
+              <p><strong>Ngày kết thúc:</strong> {selectedStage.endDate ? new Date(selectedStage.endDate).toLocaleDateString('vi-VN') : (selectedStage.EndDate ? new Date(selectedStage.EndDate).toLocaleDateString('vi-VN') : 'Chưa xác định')}</p>
+              <p><strong>Thời gian nhắc nhở:</strong> {
+                (() => {
+                  const reminderTime = selectedStage.reminderTimes || selectedStage.ReminderTimes;
+                  return reminderTime || 'Không có';
+                })()
+              }</p>
+            </div>
+
+            {/* Ghi chú */}
+            {(selectedStage.notes || selectedStage.Notes) && (
+              <div style={{ padding: 16, backgroundColor: '#f8fafc', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#475569' }}>Ghi chú</h4>
+                <p style={{ margin: 0 }}>{selectedStage.notes || selectedStage.Notes}</p>
+              </div>
+            )}
           </div>
         ) : (
           <Form
@@ -866,49 +909,12 @@ const TreatmentProtocol = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="medicine"
-                  label="Thuốc"
-                >
-                  <Input placeholder="VD: Paracetamol,Vitamin C" />
-                </Form.Item>
-              </Col>
             </Row>
 
             {/* Medical Record Fields */}
             <div style={{ marginTop: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
               <h4>Thông tin khám bệnh</h4>
               
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="patientId"
-                    label="Bệnh nhân"
-                    rules={[{ required: true, message: 'Vui lòng chọn bệnh nhân' }]}
-                  >
-                    <Select placeholder="Chọn bệnh nhân">
-                      {patients
-                        .filter(patient => {
-                          // Chỉ hiển thị bệnh nhân đã có lịch hẹn
-                          return appointmentsData.some(appointment => 
-                            appointment.patientId === patient.id || appointment.PatientId === patient.id
-                          );
-                        })
-                        .map(p => (
-                          <Option key={p.id} value={p.id}>
-                            {p.fullName}
-                          </Option>
-                        ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                {/* Bỏ chọn bác sĩ, tự động set doctorId */}
-              </Row>
-              <Form.Item name="doctorId" initialValue={currentDoctor?.id} hidden>
-                <Input type="hidden" />
-              </Form.Item>
-
               <Form.Item
                 name="examinationDate"
                 label="Ngày khám"
@@ -938,11 +944,78 @@ const TreatmentProtocol = () => {
               </Form.Item>
 
               <Form.Item
-                name="prescription"
-                label="Đơn thuốc"
+                name="prescriptionNote"
+                label="Ghi chú đơn thuốc"
               >
-                <TextArea rows={2} placeholder="Nhập đơn thuốc" />
+                <TextArea rows={2} placeholder="Nhập ghi chú về đơn thuốc" />
               </Form.Item>
+
+              <Form.List name="prescriptionItems">
+                {(fields, { add, remove }) => (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <label>Danh sách thuốc:</label>
+                      <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+                        Thêm thuốc
+                      </Button>
+                    </div>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <div key={key} style={{ 
+                        marginBottom: 16, 
+                        padding: 12, 
+                        border: '1px solid #d9d9d9', 
+                        borderRadius: 6,
+                        backgroundColor: '#fafafa'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                          <span style={{ fontWeight: 'bold' }}>Thuốc #{key + 1}</span>
+                          <Button type="link" danger onClick={() => remove(name)} size="small">
+                            Xóa
+                          </Button>
+                        </div>
+                        
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'drugName']}
+                          label="Tên thuốc"
+                          rules={[{ required: true, message: 'Nhập tên thuốc' }]}
+                          style={{ marginBottom: 12 }}
+                        >
+                          <AutoComplete
+                            placeholder="Chọn thuốc có sẵn hoặc nhập tên thuốc mới"
+                            style={{ width: '100%' }}
+                            options={hivDrugOptions.map(drug => ({ value: drug, label: drug }))}
+                            filterOption={(inputValue, option) =>
+                              option.label.toLowerCase().includes(inputValue.toLowerCase())
+                            }
+                            allowClear
+                          />
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'frequency']}
+                          label="Tần suất sử dụng"
+                          rules={[{ required: true, message: 'Nhập tần suất' }]}
+                          style={{ marginBottom: 12 }}
+                        >
+                          <Input placeholder="VD: 2 lần/ngày, sau ăn" />
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...restField}
+                          name={[name, 'dosage']}
+                          label="Tác dụng phụ"
+                          rules={[{ required: true, message: 'Nhập tác dụng phụ' }]}
+                          style={{ marginBottom: 0 }}
+                        >
+                          <Input placeholder="Nhập các tác dụng phụ có thể xảy ra" />
+                        </Form.Item>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </Form.List>
 
               <Form.Item
                 name="notes"

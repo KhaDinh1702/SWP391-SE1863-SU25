@@ -234,18 +234,19 @@ const PatientProfiles = () => {
     try {
       const currentUser = authService.getCurrentUser();
       const doctorId = currentUser?.doctorId || currentUser?.id;
-      const formData = new FormData();
-      formData.append('PatientId', values.patientId);
-      formData.append('DoctorId', doctorId);
-      formData.append('TreatmentStageId', values.treatmentStageId);
-      if (values.examinationDate) {
-        formData.append('ExaminationDate', values.examinationDate.toISOString());
-      }
-      formData.append('Diagnosis', values.diagnosis);
-      formData.append('Symptoms', values.symptoms);
-      formData.append('Prescription', values.prescription);
-      formData.append('Notes', values.notes);
-      await medicalRecordService.createMedicalRecord(formData);
+      
+      const recordData = {
+        patientId: values.patientId,
+        doctorId: doctorId,
+        treatmentStageId: values.treatmentStageId,
+        examinationDate: values.examinationDate ? values.examinationDate.toISOString() : null,
+        diagnosis: values.diagnosis,
+        symptoms: values.symptoms,
+        prescriptionNote: values.prescriptionNote,
+        notes: values.notes
+      };
+
+      await medicalRecordService.createMedicalRecord(recordData);
       message.success('Tạo hồ sơ bệnh án thành công!');
       createForm.resetFields();
       setIsCreateModalVisible(false);
@@ -269,12 +270,12 @@ const PatientProfiles = () => {
     
     // Populate form with existing data
     editForm.setFieldsValue({
-      dateOfVisit: record.examinationDate || record.ExaminationDate ? moment(record.examinationDate || record.ExaminationDate) : null,
-      treatmentStageId: record.treatmentStageId || record.TreatmentStageId,
-      diagnosis: record.diagnosis || record.Diagnosis,
-      symptoms: record.symptoms || record.Symptoms,
-      treatment: record.prescription || record.Prescription,
-      notes: record.notes || record.Notes
+      dateOfVisit: record.examinationDate ? moment(record.examinationDate) : null,
+      treatmentStageId: record.treatmentStageId,
+      diagnosis: record.diagnosis,
+      symptoms: record.symptoms,
+      prescriptionNote: record.prescriptionNote,
+      notes: record.notes
     });
   };
 
@@ -283,7 +284,7 @@ const PatientProfiles = () => {
     
     setEditLoading(true);
     try {
-      const recordId = selectedRecord.id || selectedRecord.Id;
+      const recordId = selectedRecord.id;
       const currentUser = authService.getCurrentUser();
       const doctorId = currentUser?.doctorId || currentUser?.id;
       
@@ -292,21 +293,21 @@ const PatientProfiles = () => {
         recordId,
         doctorId,
         selectedPatient,
-        patientIdFromRecord: selectedRecord.patientId || selectedRecord.PatientId,
+        patientIdFromRecord: selectedRecord.patientId,
         patientIdFromSelected: selectedPatient?.id || selectedPatient?.Id,
         values
       });
       
       const recordData = {
-        MedicalRecordId: recordId,
-        PatientId: selectedRecord.patientId || selectedRecord.PatientId || selectedPatient?.id || selectedPatient?.Id,
-        DoctorId: doctorId,
-        TreatmentStageId: values.treatmentStageId,
-        ExaminationDate: values.dateOfVisit ? values.dateOfVisit.toISOString() : null,
-        Diagnosis: values.diagnosis,
-        Symptoms: values.symptoms,
-        Prescription: values.treatment,
-        Notes: values.notes
+        id: recordId,
+        patientId: selectedRecord.patientId || selectedPatient?.id || selectedPatient?.Id,
+        doctorId: doctorId,
+        treatmentStageId: values.treatmentStageId,
+        examinationDate: values.dateOfVisit ? values.dateOfVisit.toISOString() : null,
+        diagnosis: values.diagnosis,
+        symptoms: values.symptoms,
+        prescriptionNote: values.prescriptionNote,
+        notes: values.notes
       };
 
       console.log('Sending record data:', recordData);
@@ -423,9 +424,8 @@ const PatientProfiles = () => {
       dataIndex: 'examinationDate',
       key: 'examinationDate',
       width: 120,
-      render: (date, record) => {
-        const d = date || record.ExaminationDate;
-        return d ? moment(d).format('DD/MM/YYYY') : '-';
+      render: (date) => {
+        return date ? moment(date).format('DD/MM/YYYY') : '-';
       },
     },
     {
@@ -434,7 +434,7 @@ const PatientProfiles = () => {
       key: 'diagnosis',
       width: 200,
       ellipsis: true,
-      render: (text, record) => text || record.Diagnosis || '-',
+      render: (text) => text || '-',
     },
     {
       title: 'Triệu chứng',
@@ -442,15 +442,15 @@ const PatientProfiles = () => {
       key: 'symptoms',
       width: 200,
       ellipsis: true,
-      render: (text, record) => text || record.Symptoms || '-',
+      render: (text) => text || '-',
     },
     {
-      title: 'Đơn thuốc',
-      dataIndex: 'prescription',
-      key: 'prescription',
+      title: 'Ghi chú đơn thuốc',
+      dataIndex: 'prescriptionNote',
+      key: 'prescriptionNote',
       width: 200,
       ellipsis: true,
-      render: (text, record) => text || record.Prescription || '-',
+      render: (text) => text || '-',
     },
     {
       title: 'Ghi chú',
@@ -458,7 +458,7 @@ const PatientProfiles = () => {
       key: 'notes',
       width: 200,
       ellipsis: true,
-      render: (text, record) => text || record.Notes || '-',
+      render: (text) => text || '-',
     },
     {
       title: 'Thao tác',
@@ -612,15 +612,15 @@ const PatientProfiles = () => {
             />
           </Form.Item>
           <Form.Item
-            label="Đơn thuốc"
-            name="prescription"
+            label="Ghi chú đơn thuốc"
+            name="prescriptionNote"
             rules={[
-              { min: 5, message: 'Đơn thuốc phải có ít nhất 5 ký tự!' }
+              { min: 5, message: 'Ghi chú đơn thuốc phải có ít nhất 5 ký tự!' }
             ]}
           >
             <TextArea
               rows={4}
-              placeholder="Nhập đơn thuốc và hướng dẫn sử dụng (tùy chọn)..."
+              placeholder="Nhập ghi chú về đơn thuốc và hướng dẫn sử dụng (tùy chọn)..."
               showCount
               maxLength={2000}
             />
@@ -729,13 +729,13 @@ const PatientProfiles = () => {
           </Form.Item>
 
           <Form.Item
-            name="treatment"
-            label="Đơn thuốc / Phương pháp điều trị"
-            rules={[{ required: true, message: 'Vui lòng nhập đơn thuốc!' }]}
+            name="prescriptionNote"
+            label="Ghi chú đơn thuốc"
+            rules={[{ required: true, message: 'Vui lòng nhập ghi chú đơn thuốc!' }]}
           >
             <TextArea 
               rows={3} 
-              placeholder="Nhập đơn thuốc và phương pháp điều trị..."
+              placeholder="Nhập ghi chú về đơn thuốc và phương pháp điều trị..."
               maxLength={1000}
               showCount
             />
