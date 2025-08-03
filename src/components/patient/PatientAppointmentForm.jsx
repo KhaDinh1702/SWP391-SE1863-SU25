@@ -228,7 +228,6 @@ const PatientAppointmentForm = ({ patientId }) => {
     }
 
     const specializationMap = {
-      0: "Xét nghiệm",     // Testing
       1: "Điều trị",       // Treatment
       2: "Tư vấn"          // Consultation
     };
@@ -505,7 +504,6 @@ const PatientAppointmentForm = ({ patientId }) => {
     // Determine appointment title based on type
     const getAppointmentTitle = (type) => {
       switch(type) {
-        case 0: return "Xét nghiệm";
         case 1: return "Điều trị";
         case 2: return "Tư vấn";
         default: return "Khám bệnh";
@@ -611,29 +609,7 @@ const PatientAppointmentForm = ({ patientId }) => {
                   <VideoCameraOutlined className="mr-2 text-[#3B9AB8]" />
                   Loại cuộc hẹn
                 </label>
-                <div className="grid grid-cols-3 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        appointmentType: 0,
-                        doctorId: "", // Reset doctor selection when appointment type changes
-                        appointmentTime: "", // Reset time selection
-                        meetingFormat: 1 // Force offline for testing
-                      }));
-                      setAllDoctorAppointments([]); // Reset doctor appointments
-                    }}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.appointmentType === 0
-                        ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
-                        : 'border-gray-200 hover:border-[#3B9AB8]'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">🧪</div>
-                    <div className="font-medium">Xét nghiệm</div>
-                    <div className="text-sm text-gray-500">Làm các xét nghiệm cần thiết</div>
-                  </button>
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -642,8 +618,7 @@ const PatientAppointmentForm = ({ patientId }) => {
                         appointmentType: 1,
                         doctorId: "", // Reset doctor selection when appointment type changes
                         appointmentTime: "", // Reset time selection
-                        // Only set meetingFormat to default if user is switching from testing (0)
-                        meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
+                        meetingFormat: prev.meetingFormat
                       }));
                       setAllDoctorAppointments([]); // Reset doctor appointments
                     }}
@@ -665,8 +640,7 @@ const PatientAppointmentForm = ({ patientId }) => {
                         appointmentType: 2,
                         doctorId: "", // Reset doctor selection when appointment type changes
                         appointmentTime: "", // Reset time selection
-                        // Only set meetingFormat to default if user is switching from testing (0)
-                        meetingFormat: prev.appointmentType === 0 ? 1 : prev.meetingFormat
+                        meetingFormat: prev.meetingFormat
                       }));
                       setAllDoctorAppointments([]); // Reset doctor appointments
                     }}
@@ -683,59 +657,45 @@ const PatientAppointmentForm = ({ patientId }) => {
                 </div>
               </div>
 
-              {/* Meeting Format - Only show if appointment type is selected and not testing */}
+              {/* Meeting Format - Only show if appointment type is selected */}
               {formData.appointmentType !== null && formData.appointmentType !== undefined && (
                 <div className="space-y-2">
                   <label className="flex items-center text-gray-700 font-medium">
                     <EnvironmentOutlined className="mr-2 text-[#3B9AB8]" />
                     Hình thức cuộc hẹn
                   </label>
-                  {formData.appointmentType === 0 ? (
-                    // For testing - only offline allowed
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <EnvironmentOutlined className="text-xl text-[#3B9AB8]" />
-                        <div>
-                          <div className="font-medium text-gray-900">Tại phòng khám</div>
-                          <div className="text-sm text-gray-600">Xét nghiệm chỉ có thể thực hiện trực tiếp tại phòng khám</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // For treatment and consultation - both options available
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, meetingFormat: 0 }));
-                        }}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          formData.meetingFormat === 0
-                            ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
-                            : 'border-gray-200 hover:border-[#3B9AB8]'
-                        }`}
-                      >
-                        <VideoCameraOutlined className="text-xl mb-2 text-[#3B9AB8]" />
-                        <div className="font-medium">Trực tuyến</div>
-                        <div className="text-sm text-gray-500">Khám qua video call</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, meetingFormat: 1 }));
-                        }}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          formData.meetingFormat === 1
-                            ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
-                            : 'border-gray-200 hover:border-[#3B9AB8]'
-                        }`}
-                      >
-                        <EnvironmentOutlined className="text-xl mb-2 text-[#3B9AB8]" />
-                        <div className="font-medium">Tại phòng khám</div>
-                        <div className="text-sm text-gray-500">Khám trực tiếp</div>
-                      </button>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, meetingFormat: 0 }));
+                      }}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        formData.meetingFormat === 0
+                          ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
+                          : 'border-gray-200 hover:border-[#3B9AB8]'
+                      }`}
+                    >
+                      <VideoCameraOutlined className="text-xl mb-2 text-[#3B9AB8]" />
+                      <div className="font-medium">Trực tuyến</div>
+                      <div className="text-sm text-gray-500">Khám qua video call</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, meetingFormat: 1 }));
+                      }}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        formData.meetingFormat === 1
+                          ? 'border-[#3B9AB8] bg-blue-50 text-[#3B9AB8]'
+                          : 'border-gray-200 hover:border-[#3B9AB8]'
+                      }`}
+                    >
+                      <EnvironmentOutlined className="text-xl mb-2 text-[#3B9AB8]" />
+                      <div className="font-medium">Tại phòng khám</div>
+                      <div className="text-sm text-gray-500">Khám trực tiếp</div>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -764,7 +724,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                     {getFilteredDoctors().length === 0 && (
                       <p className="text-sm text-red-500 bg-red-50 p-2 rounded-md">
                         ⚠️ Hiện tại không có bác sĩ nào chuyên về {
-                          formData.appointmentType === 0 ? 'Xét nghiệm' :
                           formData.appointmentType === 1 ? 'Điều trị' : 'Tư vấn'
                         }. Vui lòng chọn loại cuộc hẹn khác hoặc liên hệ trực tiếp với phòng khám.
                       </p>
@@ -772,7 +731,6 @@ const PatientAppointmentForm = ({ patientId }) => {
                     {getFilteredDoctors().length > 0 && (
                       <p className="text-sm text-green-600 bg-green-50 p-2 rounded-md">
                         ✓ Tìm thấy {getFilteredDoctors().length} bác sĩ chuyên về {
-                          formData.appointmentType === 0 ? 'Xét nghiệm' :
                           formData.appointmentType === 1 ? 'Điều trị' : 'Tư vấn'
                         }
                       </p>

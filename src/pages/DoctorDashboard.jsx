@@ -128,10 +128,17 @@ const DoctorDashboard = () => {
     return 'general';
   };
 
-  // Lấy danh sách menu đầy đủ cho tất cả các loại bác sĩ
+  // Lấy danh sách menu dựa trên loại bác sĩ
   const getAvailableTabs = () => {
-    // Trả về tất cả tab cho mọi loại bác sĩ
-    return ['dashboard', 'schedule', 'patients', 'lab', 'treatment', 'profile'];
+    const doctorType = getDoctorType();
+    
+    if (doctorType === 'lab') {
+      // Bác sĩ xét nghiệm: bỏ tab schedule và treatment
+      return ['dashboard', 'patients', 'lab', 'profile'];
+    } else {
+      // Bác sĩ điều trị và tư vấn: có tất cả các tab
+      return ['dashboard', 'schedule', 'patients', 'lab', 'treatment', 'profile'];
+    }
   };
 
   // Lấy dữ liệu dashboard khi tab active và có currentDoctor
@@ -141,9 +148,17 @@ const DoctorDashboard = () => {
     }
   }, [activeTab, currentDoctor]);
 
-  // Kiểm tra và chuyển về dashboard nếu tab hiện tại không khả dụng (bỏ kiểm tra này vì tất cả tab đều khả dụng)
+  // Kiểm tra và chuyển về dashboard nếu tab hiện tại không khả dụng cho loại bác sĩ này
   useEffect(() => {
-    // Không cần kiểm tra nữa vì tất cả tab đều khả dụng cho mọi bác sĩ
+    if (!currentDoctor) return;
+    
+    const doctorType = getDoctorType();
+    const availableTabs = getAvailableTabs();
+    
+    if (!availableTabs.includes(activeTab)) {
+      console.log(`Tab ${activeTab} không khả dụng cho bác sĩ ${doctorType}, chuyển về dashboard`);
+      setActiveTab('dashboard');
+    }
   }, [activeTab, currentDoctor]);
 
   const fetchDashboardData = async () => {    
@@ -481,16 +496,18 @@ const DoctorDashboard = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Lịch hẹn hôm nay"
-                value={stats.todayAppointments}
-                prefix={<CalendarOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
+          {getDoctorType() !== 'lab' && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Lịch hẹn hôm nay"
+                  value={stats.todayAppointments}
+                  prefix={<CalendarOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+          )}
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
@@ -501,16 +518,18 @@ const DoctorDashboard = () => {
               />
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Điều trị đang hoạt động"
-                value={stats.activeTreatments}
-                prefix={<FileTextOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
+          {getDoctorType() !== 'lab' && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card>
+                <Statistic
+                  title="Điều trị đang hoạt động"
+                  value={stats.activeTreatments}
+                  prefix={<FileTextOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+          )}
         </Row>
 
         {/* Quick Stats and Performance */}
@@ -528,15 +547,17 @@ const DoctorDashboard = () => {
                     Xem bệnh nhân
                   </Button>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                  <Button 
-                    icon={<CalendarOutlined />} 
-                    block
-                    onClick={() => setActiveTab('schedule')}
-                  >
-                    Xem lịch làm việc
-                  </Button>
-                </Col>
+                {getDoctorType() !== 'lab' && (
+                  <Col xs={24} sm={12} lg={6}>
+                    <Button 
+                      icon={<CalendarOutlined />} 
+                      block
+                      onClick={() => setActiveTab('schedule')}
+                    >
+                      Xem lịch làm việc
+                    </Button>
+                  </Col>
+                )}
                 <Col xs={24} sm={12} lg={6}>
                   <Button 
                     icon={<ExperimentOutlined />} 
@@ -546,15 +567,17 @@ const DoctorDashboard = () => {
                     Xem kết quả xét nghiệm
                   </Button>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                  <Button 
-                    icon={<FileTextOutlined />} 
-                    block
-                    onClick={() => setActiveTab('treatment')}
-                  >
-                    Tạo quy trình điều trị
-                  </Button>
-                </Col>
+                {getDoctorType() !== 'lab' && (
+                  <Col xs={24} sm={12} lg={6}>
+                    <Button 
+                      icon={<FileTextOutlined />} 
+                      block
+                      onClick={() => setActiveTab('treatment')}
+                    >
+                      Tạo quy trình điều trị
+                    </Button>
+                  </Col>
+                )}
               </Row>
             </Card>
           </Col>
@@ -588,10 +611,10 @@ const DoctorDashboard = () => {
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             {activeTab === 'dashboard' && <DashboardOverview />}
-            {activeTab === 'schedule' && <DoctorSchedule />}
+            {activeTab === 'schedule' && getDoctorType() !== 'lab' && <DoctorSchedule />}
             {activeTab === 'patients' && <PatientProfiles />}
             {activeTab === 'lab' && <LabResults />}
-            {activeTab === 'treatment' && <TreatmentProtocol />}
+            {activeTab === 'treatment' && getDoctorType() !== 'lab' && <TreatmentProtocol />}
             {activeTab === 'profile' && <DoctorProfile />}
           </div>
         </Content>

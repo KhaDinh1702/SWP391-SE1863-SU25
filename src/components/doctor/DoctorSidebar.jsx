@@ -36,8 +36,10 @@ const DoctorSidebar = ({ activeTab, setActiveTab, availableTabs = [] }) => {
       {/* Dashboard - luôn khả dụng */}
       <Button type={activeTab === 'dashboard' ? 'primary' : 'text'} icon={<DashboardOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('dashboard')}>Dashboard</Button>
       
-      {/* Schedule - luôn khả dụng */}
-      <Button type={activeTab === 'schedule' ? 'primary' : 'text'} icon={<CalendarOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('schedule')}>Lịch làm việc</Button>
+      {/* Schedule - chỉ hiển thị nếu khả dụng */}
+      {isTabAvailable('schedule') && (
+        <Button type={activeTab === 'schedule' ? 'primary' : 'text'} icon={<CalendarOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('schedule')}>Lịch làm việc</Button>
+      )}
       
       {/* Patients - luôn khả dụng */}
       <Button type={activeTab === 'patients' ? 'primary' : 'text'} icon={<ProfileOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('patients')}>Hồ sơ Bệnh nhân</Button>
@@ -52,8 +54,10 @@ const DoctorSidebar = ({ activeTab, setActiveTab, availableTabs = [] }) => {
         <Button type={activeTab === 'treatment' ? 'primary' : 'text'} icon={<SolutionOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('treatment')}>Quy trình điều trị</Button>
       )}
       
-      {/* Profile - luôn khả dụng */}
-      <Button type={activeTab === 'profile' ? 'primary' : 'text'} icon={<ProfileOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('profile')}>Hồ sơ cá nhân</Button>
+      {/* Profile - chỉ hiển thị nếu khả dụng */}
+      {isTabAvailable('profile') && (
+        <Button type={activeTab === 'profile' ? 'primary' : 'text'} icon={<ProfileOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0" onClick={() => setActiveTab('profile')}>Hồ sơ cá nhân</Button>
+      )}
       
       <Button type="text" icon={<LogoutOutlined />} className="w-full text-left flex items-center h-7 px-4 border-0 text-red-500 mt-2" onClick={handleLogout}>Đăng xuất</Button>
     </div>
