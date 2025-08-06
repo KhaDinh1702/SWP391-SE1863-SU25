@@ -450,76 +450,105 @@ const TreatmentProtocol = () => {
               onClick={() => handleUpdateStatus(record)}
             />
           </Tooltip>
-        </Space>
-      ),
-    },
-  ];
-
-  const stageColumns = [
-    {
-      title: 'Bệnh nhân',
-      dataIndex: 'patientName',
-      key: 'patientName',
-      render: (text) => <strong>{text}</strong>,
-    },
-    {
-      title: 'ARV Protocol',
-      dataIndex: 'arvProtocolName',
-      key: 'arvProtocolName',
-      render: (text) => <span>{text}</span>,
-    },
-    {
-      title: 'Tên giai đoạn',
-      dataIndex: 'stageName',
-      key: 'stageName',
-      render: (text) => <strong>{text}</strong>,
-    },
-    {
-      title: 'Thứ tự',
-      key: 'index',
-      render: (_text, _record, index) => index + 1,
-    },
-    {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      ellipsis: true,
-      render: (text) => (
-        <Tooltip title={text}>
-          <span>{text}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Ngày bắt đầu phác đồ',
-      dataIndex: 'protocolStartDate',
-      key: 'protocolStartDate',
-      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
-    },
-    {
-      title: 'Ngày kết thúc phác đồ',
-      dataIndex: 'protocolEndDate',
-      key: 'protocolEndDate',
-      render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
-    },
-   
-    {
-      title: 'Chi tiết',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="Thêm giai đoạn">
             <Button
-              type="primary"
-              icon={<EyeOutlined />}
+              type="default"
+              icon={<CalendarOutlined />}
               size="small"
-              onClick={() => handleViewStage(record.treatmentStageId || record.id)}
+              onClick={() => {
+                setSelectedStage(null);
+                // Pre-fill the protocol in the stage form
+                stageForm.setFieldsValue({
+                  patientTreatmentProtocolId: record.id,
+                  arvProtocolId: record.arvProtocolId
+                });
+                setIsStageModalVisible(true);
+              }}
             />
           </Tooltip>
         </Space>
       ),
     },
   ];
+
+  // Expandable row render function for treatment stages
+  const expandedRowRender = (protocol) => {
+    const protocolStages = treatmentStages.filter(
+      stage => stage.patientTreatmentProtocolId === protocol.id
+    );
+
+    const stageColumns = [
+      {
+        title: 'Tên giai đoạn',
+        dataIndex: 'stageName',
+        key: 'stageName',
+        render: (text) => <strong>{text}</strong>,
+      },
+      {
+        title: 'Thứ tự',
+        dataIndex: 'stageNumber',
+        key: 'stageNumber',
+        render: (number) => number || '-',
+      },
+      {
+        title: 'Mô tả',
+        dataIndex: 'description',
+        key: 'description',
+        ellipsis: true,
+        render: (text) => (
+          <Tooltip title={text}>
+            <span>{text}</span>
+          </Tooltip>
+        ),
+      },
+      {
+        title: 'Ngày bắt đầu',
+        dataIndex: 'startDate',
+        key: 'startDate',
+        render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+      },
+      {
+        title: 'Ngày kết thúc',
+        dataIndex: 'endDate',
+        key: 'endDate',
+        render: (date) => date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+      },
+      {
+        title: 'Thời gian nhắc nhở',
+        dataIndex: 'reminderTimes',
+        key: 'reminderTimes',
+        render: (time) => time || 'Không có',
+      },
+      {
+        title: 'Chi tiết',
+        key: 'actions',
+        render: (_, record) => (
+          <Space>
+            <Tooltip title="Xem chi tiết">
+              <Button
+                type="primary"
+                icon={<EyeOutlined />}
+                size="small"
+                onClick={() => handleViewStage(record.treatmentStageId || record.id)}
+              />
+            </Tooltip>
+          </Space>
+        ),
+      },
+    ];
+
+    return (
+      <Table
+        columns={stageColumns}
+        dataSource={protocolStages}
+        pagination={false}
+        rowKey={record => record.treatmentStageId || record.id || Math.random()}
+        locale={{
+          emptyText: 'Chưa có giai đoạn điều trị nào'
+        }}
+      />
+    );
+  };
 
   return (
     <div>
@@ -554,44 +583,39 @@ const TreatmentProtocol = () => {
               dataSource={patientProtocols}
               rowKey="id"
               loading={loading}
+              expandable={{
+                expandedRowRender,
+                expandRowByClick: true,
+                expandIcon: ({ expanded, onExpand, record }) => {
+                  const stageCount = treatmentStages.filter(
+                    stage => stage.patientTreatmentProtocolId === record.id
+                  ).length;
+                  
+                  return (
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={e => onExpand(record, e)}
+                      style={{ 
+                        padding: 0,
+                        height: 'auto',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {expanded ? '▼' : '▶'} 
+                      <span style={{ marginLeft: 4 }}>
+                        Giai đoạn ({stageCount})
+                      </span>
+                    </Button>
+                  );
+                }
+              }}
               pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
                 showQuickJumper: true,
                 showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quy trình`,
-              }}
-            />
-          </Card>
-        </Col>
-
-        <Col span={24}>
-          <Card
-            title="Giai đoạn điều trị"
-            extra={
-              <Space>
-                <Button
-                  type="primary"
-                  icon={<CalendarOutlined />}
-                  onClick={() => {
-                    setSelectedStage(null);
-                    setIsStageModalVisible(true);
-                  }}
-                >
-                  Thêm giai đoạn mới
-                </Button>
-              </Space>
-            }
-          >
-            <Table
-              columns={stageColumns}
-              dataSource={treatmentStages}
-              rowKey={record => record.treatmentStageId || record.id || record.key || Math.random()}
-              loading={loading}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} giai đoạn`,
               }}
             />
           </Card>
@@ -831,7 +855,7 @@ const TreatmentProtocol = () => {
                   label="Phác đồ ARV"
                   rules={[{ required: true, message: 'Vui lòng chọn phác đồ ARV' }]}
                 >
-                  <Select placeholder="Chọn phác đồ ARV">
+                  <Select placeholder="Chọn phác đồ ARV" disabled>
                     {arvProtocols.filter(p => p.id).map(p => (
                       <Option key={p.id} value={p.id}>
                         <div>
@@ -848,7 +872,19 @@ const TreatmentProtocol = () => {
                   name="patientTreatmentProtocolId"
                   label="Quy trình điều trị"
                   rules={[{ required: true, message: 'Vui lòng chọn quy trình điều trị' }]}
-                >                    <Select placeholder="Chọn quy trình điều trị">
+                >
+                  <Select 
+                    placeholder="Chọn quy trình điều trị"
+                    onChange={(value) => {
+                      // Tự động điền ARV protocol khi chọn quy trình điều trị
+                      const selectedProtocol = patientProtocols.find(p => p.id === value);
+                      if (selectedProtocol && selectedProtocol.arvProtocolId) {
+                        stageForm.setFieldsValue({
+                          arvProtocolId: selectedProtocol.arvProtocolId
+                        });
+                      }
+                    }}
+                  >
                     {patientProtocols.map(protocol => {
                       // Lấy 3 số đầu của id phác đồ (UUID)
                       const shortId = protocol.id ? protocol.id.substring(0, 4) : '';
